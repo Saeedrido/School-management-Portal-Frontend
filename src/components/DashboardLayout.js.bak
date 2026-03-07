@@ -1,0 +1,343 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  Avatar,
+  IconButton,
+  Divider,
+  Collapse,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Dashboard,
+  People,
+  Class,
+  School,
+  Book,
+  Assignment,
+  Assessment,
+  TrendingUp,
+  CalendarMonth,
+  Note,
+  Quiz,
+  Logout,
+} from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
+
+const drawerWidth = 260;
+
+const DashboardLayout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout, hasRole } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    // Navigate to landing page after logout
+    navigate('/');
+  };
+
+  // Admin menu items
+  const adminMenuItems = [
+    { text: 'Dashboard', icon: <Dashboard />, path: '/admin-dashboard' },
+    { text: 'Students', icon: <People />, path: '/dashboard/students' },
+    { text: 'Classes', icon: <Class />, path: '/dashboard/classes' },
+    { text: 'Subjects', icon: <Book />, path: '/dashboard/subjects' },
+    { text: 'Users', icon: <School />, path: '/dashboard/users' },
+    { text: 'Exams', icon: <Assignment />, path: '/dashboard/exams' },
+    { text: 'Results', icon: <TrendingUp />, path: '/dashboard/results' },
+    { text: 'Academic Years', icon: <CalendarMonth />, path: '/dashboard/academic-years' },
+    { text: 'Terms', icon: <Note />, path: '/dashboard/terms' },
+    { text: 'Promotions', icon: <Assessment />, path: '/dashboard/promotions' },
+    { text: 'Report Cards', icon: <Quiz />, path: '/dashboard/report-cards' },
+  ];
+
+  // Teacher menu items
+  const teacherMenuItems = [
+    { text: 'Dashboard', icon: <Dashboard />, path: '/teacher-dashboard' },
+    { text: 'My Classes', icon: <Class />, path: '/dashboard/classes' },
+    { text: 'Subjects', icon: <Book />, path: '/dashboard/subjects' },
+    { text: 'Exams', icon: <Assignment />, path: '/dashboard/exams' },
+    { text: 'Students', icon: <People />, path: '/dashboard/students' },
+    { text: 'My ID Card', icon: <School />, path: '/my-id-card' },
+  ];
+
+  // Select menu based on role
+  const menuItems = user?.role === 'Admin' ? adminMenuItems : teacherMenuItems;
+
+  return (
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)',
+      }}
+    >
+      {/* Navbar */}
+      <Box
+        sx={{
+          background: 'rgba(10, 25, 47, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        <Toolbar
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 3,
+            py: 2,
+          }}
+        >
+          {/* Logo & Title */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                background: 'linear-gradient(90deg, #FF3E8A 0%, #FF5DA3 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <School sx={{ fontSize: 24, color: 'white' }} />
+            </Box>
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '1.25rem',
+              }}
+            >
+              {user?.role === 'Admin' ? 'Admin Dashboard' : 'Teacher Dashboard'}
+            </Typography>
+          </Box>
+
+          {/* User Info */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              src={user?.profilePicture}
+              sx={{
+                width: 36,
+                height: 36,
+                border: '2px solid #FF3E8A',
+                bgcolor: '#111111',
+              }}
+            >
+              {!user?.profilePicture && (
+                <Box sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.3)' }}>
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </Box>
+              )}
+            </Avatar>
+            <Typography
+              variant="body2"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)' }}
+            >
+              {user?.name || 'User'}
+            </Typography>
+            <IconButton
+              size="small"
+              aria-label="logout"
+              onClick={handleLogout}
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                '&:hover': {
+                  color: '#FF3E8A',
+                  background: 'rgba(255, 62, 138, 0.1)',
+                },
+              }}
+            >
+              <Logout sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </Box>
+
+      {/* Main Content Area */}
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        {/* Sidebar */}
+        <Box
+          component="nav"
+          sx={{
+            width: { sm: drawerWidth, xs: '100%' },
+            background: 'rgba(10, 25, 47, 0.5)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+            display: { xs: 'none', sm: 'block' },
+            flexDirection: 'column',
+          }}
+        >
+          {/* Sidebar Header */}
+          <Box
+            sx={{
+              p: 3,
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                fontSize: '0.7rem',
+                letterSpacing: 1,
+              }}
+            >
+              Navigation
+            </Typography>
+          </Box>
+
+          {/* Menu Items */}
+          <List sx={{ px: 2, py: 1 }}>
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path);
+              return (
+                <ListItem
+                  key={item.text}
+                  disablePadding
+                  sx={{
+                    mb: 0.5,
+                    borderRadius: 1,
+                    '&:hover': {
+                      background: 'rgba(255, 62, 138, 0.1)',
+                    },
+                    ...(isActive && {
+                      background: 'rgba(255, 62, 138, 0.2)',
+                      '&:hover': {
+                        background: 'rgba(255, 62, 138, 0.3)',
+                      },
+                    }),
+                  }}
+                >
+                  <ListItemButton
+                    selected={isActive}
+                    onClick={() => navigate(item.path)}
+                    sx={{
+                      borderRadius: 1,
+                      py: 1.2,
+                      px: 2,
+                      '& .MuiListItemButton-root': {
+                        '&.Mui-selected': {
+                          background: 'transparent !important',
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        color: isActive ? '#FF3E8A' : 'rgba(255, 255, 255, 0.6)',
+                        minWidth: 36,
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.text}
+                      sx={{
+                        color: isActive ? '#FF3E8A' : '#ffffff',
+                        fontWeight: isActive ? 600 : 500,
+                        '& .MuiTypography-root': {
+                          fontWeight: isActive ? '600 !important' : '500',
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
+
+          {/* Logout Button */}
+          <Box sx={{ p: 2, mt: 2 }}>
+            <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)' }} />
+            <ListItem
+              disablePadding
+              sx={{
+                mb: 0.5,
+                borderRadius: 1,
+                '&:hover': {
+                  background: 'rgba(239, 83, 80, 0.2)',
+                },
+              }}
+            >
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{
+                  borderRadius: 1,
+                  py: 1.2,
+                  px: 2,
+                  width: '100%',
+                  background: 'rgba(239, 83, 80, 0.1)',
+                  '&:hover': {
+                    background: 'rgba(239, 83, 80, 0.2)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: '#ff6b6b', minWidth: 36 }}>
+                  <Logout sx={{ fontSize: 20 }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Logout"
+                  sx={{
+                    color: '#ff6b6b',
+                    fontWeight: 600,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </Box>
+        </Box>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            width: { sm: `calc(100% - ${drawerWidth}px)`, xs: '100%' },
+            minHeight: '100vh',
+            background: '#000000',
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(255, 62, 138, 0.3)',
+              borderRadius: '4px',
+            },
+          }}
+        >
+          <Toolbar />
+          <Outlet />
+        </Box>
+      </Box>
+    </>
+  );
+};
+
+export default DashboardLayout;
+
+// Named export for better imports
+export { DashboardLayout as DashboardLayoutComponent };

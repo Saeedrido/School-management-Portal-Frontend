@@ -1,0 +1,1375 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  TextField,
+  Grid,
+  MenuItem,
+  IconButton,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  CircularProgress,
+  useTheme,
+} from '@mui/material';
+import {
+  ArrowBack,
+  Save,
+  Add,
+  Delete,
+  Schedule,
+  Quiz,
+  Timer,
+} from '@mui/icons-material';
+import {
+  adminAPI,
+  teacherAPI,
+  termsAPI,
+  examsAPI,
+  academicYearsAPI,
+} from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import {
+  mapExamFormToCreateDto,
+  examTypeToEnum,
+  enumToExamType,
+  validateExamForm,
+} from '../../utils/dataMapping';
+
+const EXAM_TYPES = [
+  { value: 'Objective', label: 'Multiple Choice' },
+  { value: 'Theory', label: 'Theory Exam' },
+  { value: 'Mixed', label: 'Mixed (Theory + Objective)' },
+];
+
+// Dropdown menu props for consistent scroll behavior
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const DropdownMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 6 + ITEM_PADDING_TOP, // ~296px - shows ~6 items
+      width: 250,
+    },
+  },
+};
+
+const ExamForm = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { user } = useAuth();
+  const isEditing = Boolean(id);
+
+  // Get base path based on user role
+  const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
+
+  const [loading, setLoading] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const [classes, setClasses] = useState([]);
+  const [classSubjects, setClassSubjects] = useState([]); // Class-subject assignments for selected class
+  const [terms, setTerms] = useState([]); // All available terms for manual selection
+  const [currentTerm, setCurrentTerm] = useState(null);
+  const [academicYears, setAcademicYears] = useState([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState(null);
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    classId: '',
+    classSubjectId: '',
+    termId: '', // Manual term selection
+    type: 'Theory',
+    startDate: '',
+    startTime: '',
+    duration: '60',
+    durationUnit: 'minutes',
+    totalMarks: 100,
+    objectiveMark: 60,
+    theoryMark: 40,
+    passingMarks: 40,
+    instructions: '',
+    allowRetake: false,
+    maxAttempts: 1,
+  });
+
+  useEffect(() => {
+    fetchClasses();
+    fetchAcademicYears();
+    if (isEditing && id) {
+      fetchExamData(id);
+    }
+  }, [id, isEditing]);
+
+  useEffect(() => {
+    if (formData.classId) {
+      if (user?.role === 'Teacher') {
+        // Teacher: Fetch their assigned class-subject combinations
+        fetchTeacherClassSubjects(formData.classId);
+      } else {
+        // Admin: Fetch class-subject assignments for the selected class (same as TeacherAssignments)
+        fetchClassSubjectsForClass(formData.classId);
+      }
+    }
+  }, [formData.classId]);
+
+  const fetchClasses = async () => {
+    try {
+      setLoadingClasses(true);
+      console.log('📚 Fetching classes for role:', user?.role);
+      console.log('🔍 Current user:', user);
+
+      // If teacher, fetch only their assigned classes
+      if (user?.role === 'Teacher') {
+        console.log('👨‍🏫 Fetching teacher assignments...');
+        const response = await teacherAPI.myAssignments.getAll(1, 100);
+        console.log('📦 Full response:', response);
+        console.log('👨‍🏫 Teacher assignments response:', response.data);
+
+        if (response.data?.success && response.data?.data?.items) {
+          const assignments = response.data.data.items;
+          const uniqueClasses = [];
+          const seenClassIds = new Set();
+
+          assignments.forEach(assignment => {
+            if (assignment.class && !seenClassIds.has(assignment.classId)) {
+              seenClassIds.add(assignment.classId);
+              uniqueClasses.push({
+                id: assignment.classId,
+                name: assignment.class.name || 'Class',
+                displayName: assignment.class.displayName,
+                schoolLevel: assignment.class?.schoolLevel,
+              });
+            }
+          });
+          setClasses(uniqueClasses);
+          console.log('✅ Teacher classes loaded:', uniqueClasses.length);
+        } else {
+          console.error('❌ Failed to load teacher assignments');
+        }
+      } else {
+        // Admin: Get all classes
+        console.log('🔑 Admin: fetching all classes...');
+        const classesResponse = await adminAPI.classes.getAll();
+        console.log('📦 Full classes response:', classesResponse);
+        console.log('🏫 All classes response:', classesResponse.data);
+
+        if (classesResponse.data?.success) {
+          console.log('✅ Success! Data:', classesResponse.data.data);
+          const allClasses = classesResponse.data.data || [];
+          console.log('✅ All classes loaded:', allClasses.length);
+          setClasses(allClasses);
+        } else {
+          console.error('❌ Failed to load classes:', classesResponse.data);
+          setError(`Failed to load classes: ${classesResponse.data?.message || 'Unknown error'}`);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error fetching classes:', err);
+      console.error('❌ Error details:', err.response?.data);
+      setError(`Failed to load classes: ${err.message}`);
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
+  const fetchTeacherClassSubjects = async (classId) => {
+    // Only for teachers - fetch their assigned class-subject combinations
+    if (user?.role !== 'Teacher') return;
+
+    try {
+      setLoadingSubjects(true);
+      const response = await teacherAPI.myAssignments.getAll(1, 100);
+      console.log('Teacher assignments response:', response.data);
+
+      if (response.data?.success && response.data?.data?.items) {
+        // Filter assignments by classId
+        const classAssignments = response.data.data.items.filter(
+          a => a.classId === classId
+        );
+        console.log('Filtered class assignments:', classAssignments);
+        setClassSubjects(classAssignments);
+
+        // Show warning if no subjects assigned
+        if (classAssignments.length === 0) {
+          setError('No subjects are assigned to you for this class. Please contact the administrator.');
+        }
+      }
+
+      // Reset subject selection when class changes
+      setFormData(prev => ({
+        ...prev,
+        classSubjectId: '',
+      }));
+    } catch (err) {
+      console.error('Error fetching teacher class subjects:', err);
+      setError('Failed to load your assigned subjects for this class');
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
+
+  const fetchClassSubjectsForClass = async (classId) => {
+    try {
+      setLoadingSubjects(true);
+
+      if (user?.role === 'Admin') {
+        // Admin: Fetch all class-subject assignments for this class
+        console.log('🔍 Admin fetching class subjects for classId:', classId);
+        const response = await adminAPI.classSubjects.getByClass(classId, 1, 100);
+        console.log('📦 Admin class subjects response:', response.data);
+
+        if (response.data?.success && response.data?.data?.items) {
+          const items = response.data.data.items;
+          console.log('✅ Class subjects items:', items);
+          console.log('✅ Number of items:', items.length);
+          console.log('✅ First item:', items[0]);
+          setClassSubjects(items);
+
+          if (items.length === 0) {
+            setError(`⚠️ No subjects are assigned to this class (ID: ${classId}). Class-subject assignments may not be seeded yet.`);
+          }
+        } else if (response.data?.success && response.data?.data) {
+          setClassSubjects(response.data.data);
+        } else {
+          console.error('❌ API Error:', response.data);
+          setError(`Failed to load subjects: ${response.data?.message || 'Unknown error'}`);
+        }
+      } else {
+        // Teacher: Fetch their specific assignments for this class
+        const response = await teacherAPI.myAssignments.getAll(1, 100);
+        console.log('Teacher assignments response:', response.data);
+
+        if (response.data?.success && response.data?.data?.items) {
+          const classAssignments = response.data.data.items.filter(
+            a => a.classId === classId
+          );
+          console.log('Filtered class assignments:', classAssignments);
+          setClassSubjects(classAssignments);
+
+          if (classAssignments.length === 0) {
+            setError('No subjects are assigned to you for this class. Please contact the administrator.');
+          }
+        }
+      }
+
+      // Reset subject selection when class changes
+      setFormData(prev => ({
+        ...prev,
+        classSubjectId: '',
+      }));
+    } catch (err) {
+      console.error('Error fetching class subjects:', err);
+      setError(`Failed to load subjects: ${err.message}`);
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
+
+  const fetchAcademicYears = async () => {
+    try {
+      console.log('Fetching academic years...');
+      setLoadingData(true);
+      const response = await academicYearsAPI.getAll();
+      console.log('Academic years response:', response.data);
+
+      if (response.data?.success && response.data?.data) {
+        const yearsList = response.data.data;
+        setAcademicYears(yearsList);
+        
+        // Set current/active academic year
+        const current = yearsList.find(ay => ay.isActive) || yearsList[0];
+        if (current) {
+          console.log('Setting current academic year to:', current.id, current.name);
+          setCurrentAcademicYear(current.id);
+          // Fetch terms for the active academic year
+          fetchTermsForAcademicYear(current.id);
+        } else {
+          setLoadingData(false);
+        }
+      } else {
+        setLoadingData(false);
+      }
+    } catch (err) {
+      console.error('Error fetching academic years:', err);
+      setLoadingData(false);
+      // Fallback: try to get all terms
+      fetchTerms();
+    }
+  };
+
+  const fetchTermsForAcademicYear = async (academicYearId) => {
+    try {
+      console.log('Fetching terms for academic year:', academicYearId);
+      const response = await adminAPI.terms.getByAcademicYear(academicYearId);
+      console.log('Terms response:', response.data);
+
+      if (response.data?.success && response.data?.data) {
+        const termsList = response.data.data;
+        console.log('Loaded terms:', termsList);
+        setTerms(termsList);
+
+        // Set current/active term
+        const activeTerm = termsList.find(t => t.isActive) || termsList[0];
+        if (activeTerm) {
+          console.log('Setting current term to:', activeTerm.id, activeTerm.name);
+          setCurrentTerm(activeTerm);
+          setFormData(prev => ({ ...prev, termId: activeTerm.id.toString() }));
+        } else {
+          console.warn('No active term found and no terms available');
+        }
+      }
+      setLoadingData(false);
+    } catch (err) {
+      console.error('Error fetching terms for academic year:', err);
+      setLoadingData(false);
+      // Fallback: try to get all terms
+      fetchTerms();
+    }
+  };
+
+  // Fallback: fetch all terms (original approach)
+  const fetchTerms = async () => {
+    try {
+      console.log('Fetching all terms (fallback)...');
+      const response = await termsAPI.getAll();
+      console.log('Terms response:', response.data);
+
+      if (response.data?.success && response.data?.data) {
+        const termsList = response.data.data;
+        console.log('Loaded terms:', termsList);
+        setTerms(termsList);
+
+        // Set current/active term
+        const activeTerm = termsList.find(t => t.isActive) || termsList[0];
+        if (activeTerm) {
+          console.log('Setting current term to:', activeTerm.id, activeTerm.name);
+          setCurrentTerm(activeTerm);
+          setFormData(prev => ({ ...prev, termId: activeTerm.id.toString() }));
+        }
+      }
+      setLoadingData(false);
+    } catch (err) {
+      console.error('Error fetching terms:', err);
+      setLoadingData(false);
+    }
+  };
+
+  const handleAcademicYearChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+      termId: '', // Reset term when academic year changes
+    });
+    
+    // Fetch terms for the newly selected academic year
+    if (value) {
+      fetchTermsForAcademicYear(value);
+    }
+    setTerms([]);
+  };
+
+  const fetchExamData = async (examId) => {
+    try {
+      setLoading(true);
+      const response = await examsAPI.getById(examId);
+
+      if (response.data?.success && response.data?.data) {
+        const exam = response.data.data;
+        const startTime = new Date(exam.examDate);
+        const startDate = startTime.toISOString().split('T')[0];
+        const startTimeStr = startTime.toTimeString().slice(0, 5);
+
+        setFormData({
+          title: exam.title || '',
+          description: exam.description || '',
+          classId: exam.classId?.toString() || '',
+          classSubjectId: exam.classSubjectId?.toString() || '',
+          type: enumToExamType(exam.examType),
+          startDate: startDate,
+          startTime: startTimeStr,
+          duration: exam.durationMinutes?.toString() || '60',
+          durationUnit: 'minutes',
+          totalMarks: exam.totalMarks || 100,
+          objectiveMark: exam.objectiveMark || 60,
+          theoryMark: exam.theoryMark || 40,
+          passingMarks: exam.passingMark || 40,
+          instructions: exam.instructions || '',
+          allowRetake: exam.allowRetake || false,
+          maxAttempts: exam.maxAttempts || 1,
+        });
+
+        // Load class subjects for this class
+        if (exam.classId) {
+          fetchClassSubjectsForClass(exam.classId);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching exam:', err);
+      setError('Failed to load exam data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+
+    // If term is changed manually, update currentTerm
+    if (name === 'termId' && value) {
+      const selectedTerm = terms.find(t => t.id === value);
+      if (selectedTerm) {
+        setCurrentTerm(selectedTerm);
+      }
+    }
+
+    // Clear field error
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: '',
+      });
+    }
+
+    setError('');
+    setSuccess(false);
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.title?.trim()) {
+      errors.title = 'Exam title is required';
+    }
+    if (!formData.classId) {
+      errors.classId = 'Please select a class';
+    }
+    if (!formData.classSubjectId) {
+      errors.classSubjectId = 'Please select a subject';
+    }
+    if (!formData.termId) {
+      errors.termId = 'Please select a term';
+    }
+    if (!formData.startDate) {
+      errors.startDate = 'Start date is required';
+    }
+    if (!formData.startTime) {
+      errors.startTime = 'Start time is required';
+    }
+    if (!formData.duration || parseFloat(formData.duration) <= 0) {
+      errors.duration = 'Duration must be greater than 0';
+    }
+    if (!formData.totalMarks || formData.totalMarks <= 0) {
+      errors.totalMarks = 'Total marks must be greater than 0';
+    }
+    if (formData.passingMarks < 0 || formData.passingMarks > formData.totalMarks) {
+      errors.passingMarks = 'Passing marks must be between 0 and total marks';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!formData.termId) {
+      setError('Please select a term.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const examDto = mapExamFormToCreateDto(
+        formData,
+        formData.classSubjectId,
+        formData.termId
+      );
+
+      console.log('📤 Creating exam with DTO:', examDto);
+      console.log('👤 User role:', user?.role);
+      console.log('🆔 classSubjectId:', formData.classSubjectId);
+      console.log('🆔 termId:', formData.termId);
+
+      let response;
+      if (isEditing) {
+        response = await examsAPI.update(id, examDto);
+      } else {
+        response = await examsAPI.create(examDto);
+      }
+
+      if (response.data?.success) {
+        setSuccess(isEditing ? 'Exam updated successfully!' : 'Exam created successfully!');
+        setTimeout(() => {
+          if (isEditing) {
+            navigate(`${basePath}/exams/${id}/questions`);
+          } else {
+            const newExamId = response.data.data.id;
+            navigate(`${basePath}/exams/${newExamId}/questions`);
+          }
+        }, 1500);
+      } else {
+        setError(response.data?.message || 'Failed to save exam');
+      }
+    } catch (err) {
+      console.error('Error saving exam:', err);
+      setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAndAddQuestions = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!formData.termId) {
+      setError('Please select a term.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const examDto = mapExamFormToCreateDto(
+        formData,
+        formData.classSubjectId,
+        formData.termId
+      );
+
+      console.log('📤 Creating exam with DTO:', examDto);
+      console.log('👤 User role:', user?.role);
+      console.log('🆔 classSubjectId:', formData.classSubjectId);
+      console.log('🆔 termId:', formData.termId);
+
+      let response;
+      if (isEditing) {
+        response = await examsAPI.update(id, examDto);
+      } else {
+        response = await examsAPI.create(examDto);
+      }
+
+      if (response.data?.success) {
+        setSuccess('Exam saved! Redirecting to question builder...');
+        setTimeout(() => {
+          const examId = isEditing ? id : response.data.data.id;
+          navigate(`${basePath}/exams/${examId}/questions`);
+        }, 1000);
+      } else {
+        setError(response.data?.message || 'Failed to save exam');
+      }
+    } catch (err) {
+      console.error('Error saving exam:', err);
+      setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loadingClasses || loadingData) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <CircularProgress sx={{ color: '#FF3E8A' }} />
+        <Typography sx={{ color: 'text.secondary' }}>
+          Loading exam data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: theme.palette.mode === 'dark'
+          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
+          : 'background.default',
+      }}
+    >
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 900, mx: 'auto' }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, md: 4 }, gap: 2, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
+          <IconButton
+            onClick={() => navigate(`${basePath}/exams`)}
+            sx={{ color: 'text.primary' }}
+          >
+            <ArrowBack />
+          </IconButton>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: 'text.primary',
+                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+              }}
+            >
+              {isEditing ? 'Edit Exam' : 'Create New Exam'}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary' }}
+            >
+              {isEditing ? 'Update exam details' : 'Fill in the exam details below'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" onClose={() => setError('')} sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <Alert severity="success" onClose={() => setSuccess(false)} sx={{ mb: 3 }}>
+            {success}
+          </Alert>
+        )}
+
+        {/* Form */}
+        <Card
+          sx={{
+            background: 'rgba(17, 17, 17, 0.8)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 62, 138, 0.3)',
+            borderRadius: 3,
+          }}
+        >
+          <CardContent sx={{ p: 0 }}>
+          <form onSubmit={handleSubmit}>
+            {/* Section 1: Basic Information */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(255, 62, 138, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Quiz sx={{ color: '#FF3E8A', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Basic Information
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                {/* Exam Title */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Exam Title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., Mathematics Mid-Term Examination"
+                    required
+                    error={!!fieldErrors.title}
+                    helperText={fieldErrors.title}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description (Optional)"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Brief description of the exam"
+                    multiline
+                    rows={2}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Class Selection */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Class</InputLabel>
+                    <Select
+                      name="classId"
+                      value={formData.classId}
+                      onChange={handleChange}
+                      label="Class"
+                      error={!!fieldErrors.classId}
+                      MenuProps={DropdownMenuProps}
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      {loadingClasses ? (
+                        <MenuItem value="">
+                          <em>Loading classes...</em>
+                        </MenuItem>
+                      ) : classes.length === 0 ? (
+                        <MenuItem value="">
+                          <em>No classes available</em>
+                        </MenuItem>
+                      ) : (
+                        classes.map((cls) => (
+                          <MenuItem key={cls.id} value={cls.id} sx={{ color: 'text.primary' }}>
+                            {cls.displayName || cls.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                    {fieldErrors.classId && (
+                      <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5, ml: 2 }}>
+                        {fieldErrors.classId}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                {/* Subject Selection */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required disabled={!formData.classId || loadingSubjects}>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Subject</InputLabel>
+                    <Select
+                      name="classSubjectId"
+                      value={formData.classSubjectId}
+                      onChange={handleChange}
+                      label="Subject"
+                      error={!!fieldErrors.classSubjectId}
+                      MenuProps={DropdownMenuProps}
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      {!formData.classId ? (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>Select a class first</em>
+                        </MenuItem>
+                      ) : loadingSubjects ? (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>Loading subjects...</em>
+                        </MenuItem>
+                      ) : classSubjects.length > 0 ? (
+                        // Both Admin and Teacher: Show subjects from ClassSubject assignments
+                        classSubjects.map((cs) => (
+                          <MenuItem key={cs.id} value={cs.id} sx={{ color: 'text.primary' }}>
+                            {cs.subject?.name || 'Unknown Subject'} ({cs.subject?.code || 'N/A'})
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>No subjects available for this class</em>
+                        </MenuItem>
+                      )}
+                    </Select>
+                    {fieldErrors.classSubjectId && (
+                      <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5, ml: 2 }}>
+                        {fieldErrors.classSubjectId}
+                      </Typography>
+                    )}
+                    {formData.classId && classSubjects.length > 0 && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, ml: 2 }}>
+                        {user?.role === 'Admin'
+                          ? 'Showing subjects assigned to this class'
+                          : 'Showing your assigned subjects for this class'}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                {/* Academic Year Selection */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Academic Year</InputLabel>
+                    <Select
+                      name="academicYearId"
+                      value={currentAcademicYear || ''}
+                      onChange={handleAcademicYearChange}
+                      label="Academic Year"
+                      MenuProps={DropdownMenuProps}
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      {academicYears.length === 0 ? (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>No academic years available</em>
+                        </MenuItem>
+                      ) : (
+                        academicYears.map((ay) => (
+                          <MenuItem key={ay.id} value={ay.id} sx={{ color: 'text.primary' }}>
+                            {ay.name} {ay.isActive ? '(Active)' : ''}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Term Selection - Shows terms for the selected academic year */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required error={!!fieldErrors.termId}>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Term</InputLabel>
+                    <Select
+                      name="termId"
+                      value={formData.termId}
+                      onChange={handleChange}
+                      label="Term"
+                      MenuProps={DropdownMenuProps}
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      {!currentAcademicYear ? (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>Select an academic year first</em>
+                        </MenuItem>
+                      ) : terms.length === 0 ? (
+                        <MenuItem value="" sx={{ color: 'text.primary' }}>
+                          <em>No terms available</em>
+                        </MenuItem>
+                      ) : (
+                        terms.map((term) => (
+                          <MenuItem key={term.id} value={term.id} sx={{ color: 'text.primary' }}>
+                            {term.name} {term.isActive ? '(Active)' : ''}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                    {fieldErrors.termId && (
+                      <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5, ml: 2 }}>
+                        {fieldErrors.termId}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Section 2: Exam Configuration */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(33, 150, 243, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Timer sx={{ color: '#2196F3', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Exam Configuration
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                {/* Exam Type */}
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth required>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Exam Type</InputLabel>
+                    <Select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleChange}
+                      label="Exam Type"
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      {EXAM_TYPES.map((type) => (
+                        <MenuItem key={type.value} value={type.value} sx={{ color: 'text.primary' }}>
+                          {type.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Duration */}
+                <Grid item xs={12} sm={8}>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="Duration"
+                      name="duration"
+                      type="number"
+                      value={formData.duration}
+                      onChange={handleChange}
+                      required
+                      error={!!fieldErrors.duration}
+                      helperText={fieldErrors.duration}
+                      inputProps={{ min: 1, step: 1 }}
+                      sx={textFieldStyles}
+                    />
+                    <FormControl sx={{ minWidth: 120 }}>
+                      <InputLabel sx={{ color: 'text.secondary' }}>Unit</InputLabel>
+                      <Select
+                        name="durationUnit"
+                        value={formData.durationUnit}
+                        onChange={handleChange}
+                        label="Unit"
+                        sx={{
+                          color: 'text.primary',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'divider',
+                          },
+                          '& .MuiSelect-select': {
+                            color: 'text.primary',
+                          },
+                        }}
+                      >
+                        <MenuItem value="minutes" sx={{ color: 'text.primary' }}>Minutes</MenuItem>
+                        <MenuItem value="hours" sx={{ color: 'text.primary' }}>Hours</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Section 3: Schedule */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(102, 187, 106, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Schedule sx={{ color: '#66BB6A', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Schedule
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                {/* Start Date */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Start Date"
+                    name="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    required
+                    error={!!fieldErrors.startDate}
+                    helperText={fieldErrors.startDate}
+                    InputLabelProps={{
+                      shrink: true,
+                      sx: { color: 'rgba(255, 255, 255, 0.7)' },
+                    }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Start Time */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Start Time"
+                    name="startTime"
+                    type="time"
+                    value={formData.startTime}
+                    onChange={handleChange}
+                    required
+                    error={!!fieldErrors.startTime}
+                    helperText={fieldErrors.startTime}
+                    InputLabelProps={{
+                      shrink: true,
+                      sx: { color: 'rgba(255, 255, 255, 0.7)' },
+                    }}
+                    inputProps={{
+                      step: 300,
+                    }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Section 4: Grading */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(255, 167, 38, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Quiz sx={{ color: '#FFA726', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Grading
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                {/* Total Marks */}
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Total Marks"
+                    name="totalMarks"
+                    type="number"
+                    value={formData.totalMarks}
+                    onChange={handleChange}
+                    required
+                    error={!!fieldErrors.totalMarks}
+                    helperText={fieldErrors.totalMarks}
+                    inputProps={{ min: 1 }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Objective Marks */}
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Objective Marks"
+                    name="objectiveMark"
+                    type="number"
+                    value={formData.objectiveMark}
+                    onChange={handleChange}
+                    required
+                    inputProps={{ min: 0 }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Theory Marks */}
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Theory Marks"
+                    name="theoryMark"
+                    type="number"
+                    value={formData.theoryMark}
+                    onChange={handleChange}
+                    inputProps={{ min: 0 }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+
+                {/* Passing Marks */}
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Passing Marks"
+                    name="passingMarks"
+                    type="number"
+                    value={formData.passingMarks}
+                    onChange={handleChange}
+                    required
+                    error={!!fieldErrors.passingMarks}
+                    helperText={fieldErrors.passingMarks}
+                    inputProps={{ min: 0 }}
+                    sx={textFieldStyles}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Section 5: Instructions */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(158, 158, 158, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Quiz sx={{ color: '#9E9E9E', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Instructions (Optional)
+                </Typography>
+              </Box>
+
+              <TextField
+                fullWidth
+                name="instructions"
+                multiline
+                rows={4}
+                value={formData.instructions}
+                onChange={handleChange}
+                placeholder="Enter exam instructions for students..."
+                sx={textFieldStyles}
+              />
+            </Box>
+
+            {/* Section 6: Retake Settings */}
+            <Box
+              sx={{
+                mb: 3,
+                p: 3,
+                background: 'rgba(17, 17, 17, 0.6)',
+                borderRadius: 3,
+                border: '1px solid rgba(156, 39, 176, 0.2)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Quiz sx={{ color: '#9C27B0', fontSize: 28 }} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                  }}
+                >
+                  Retake Settings
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel sx={{ color: 'text.secondary' }}>Allow Retake</InputLabel>
+                    <Select
+                      name="allowRetake"
+                      value={formData.allowRetake}
+                      onChange={handleChange}
+                      label="Allow Retake"
+                      sx={{
+                        color: 'text.primary',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'divider',
+                        },
+                        '& .MuiSelect-select': {
+                          color: 'text.primary',
+                        },
+                      }}
+                    >
+                      <MenuItem value={false} sx={{ color: 'text.primary' }}>No</MenuItem>
+                      <MenuItem value={true} sx={{ color: 'text.primary' }}>Yes</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {formData.allowRetake && (
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Max Attempts"
+                      name="maxAttempts"
+                      type="number"
+                      value={formData.maxAttempts}
+                      onChange={handleChange}
+                      inputProps={{ min: 1 }}
+                      sx={textFieldStyles}
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                justifyContent: 'flex-end',
+                mt: 1,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => navigate(`${basePath}/exams`)}
+                disabled={loading}
+                sx={{
+                  color: '#ffffff',
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  px: 3,
+                  py: 1.5,
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <Save />}
+                onClick={handleSubmit}
+                disabled={loading}
+                sx={{
+                  background: '#2196F3',
+                  '&:hover': {
+                    background: '#1976D2',
+                  },
+                  px: 3,
+                  py: 1.5,
+                }}
+              >
+                {loading ? 'Saving...' : 'Save Exam'}
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <Add />}
+                onClick={handleSaveAndAddQuestions}
+                disabled={loading}
+                sx={{
+                  background: 'linear-gradient(135deg, #FF3E8A 0%, #FF5DA3 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FF5DA3 0%, #FF7CB8 100%)',
+                  },
+                  px: 3,
+                  py: 1.5,
+                }}
+              >
+                {loading ? 'Saving...' : 'Save & Add Questions'}
+              </Button>
+            </Box>
+          </form>
+        </CardContent>
+        </Card>
+      </Box>
+    </Box>
+  );
+};
+
+// Common styles
+const textFieldStyles = {
+  '& .MuiInputLabel-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  '& .MuiOutlinedInput-root': {
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#FF3E8A',
+    },
+    '&.Mui-error .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#ff6b6b',
+    },
+  },
+  '& .MuiFormHelperText-root': {
+    color: '#ff6b6b',
+  },
+};
+
+const selectStyles = {
+  color: '#ffffff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#FF3E8A',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#FF3E8A',
+  },
+  '& .MuiInputLabel-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  '& .MuiSelect-select': {
+    color: '#ffffff',
+  },
+  '& .MuiSvgIcon-root': {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+};
+
+export default ExamForm;

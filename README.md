@@ -1,70 +1,210 @@
-# Getting Started with Create React App
+# School Management System - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern React frontend for the School Management System built with Material-UI.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Authentication**: Login and Registration with JWT token management
+- **Dashboard**: Role-based dashboard for Admin, Teacher, and Student
+- **Student Management**: Create, view, edit, and delete students
+- **Class Management**: Manage classes, sections, and student enrollment
+- **Exam Management**: Create and manage objective and theory exams
+- **Exam Taking**: Students can take exams with timer
+- **Results**: View exam results and performance statistics
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **React 19**: Latest React with hooks and functional components
+- **Material-UI v7**: Beautiful pre-built components
+- **React Router v7**: Client-side routing
+- **Axios**: HTTP client for API requests
+- **Emotion**: CSS-in-JS styling (included with MUI)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Prerequisites
 
-### `npm test`
+- Node.js 16+ and npm
+- Backend API running on http://localhost:5000 (or configured URL)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Getting Started
 
-### `npm run build`
+### 1. Install Dependencies
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 2. Configure API URL
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Create a `.env` file in the root directory:
 
-### `npm run eject`
+```
+REACT_APP_API_URL=http://localhost:5000
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Or modify the default URL in `src/services/api.js`.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 3. Start Development Server
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The app will open at [http://localhost:3000](http://localhost:3000)
 
-## Learn More
+### 4. Build for Production
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+npm run build
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The built files will be in the `build/` directory.
 
-### Code Splitting
+## Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+src/
+├── components/          # Reusable components
+│   └── MainLayout.js   # Main app layout with sidebar
+├── context/            # React Context providers
+│   └── AuthContext.js  # Authentication state management
+├── pages/              # Page components
+│   ├── Auth/          # Login and Register pages
+│   ├── Dashboard/     # Dashboard page
+│   ├── Students/      # Student management pages
+│   ├── Classes/       # Class management pages
+│   ├── Exams/         # Exam management and taking pages
+│   └── Results/       # Results viewing page
+├── services/          # API service layer
+│   └── api.js         # Axios instance and API endpoints
+├── utils/             # Utility functions
+├── App.js             # Main app component with routing
+└── index.js           # Entry point
+```
 
-### Analyzing the Bundle Size
+## User Roles
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Admin
+- Full access to all features
+- Manage students, classes, subjects, exams
+- View all results
+- Assign roles to users
 
-### Making a Progressive Web App
+### Teacher
+- View and manage assigned classes
+- Create and manage exams
+- View student results
+- Grade theory exams
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Student
+- View own profile
+- Take assigned exams
+- View own results
+- Access learning materials
 
-### Advanced Configuration
+## API Integration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+The frontend connects to the backend API at `/api` with the following endpoints:
 
-### Deployment
+- **Auth**: `/api/auth/login`, `/api/auth/register`
+- **Users**: `/api/users`
+- **Students**: `/api/students`
+- **Classes**: `/api/classes`
+- **Exams**: `/api/exams`
+- **Results**: `/api/results`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+All API requests include the JWT token in the Authorization header.
 
-### `npm run build` fails to minify
+## Authentication Flow
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. User logs in via `/login`
+2. Backend returns JWT token and user data
+3. Token stored in localStorage
+4. Token included in all subsequent requests
+5. Protected routes check authentication status
+6. Token automatically cleared on logout
+
+## Features by Page
+
+### Login/Register
+- Email and password authentication
+- Role selection during registration
+- Form validation and error handling
+- Demo credentials displayed for testing
+
+### Dashboard
+- Welcome message with user's name
+- Statistics cards (students, classes, exams, results)
+- Quick actions guide
+- Recent activity feed
+
+### Students
+- List view with search functionality
+- Add/Edit student forms
+- Student details (name, ID, class, status)
+- Parent/guardian information
+
+### Classes
+- Card-based grid view
+- Add/Edit class forms
+- Class details (name, level, section, capacity)
+- Student count per class
+
+### Exams
+- Card-based grid view
+- Create exam (title, type, duration, marks)
+- Select class and subject
+- Schedule start/end time
+- Take exam with timer (for students)
+
+### Results
+- Summary cards (average, total, passed, failed)
+- Detailed results table
+- Grade and status indicators
+- Performance percentage
+
+## Customization
+
+### Theme Colors
+
+Modify the theme in `src/App.js`:
+
+```javascript
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',  // Change primary color
+    },
+    secondary: {
+      main: '#dc004e',  // Change secondary color
+    },
+  },
+});
+```
+
+### API Configuration
+
+Modify the API base URL in `src/services/api.js` or use environment variables.
+
+## Troubleshooting
+
+### CORS Issues
+If you encounter CORS errors, ensure the backend API has CORS configured to allow requests from your frontend URL.
+
+### 401 Unauthorized
+- Check that the backend API is running
+- Verify JWT token is valid
+- Check token in localStorage
+
+### Blank Page
+- Check browser console for errors
+- Ensure all dependencies are installed
+- Verify React Router is configured correctly
+
+## License
+
+Proprietary - All rights reserved
+
+## Support
+
+For issues or questions, please contact the development team.
