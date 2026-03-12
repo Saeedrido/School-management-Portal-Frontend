@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 import {
-  Container,
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -18,6 +15,9 @@ import {
   InputAdornment,
   Chip,
   Avatar,
+  Grid,
+  Card,
+  CardContent,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -26,12 +26,13 @@ import {
   Delete,
   Search,
   Class as ClassIcon,
+  People,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const ClassList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -39,16 +40,15 @@ const ClassList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch classes based on user role
+  const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
+
   useEffect(() => {
     const fetchClasses = async () => {
       try {
         setLoading(true);
-        // If teacher, fetch their assigned classes
         if (user?.role === 'Teacher') {
           const response = await teacherAPI.myAssignments.getAll(1, 100);
           if (response.data?.success && response.data?.data?.items) {
-            // Extract unique classes from assignments
             const assignments = response.data.data.items;
             const uniqueClasses = [];
             const seenClassIds = new Set();
@@ -73,7 +73,6 @@ const ClassList = () => {
             setClasses(uniqueClasses);
           }
         } else {
-          // Admin fetches all classes
           const response = await adminAPI.classes.getAll();
           if (response.data?.success && response.data?.data) {
             setClasses(response.data.data);
@@ -92,325 +91,188 @@ const ClassList = () => {
     }
   }, [user?.role]);
 
-  // Filter classes based on search query
   const filteredClasses = classes.filter((classItem) =>
     classItem.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     classItem.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getRowStyle = (index) => ({
-    background: index % 2 === 0
-      ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
-      : 'transparent',
-    borderBottom: '1px solid',
-    borderColor: 'divider',
-    '&:hover': {
-      background: 'primary.main',
-      opacity: 0.05,
-    },
-  });
-
   const getClassColor = (name) => {
-    const colors = ['#2196F3', '#66BB6A', '#EF5350', '#FFA726', '#AB47BC', '#26C6DA', '#E91E63', '#9C27B0'];
+    const colors = ['#6FAF8F', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#10B981'];
     const index = name?.charCodeAt(0) % colors.length || 0;
     return colors[index];
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Typography variant="h6" color="error">{error}</Typography>
+      <Box>
+        <PageHeader title="Classes" subtitle="Manage your classes" />
+        <Card sx={{ borderRadius: 3, p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Card>
       </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-      {/* Header */}
-      <Box
-        sx={{
-          mb: { xs: 2, sm: 3, md: 4 },
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.success.main} 100%)`,
-          borderRadius: { xs: 2, sm: 3, md: 4 },
-          p: { xs: 2, sm: 3, md: 4 },
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: { xs: -30, sm: -50 },
-            right: { xs: -30, sm: -50 },
-            width: { xs: 150, sm: 200 },
-            height: { xs: 150, sm: 200 },
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)',
-          }}
-        />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, position: 'relative', zIndex: 1, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
-          <Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>
-              {user?.role === 'Teacher' ? '📚 My Classes' : '📚 Classes Management'}
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-              {user?.role === 'Teacher'
-                ? 'View your assigned classes and students'
-                : 'Manage all classes and sections'}
-            </Typography>
-          </Box>
-          {user?.role !== 'Teacher' && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/dashboard/classes/new')}
-              sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-              }}
-            >
-              {window.innerWidth < 600 ? 'Add' : 'Add Class'}
-            </Button>
-          )}
-        </Box>
-      </Box>
+    <Box>
+      <PageHeader
+        title={user?.role === 'Teacher' ? 'My Classes' : 'Classes Management'}
+        subtitle={user?.role === 'Teacher' ? 'View your assigned classes and students' : 'Manage all classes and sections'}
+        actionText={user?.role !== 'Teacher' ? 'Add Class' : undefined}
+        onAction={user?.role !== 'Teacher' ? () => navigate(`${basePath}/classes/new`) : undefined}
+      />
 
-      {/* Search Bar */}
-      <Paper
-        sx={{
-          mb: { xs: 2, sm: 3 },
-          p: { xs: 1.5, sm: 2 },
-          borderRadius: { xs: 2, sm: 3 },
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <TextField
-          fullWidth
-          placeholder="Search classes by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ color: 'primary.main' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: { xs: 1.5, sm: 2 },
-              '&:hover fieldset': { borderColor: 'primary.main' },
-              '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: 2 },
-            },
-          }}
-        />
-      </Paper>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Total Classes</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>{classes.length}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6FAF8F' }}>
+                  <ClassIcon sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-      {/* Classes Table */}
-      <Box sx={{ overflowX: 'auto' }}>
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: { xs: 2, sm: 3, md: 4 },
-            boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.08)',
-          }}
-        >
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="Search classes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2.5,
+                backgroundColor: '#F8FAF9',
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: '#6FAF8F' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.success.main} 100%)` }}>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Class
-                </TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  {user?.role === 'Teacher' ? 'Subjects' : 'Section'}
-                </TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Level
-                </TableCell>
+              <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Class</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>{user?.role === 'Teacher' ? 'Subjects' : 'Section'}</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Level</TableCell>
                 {user?.role !== 'Teacher' && (
-                  <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                    Status
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
                 )}
-                <TableCell align="right" sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Actions
-                </TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredClasses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={user?.role === 'Teacher' ? 4 : 5} align="center" sx={{ py: { xs: 6, sm: 8 } }}>
-                    <ClassIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.disabled', mb: 2 }} />
-                    <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                      No classes found
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      {user?.role === 'Teacher'
-                        ? 'You have not been assigned to any classes yet. Please contact the administrator.'
-                        : searchTerm
-                          ? 'Try a different search term'
-                          : 'Add your first class to get started'}
-                    </Typography>
+                  <TableCell colSpan={user?.role === 'Teacher' ? 4 : 5} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <ClassIcon sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+                        No classes found
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClasses.map((classItem, index) => (
+                filteredClasses.map((classItem) => (
                   <TableRow
                     key={classItem.id}
-                    hover
-                    sx={getRowStyle(index)}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                      transition: 'background-color 0.2s ease',
+                    }}
                   >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
-                        <Avatar
-                          sx={{
-                            bgcolor: getClassColor(classItem.name),
-                            fontWeight: 600,
-                            width: { xs: 32, sm: 40 },
-                            height: { xs: 32, sm: 40 },
-                          }}
-                        >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: getClassColor(classItem.name), fontWeight: 600 }}>
                           {classItem.name?.charAt(0).toUpperCase() || 'C'}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
                             {classItem.displayName || classItem.name}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                          <Typography variant="caption" sx={{ color: '#64748B' }}>
                             {classItem.name}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      {user?.role === 'Teacher' ? (
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                          {classItem.subjects || 'N/A'}
-                        </Typography>
-                      ) : (
-                        <Chip
-                          label={classItem.section || 'N/A'}
-                          size="small"
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            fontWeight: 600,
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            opacity: 0.15,
-                          }}
-                        />
-                      )}
+                    <TableCell sx={{ color: '#64748B' }}>
+                      {user?.role === 'Teacher' ? classItem.subjects || 'N/A' : classItem.section || '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
                       <Chip
                         label={classItem.schoolLevel || 'N/A'}
                         size="small"
                         sx={{
-                          bgcolor: 'success.main',
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                          opacity: 0.15,
+                          bgcolor: '#F1F5F9',
+                          color: '#475569',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
                         }}
                       />
                     </TableCell>
                     {user?.role !== 'Teacher' && (
                       <TableCell>
-                        <Chip
-                          label={classItem.isActive ? 'Active' : 'Inactive'}
-                          size="small"
-                          sx={{
-                            bgcolor: classItem.isActive ? 'success.main' : 'error.main',
-                            color: 'white',
-                            fontWeight: 600,
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            opacity: 0.8,
-                          }}
-                        />
+                        <StatusBadge status="Active" />
                       </TableCell>
                     )}
                     <TableCell align="right">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => {
-                          const route = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
-                          navigate(`${route}/exams?classId=${classItem.id}`);
-                        }}
-                        sx={{
-                          color: '#AB47BC',
-                          borderColor: '#AB47BC',
-                          mr: 1,
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          '&:hover': { bgcolor: '#AB47BC', color: 'white', borderColor: '#AB47BC' },
-                        }}
-                      >
-                        {window.innerWidth < 600 ? 'Exams' : 'View Exams'}
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => navigate(`/dashboard/students?classId=${classItem.id}`)}
-                        sx={{
-                          color: 'primary.main',
-                          borderColor: 'primary.main',
-                          mr: 1,
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          '&:hover': { bgcolor: 'primary.main', color: 'white' },
-                        }}
-                      >
-                        {window.innerWidth < 600 ? 'Students' : 'View Students'}
-                      </Button>
-                      {user?.role !== 'Teacher' && (
-                        <>
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        {user?.role !== 'Teacher' && (
+                          <>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`${basePath}/classes/${classItem.id}/edit`)}
+                              sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`${basePath}/classes/${classItem.id}/students`)}
+                              sx={{ color: '#8B5CF6', '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' } }}
+                            >
+                              <People fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </>
+                        )}
+                        {user?.role === 'Teacher' && (
                           <IconButton
                             size="small"
-                            onClick={() => navigate(`/dashboard/classes/${classItem.id}/edit`)}
-                            sx={{
-                              bgcolor: 'primary.main',
-                              color: 'white',
-                              mr: 1,
-                              opacity: 0.15,
-                              '&:hover': { bgcolor: 'primary.main', opacity: 1 },
-                            }}
+                            onClick={() => navigate(`${basePath}/classes/${classItem.id}/students`)}
+                            sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
                           >
-                            <Edit fontSize="small" />
+                            <People fontSize="small" />
                           </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this class?')) {
-                                adminAPI.classes.delete(classItem.id).then(() => {
-                                  setClasses(classes.filter(c => c.id !== classItem.id));
-                                });
-                              }
-                            }}
-                            sx={{
-                              bgcolor: 'error.main',
-                              color: 'white',
-                              opacity: 0.15,
-                              '&:hover': { bgcolor: 'error.main', opacity: 1 },
-                            }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </>
-                      )}
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))
@@ -418,8 +280,8 @@ const ClassList = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Box>
-    </Container>
+      </Card>
+    </Box>
   );
 };
 

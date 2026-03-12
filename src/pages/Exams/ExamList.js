@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Container,
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -19,7 +17,7 @@ import {
   Avatar,
   Grid,
   Card,
-  useTheme,
+  CardContent,
   CircularProgress,
   Alert,
   FormControl,
@@ -35,13 +33,17 @@ import {
   PlayArrow,
   Stop,
   AssignmentTurnedIn,
+  Schedule,
+  CheckCircle,
+  Pending,
+  Edit,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI, studentAPI } from '../../services/api';
 import { enumToExamType } from '../../utils/dataMapping';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const ExamList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, hasRole } = useAuth();
@@ -68,19 +70,43 @@ const ExamList = () => {
   }, [location]);
 
   useEffect(() => {
-    if (user?.role === 'Admin') {
-      const fetchClasses = async () => {
-        try {
+    const fetchClasses = async () => {
+      try {
+        if (user?.role === 'Admin') {
           const response = await adminAPI.classes.getAll();
           if (response.data?.success && response.data?.data) {
             setClasses(response.data.data);
           }
-        } catch (err) {
-          console.error('Error fetching classes:', err);
+        } else if (user?.role === 'Teacher') {
+          // Fetch teacher's assigned classes
+          const response = await teacherAPI.myAssignments.getAll(1, 100);
+          if (response.data?.success && response.data?.data?.items) {
+            const assignments = response.data.data.items;
+            const uniqueClasses = [];
+            const seenClassIds = new Set();
+            assignments.forEach(assignment => {
+              if (assignment.class && !seenClassIds.has(assignment.classId)) {
+                seenClassIds.add(assignment.classId);
+                uniqueClasses.push({
+                  id: assignment.classId,
+                  name: assignment.class.name || 'Class',
+                  displayName: assignment.class.displayName,
+                });
+              }
+            });
+            setClasses(uniqueClasses);
+            // Auto-select first class if only one
+            if (uniqueClasses.length === 1) {
+              setSelectedClassId(uniqueClasses[0].id);
+            }
+          }
         }
-      };
-      fetchClasses();
-    }
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+      }
+    };
+
+    fetchClasses();
   }, [user]);
 
   useEffect(() => {
@@ -95,16 +121,56 @@ const ExamList = () => {
       setError('');
 
       if (user?.role === 'Teacher') {
-        const response = await teacherAPI.exams.getMyExams(1, 100);
-        if (response.data?.success) {
-          if (response.data.data?.items) {
-            setExams(response.data.data.items);
-          } else if (Array.isArray(response.data.data)) {
-            setExams(response.data.data);
+        try {
+          // First get teacher's assigned classes
+          const assignmentsRes = await teacherAPI.myAssignments.getAll(1, 100);
+          if (assignmentsRes.data?.success && assignmentsRes.data?.data?.items) {
+            const assignments = assignmentsRes.data.data.items;
+            
+            // Get unique class IDs
+            const classIds = [...new Set(assignments.map(a => a.classId))];
+            
+            // Fetch ONLY exams created by this teacher (filter by teacherId)
+            const allExams = [];
+            for (const classId of classIds) {
+              try {
+                // Filter by teacherId so teacher only sees their own exams
+                const examRes = await adminAPI.exams.getByClass(classId, 1, 100, user?.id);
+                if (examRes.data?.success) {
+                  const examData = examRes.data.data?.items || examRes.data.data || [];
+                  // Add class info and ownership to each exam
+                  const classAssignment = assignments.find(a => a.classId === classId);
+                  
+                  const examsWithClass = examData.map(exam => {
+                    const isOwner = exam.createdBy?.toLowerCase() === user?.id?.toLowerCase();
+                    return {
+                      ...exam,
+                      isOwner: isOwner,
+                      class: { 
+                        id: classId, 
+                        name: classAssignment?.class?.name || '', 
+                        displayName: classAssignment?.class?.displayName || '' 
+                      }
+                    };
+                  });
+                  allExams.push(...examsWithClass);
+                }
+              } catch (e) {
+                console.warn(`Failed to fetch exams for class ${classId}:`, e);
+              }
+            }
+            
+            // Filter by selected class if one is selected
+            const filteredExams = selectedClassId 
+              ? allExams.filter(e => e.class?.id === selectedClassId)
+              : allExams;
+              
+            setExams(filteredExams);
           } else {
             setExams([]);
           }
-        } else {
+        } catch (err) {
+          console.error('Error fetching teacher exams:', err);
           setExams([]);
         }
       } else if (user?.role === 'Admin') {
@@ -114,10 +180,16 @@ const ExamList = () => {
         } else {
           const response = await adminAPI.exams.getByClass(selectedClassId, 1, 100);
           if (response.data?.success) {
+            const examData = response.data.data?.items || response.data.data || [];
+            // Admin can do everything, mark all as owner
+            const examsWithOwner = examData.map(exam => ({
+              ...exam,
+              isOwner: true
+            }));
             if (response.data.data?.items) {
-              setExams(response.data.data.items);
+              setExams(examsWithOwner);
             } else if (Array.isArray(response.data.data)) {
-              setExams(response.data.data);
+              setExams(examsWithOwner);
             } else {
               setExams([]);
             }
@@ -193,183 +265,371 @@ const ExamList = () => {
     }
   };
 
-  const filteredExams = exams.filter((exam) =>
-    exam.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredExams = exams.filter((exam) => {
+    const matches = exam.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     exam.class?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.classSubject?.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    exam.classSubject?.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matches;
+  });
 
   const getExamTypeColor = (type) => {
     switch (type) {
-      case 'Theory': return '#2196F3';
-      case 'Objective': return '#66BB6A';
-      case 'Practical': return '#FFA726';
-      case 'Final': return '#EF5350';
-      default: return '#AB47BC';
+      case 'Theory': return { bg: '#DBEAFE', color: '#1E40AF' };
+      case 'Objective': return { bg: '#DCFCE7', color: '#166534' };
+      case 'Practical': return { bg: '#FEF3C7', color: '#92400E' };
+      case 'Final': return { bg: '#FEE2E2', color: '#991B1B' };
+      default: return { bg: '#F3E8FF', color: '#7C3AED' };
     }
   };
 
   const getExamStatus = (exam) => {
-    if (exam.isActive) return { label: 'In Progress', color: '#2E7D32', bgcolor: '#E8F5E9' };
-    if (exam.actualEndTime) return { label: 'Ended', color: '#F57C00', bgcolor: '#FFF3E0' };
-    return { label: 'Scheduled', color: '#1976D2', bgcolor: '#E3F2FD' };
+    if (exam.isActive) return { label: 'In Progress', color: '#166534', bg: '#DCFCE7' };
+    if (exam.actualEndTime) return { label: 'Completed', color: '#92400E', bg: '#FEF3C7' };
+    return { label: 'Scheduled', color: '#1E40AF', bg: '#DBEAFE' };
   };
 
+  const activeExams = exams.filter((e) => e.isActive).length;
+  const scheduledExams = exams.filter((e) => !e.isActive && !e.actualEndTime).length;
+  const completedExams = exams.filter((e) => e.actualEndTime).length;
+
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-      <Box sx={{ mb: { xs: 3, md: 4 }, background: 'linear-gradient(135deg, #EF5350 0%, #FFA726 100%)', borderRadius: { xs: 2, sm: 3, md: 4 }, p: { xs: 2, sm: 3, md: 4 }, color: 'white', position: 'relative', overflow: 'hidden' }}>
-        <Box sx={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
-          <Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>📝 Exams Management</Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              {user?.role === 'Teacher' ? 'Manage your class exams' : user?.role === 'Student' ? 'Active exams for your class' : 'Create and manage exams for students'}
-            </Typography>
-          </Box>
-          {hasRole('Admin', 'Teacher') && (
-            <Button variant="contained" startIcon={<Add />} onClick={() => navigate(`${basePath}/exams/new`)} sx={{ bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}>
-              Create Exam
-            </Button>
-          )}
-        </Box>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Exams Management"
+        subtitle={user?.role === 'Teacher' ? 'Manage your class exams' : user?.role === 'Student' ? 'Active exams for your class' : 'Create and manage exams for students'}
+        actionText={hasRole(['Admin', 'Teacher']) ? 'Create Exam' : undefined}
+        onAction={hasRole(['Admin', 'Teacher']) ? () => navigate(`${basePath}/exams/new`) : undefined}
+      />
 
       {error && (
-        <Alert severity="error" onClose={() => setError('')} sx={{ mb: 3 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ p: 3, borderRadius: 4, background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white' }}>
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>Total Exams</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>{exams.length}</Typography>
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Total Exams</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>{exams.length}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6FAF8F' }}>
+                  <Quiz sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ p: 3, borderRadius: 4, background: 'linear-gradient(135deg, #66BB6A 0%, #388E3C 100%)', color: 'white' }}>
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>Active Exams</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>{exams.filter((e) => e.isActive).length}</Typography>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Active</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>{activeExams}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #10B98115 0%, #10B98108 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
+                  <PlayArrow sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ p: 3, borderRadius: 4, background: 'linear-gradient(135deg, #FFA726 0%, #F57C00 100%)', color: 'white' }}>
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>Scheduled</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>{exams.filter((e) => !e.isActive && !e.actualEndTime).length}</Typography>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Scheduled</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>{scheduledExams}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #F59E0B15 0%, #F59E0B08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F59E0B' }}>
+                  <Schedule sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ p: 3, borderRadius: 4, background: 'linear-gradient(135deg, #AB47BC 0%, #7B1FA2 100%)', color: 'white' }}>
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>Completed</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>{exams.filter((e) => e.actualEndTime).length}</Typography>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Completed</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#8B5CF6' }}>{completedExams}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #8B5CF615 0%, #8B5CF608 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6' }}>
+                  <CheckCircle sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      <Paper sx={{ mb: 3, p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
-        {user?.role !== 'Student' && (
-          <TextField
-            fullWidth
-            placeholder="Search exams..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: '#FFA726' }} /></InputAdornment> }}
-            sx={{ flexGrow: 1, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-          />
-        )}
-        {user?.role === 'Admin' && (
-          <FormControl sx={{ minWidth: 200, width: { xs: '100%', md: 'auto' } }}>
-            <InputLabel>Select Class</InputLabel>
-            <Select value={selectedClassId} label="Select Class" onChange={(e) => setSelectedClassId(e.target.value)} sx={{ borderRadius: 2 }}>
-              <MenuItem value=""><em>None</em></MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>{cls.displayName || cls.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </Paper>
+      {/* Filters */}
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {user?.role !== 'Student' && (
+              <TextField
+                placeholder="Search exams..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  flex: 1,
+                  minWidth: 250,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: '#6FAF8F' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
+            {user?.role === 'Admin' && (
+              <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Select Class</InputLabel>
+                <Select
+                  value={selectedClassId}
+                  label="Select Class"
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  sx={{ borderRadius: 2.5, backgroundColor: '#F8FAF9' }}
+                >
+                  <MenuItem value=""><em>Select a class</em></MenuItem>
+                  {classes.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.displayName || cls.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            {user?.role === 'Teacher' && classes.length > 0 && (
+              <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Select Class</InputLabel>
+                <Select
+                  value={selectedClassId}
+                  label="Select Class"
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  sx={{ borderRadius: 2.5, backgroundColor: '#F8FAF9' }}
+                >
+                  <MenuItem value=""><em>All My Classes</em></MenuItem>
+                  {classes.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.displayName || cls.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ background: 'linear-gradient(90deg, #EF5350 0%, #FFA726 100%)' }}>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Exam</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Subject</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Class</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Type</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Date</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Duration</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
-              <TableCell align="right" sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={8} align="center" sx={{ py: 8 }}><CircularProgress /></TableCell></TableRow>
-            ) : filteredExams.length === 0 ? (
-              <TableRow><TableCell colSpan={8} align="center" sx={{ py: 8 }}><Typography>No exams found</Typography></TableCell></TableRow>
-            ) : (
-              filteredExams.map((exam) => {
-                const status = getExamStatus(exam);
-                return (
-                  <TableRow key={exam.id} hover>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: getExamTypeColor(enumToExamType(exam.examType)) }}><Quiz /></Avatar>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{exam.title}</Typography>
-                          <Typography variant="caption">{exam.classSubject?.subject?.name || 'Unknown Subject'}</Typography>
+      {/* Exam Table */}
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Exam</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Subject</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Class</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Duration</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredExams.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Quiz sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+                        No exams found
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredExams.map((exam) => {
+                  const status = getExamStatus(exam);
+                  const examType = enumToExamType(exam.examType);
+                  const typeColors = getExamTypeColor(examType);
+                  
+                  return (
+                    <TableRow
+                      key={exam.id}
+                      sx={{
+                        borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                        '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                        transition: 'background-color 0.2s ease',
+                      }}
+                    >
+                      <TableCell sx={{ py: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar sx={{ bgcolor: typeColors.bg, color: typeColors.color }}>
+                            <Quiz sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
+                              {exam.title}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#64748B' }}>
+                              {exam.classSubject?.subject?.name || 'Unknown Subject'}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{exam.classSubject?.subject?.name || '-'}</TableCell>
-                    <TableCell>{exam.class?.displayName || exam.class?.name || '-'}</TableCell>
-                    <TableCell>
-                      <Chip label={enumToExamType(exam.examType)} size="small" sx={{ bgcolor: getExamTypeColor(enumToExamType(exam.examType)) + '20', fontWeight: 600 }} />
-                    </TableCell>
-                    <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{exam.durationMinutes} min</TableCell>
-                    <TableCell><Chip label={status.label} size="small" sx={{ bgcolor: status.bgcolor, color: status.color, fontWeight: 600 }} /></TableCell>
-                    <TableCell align="right">
-                      {user?.role === 'Student' && exam.isActive && (
-                        <Button variant="contained" startIcon={<PlayArrow />} onClick={() => navigate(`/student/exam/${exam.id}`)} sx={{ bgcolor: '#4CAF50', '&:hover': { bgcolor: '#45a049' } }}>
-                          Take Exam
-                        </Button>
-                      )}
-                      {hasRole('Admin', 'Teacher') && (
-                        <>
-                          {hasRole('Admin') && !exam.isActive && !exam.actualEndTime && (
-                            <IconButton size="small" onClick={() => handleStartExam(exam.id)} sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', mr: 1 }} title="Start Exam">
-                              <PlayArrow fontSize="small" />
-                            </IconButton>
-                          )}
-                          {hasRole('Admin') && exam.isActive && (
-                            <IconButton size="small" onClick={() => handleEndExam(exam.id)} sx={{ bgcolor: '#FFEBEE', color: '#C62828', mr: 1 }} title="End Exam">
-                              <Stop fontSize="small" />
-                            </IconButton>
-                          )}
-                          <IconButton size="small" onClick={() => navigate(`${basePath}/exams/${exam.id}/questions`)} sx={{ bgcolor: '#E3F2FD', color: '#2196F3', mr: 1 }} title="Manage Questions">
-                            <Quiz fontSize="small" />
-                          </IconButton>
-                          {(enumToExamType(exam.examType) === 'Objective+Theory' || enumToExamType(exam.examType) === 'Theory') && (
-                            <IconButton size="small" onClick={() => navigate(`${basePath}/exams/${exam.id}/grade`)} sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', mr: 1 }} title="Grade Theory">
+                      </TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {exam.classSubject?.subject?.name || '-'}
+                      </TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {exam.class?.displayName || exam.class?.name || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={examType}
+                          size="small"
+                          sx={{
+                            bgcolor: typeColors.bg,
+                            color: typeColors.color,
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {exam.examDate ? new Date(exam.examDate).toLocaleDateString() : '-'}
+                      </TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {exam.durationMinutes ? `${exam.durationMinutes} min` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={status.label}
+                          size="small"
+                          sx={{
+                            bgcolor: status.bg,
+                            color: status.color,
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        {user?.role === 'Student' && exam.isActive && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<PlayArrow />}
+                            onClick={() => navigate(`/student/exam/${exam.id}`)}
+                            sx={{
+                              bgcolor: '#10B981',
+                              borderRadius: 2,
+                              '&:hover': { bgcolor: '#059669' },
+                            }}
+                          >
+                            Take Exam
+                          </Button>
+                        )}
+                        {hasRole(['Admin', 'Teacher']) && (
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            {/* Grade - show for Admin OR Teacher (any exam they can see) */}
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`${basePath}/exams/${exam.id}/grade`)}
+                              sx={{ color: '#10B981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
+                              title="Grade"
+                            >
                               <AssignmentTurnedIn fontSize="small" />
                             </IconButton>
-                          )}
-                          <IconButton size="small" onClick={() => handleDelete(exam.id)} disabled={!hasRole('Admin') || exam.isActive} sx={{ bgcolor: '#FFEBEE', color: '#EF5350' }} title="Delete Exam">
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Container>
+                            {/* Edit - show for Admin OR Teacher who owns the exam AND exam not started */}
+                            {(hasRole('Admin') || (exam.isOwner && !exam.isActive && !exam.actualEndTime)) && (
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`${basePath}/exams/${exam.id}/edit`)}
+                                sx={{ color: '#3B82F6', '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.1)' } }}
+                                title="Edit"
+                              >
+                                <Edit fontSize="small" />
+                              </IconButton>
+                            )}
+                            {/* Start/End - ONLY Admin can control exam start/end */}
+                            {hasRole('Admin') && !exam.isActive && !exam.actualEndTime && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleStartExam(exam.id)}
+                                sx={{ color: '#10B981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
+                                title="Start Exam"
+                              >
+                                <PlayArrow fontSize="small" />
+                              </IconButton>
+                            )}
+                            {hasRole('Admin') && exam.isActive && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEndExam(exam.id)}
+                                sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                                title="End Exam"
+                              >
+                                <Stop fontSize="small" />
+                              </IconButton>
+                            )}
+                            {/* Questions - show for Admin OR Teacher who owns the exam AND exam not started */}
+                            {(hasRole('Admin') || (exam.isOwner && !exam.isActive && !exam.actualEndTime)) && (
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`${basePath}/exams/${exam.id}/questions`)}
+                                sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
+                                title="Questions"
+                              >
+                                <Quiz fontSize="small" />
+                              </IconButton>
+                            )}
+                            {/* Delete - Admin can always delete (if not active), Teacher only if owner and not active */}
+                            {(hasRole('Admin') || (exam.isOwner && !exam.isActive)) && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(exam.id)}
+                                disabled={exam.isActive}
+                                sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                                title={exam.isOwner && !hasRole('Admin') ? "Cannot delete - exam has started" : "Delete"}
+                              >
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            )}
+                          </Box>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Box>
   );
 };
 

@@ -12,12 +12,16 @@ import {
   Divider,
   Card,
   CardContent,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Email,
   Lock,
   Visibility,
   VisibilityOff,
+  School,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,6 +35,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -58,10 +63,9 @@ const Login = () => {
     if (result.success) {
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const userRole = savedUser.roles && savedUser.roles.length > 0
-        ? savedUser.roles[0].name
-        : 'User';
+        ? (savedUser.roles[0].name || savedUser.roles[0].Name)
+        : (savedUser.role || 'User');
 
-      // Use setTimeout to ensure navigation happens after state updates
       setTimeout(() => {
         if (userRole === 'Student') {
           navigate('/student/exams', { replace: true });
@@ -84,85 +88,224 @@ const Login = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #EAF5F1 0%, #D4EBE3 100%)',
+        background: 'linear-gradient(135deg, #F0F7F4 0%, #E8F2ED 50%, #D4EBE3 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        p: { xs: 2, sm: 3 },
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Background Decorations */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.08)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -50,
+          left: -50,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.06)',
+        }}
+      />
+
       <Card
         sx={{
-          maxWidth: 420,
+          maxWidth: 440,
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          borderRadius: 4,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
           backgroundColor: '#FFFFFF',
+          position: 'relative',
+          overflow: 'visible',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          {/* Logo */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1F2937', mb: 1 }}>
+            <Box
+              sx={{
+                width: 60,
+                height: 60,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 24px rgba(111, 175, 143, 0.35)',
+              }}
+            >
+              <School sx={{ fontSize: 32, color: 'white' }} />
+            </Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                color: '#1F2937',
+                mb: 0.5,
+                fontSize: { xs: '1.5rem', sm: '1.75rem' },
+              }}
+            >
               Welcome Back
             </Typography>
-            <Typography variant="body2" sx={{ color: '#4B5563' }}>
-              Sign in to your account
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
+              Sign in to continue to EduFlow Pro
             </Typography>
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                '& .MuiAlert-icon': { color: '#EF4444' },
+              }}
+            >
               {error}
             </Alert>
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
-              Email
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="Enter your email"
-              name="identifier"
-              value={formData.identifier}
-              onChange={handleChange}
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email sx={{ color: '#5FAF8F' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
-            />
+            <Box sx={{ mb: 2.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}
+              >
+                Email Address
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="Enter your email"
+                name="identifier"
+                value={formData.identifier}
+                onChange={handleChange}
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': {
+                      backgroundColor: '#F1F5F4',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(111, 175, 143, 0.2)',
+                  },
+                }}
+              />
+            </Box>
 
-            <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
-              Password
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="Enter your password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock sx={{ color: '#5FAF8F' }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#4B5563' }}>
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 4, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+            <Box sx={{ mb: 2.5 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: '#374151', fontWeight: 600, fontSize: '0.85rem' }}
+                >
+                  Password
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#6FAF8F',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    '&:hover': { textDecoration: 'underline' },
+                  }}
+                >
+                  Forgot password?
+                </Typography>
+              </Box>
+              <TextField
+                fullWidth
+                placeholder="Enter your password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: '#64748B' }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': {
+                      backgroundColor: '#F1F5F4',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(111, 175, 143, 0.2)',
+                  },
+                }}
+              />
+            </Box>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  sx={{
+                    color: '#6FAF8F',
+                    '&.Mui-checked': { color: '#6FAF8F' },
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.85rem' }}>
+                  Remember me
+                </Typography>
+              }
+              sx={{ mb: 1 }}
             />
 
             <Button
@@ -174,34 +317,42 @@ const Login = () => {
               sx={{
                 py: 1.8,
                 mb: 3,
-                background: 'linear-gradient(135deg, #5FAF8F 0%, #2E8B57 100%)',
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                 borderRadius: '50px',
-                fontWeight: 600,
-                boxShadow: '0 4px 14px rgba(95, 175, 143, 0.4)',
-                '&:hover': { 
-                  background: 'linear-gradient(135deg, #4E9A7A 0%, #1F6B42 100%)',
-                  boxShadow: '0 6px 20px rgba(95, 175, 143, 0.5)',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                  boxShadow: '0 8px 24px rgba(111, 175, 143, 0.5)',
+                  transform: 'translateY(-2px)',
+                },
+                '&:disabled': {
+                  background: '#CBD5E1',
+                  boxShadow: 'none',
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Sign In'}
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#fff' }} />
+              ) : (
+                <>
+                  Sign In <ArrowForward sx={{ ml: 1, fontSize: 18 }} />
+                </>
+              )}
             </Button>
           </Box>
 
-          <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <Typography variant="body2" sx={{ color: '#4B5563' }}>
-              Don't have an account?{' '}
-              <Link to="/register" style={{ color: '#5FAF8F', textDecoration: 'none', fontWeight: 600 }}>
-                Register
-              </Link>
+          <Divider sx={{ my: 3, borderColor: 'rgba(111, 175, 143, 0.1)' }}>
+            <Typography variant="caption" sx={{ color: '#94A3B8', px: 1 }}>
+              OR
             </Typography>
-          </Box>
-
-          <Divider sx={{ my: 3, borderColor: '#EAF5F1' }} />
+          </Divider>
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#4B5563', mb: 2 }}>
-              Are you a student?
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2, fontSize: '0.9rem' }}>
+              Are you a student? Login as student
             </Typography>
             <Button
               variant="outlined"
@@ -210,19 +361,39 @@ const Login = () => {
               to="/student-login"
               sx={{
                 py: 1.5,
-                borderColor: '#5FAF8F',
-                color: '#2E8B57',
+                borderColor: '#6FAF8F',
+                color: '#4E8C70',
                 textDecoration: 'none',
                 fontWeight: 600,
+                fontSize: '0.9rem',
                 borderRadius: '50px',
+                backgroundColor: 'rgba(111, 175, 143, 0.05)',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  borderColor: '#2E8B57',
-                  backgroundColor: 'rgba(95, 175, 143, 0.1)',
+                  borderColor: '#4E8C70',
+                  backgroundColor: 'rgba(111, 175, 143, 0.15)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
               Student Login
             </Button>
+          </Box>
+
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.9rem' }}>
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                style={{
+                  color: '#6FAF8F',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                }}
+              >
+                Register now
+              </Link>
+            </Typography>
           </Box>
         </CardContent>
       </Card>

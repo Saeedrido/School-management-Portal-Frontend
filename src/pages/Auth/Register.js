@@ -22,6 +22,7 @@ import {
   VisibilityOff,
   Phone,
   School,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -102,66 +103,99 @@ const Register = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #EAF5F1 0%, #D4EBE3 100%)',
+        background: 'linear-gradient(135deg, #F0F7F4 0%, #E8F2ED 50%, #D4EBE3 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        p: { xs: 2, sm: 3 },
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Background Decorations */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.08)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -50,
+          left: -50,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.06)',
+        }}
+      />
+
       <Card
         sx={{
           maxWidth: 500,
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          borderRadius: 4,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
           backgroundColor: '#FFFFFF',
+          position: 'relative',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box
+              sx={{
+                width: 60,
+                height: 60,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: '0 8px 24px rgba(111, 175, 143, 0.35)',
+              }}
+            >
+              <School sx={{ fontSize: 32, color: 'white' }} />
+            </Box>
             <Typography
               variant="h4"
               sx={{
-                fontWeight: 700,
+                fontWeight: 800,
                 color: '#1F2937',
-                mb: 1,
+                mb: 0.5,
+                fontSize: { xs: '1.5rem', sm: '1.75rem' },
               }}
             >
-              Teacher Registration
+              Create Account
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#4B5563',
-                mb: 2,
-              }}
-            >
-              Join the school management system
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
+              Join EduFlow Pro as a teacher
             </Typography>
-
-            <Chip
-              icon={<School sx={{ fontSize: 18 }} />}
-              label="Teacher Account"
-              sx={{
-                backgroundColor: 'rgba(95, 175, 143, 0.15)',
-                color: '#2E8B57',
-                border: '1px solid rgba(95, 175, 143, 0.3)',
-                fontWeight: 600,
-              }}
-            />
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+              }}
+            >
               {error}
             </Alert>
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
                   First Name *
                 </Typography>
                 <TextField
@@ -174,15 +208,25 @@ const Register = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Person sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                        <Person sx={{ color: '#6FAF8F', fontSize: 20 }} />
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      backgroundColor: '#F8FAF9',
+                      '&:hover': { backgroundColor: '#F1F5F4' },
+                      '&.Mui-focused': {
+                        backgroundColor: '#FFFFFF',
+                        boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                      },
+                    },
+                  }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
                   Last Name *
                 </Typography>
                 <TextField
@@ -195,18 +239,28 @@ const Register = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Person sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                        <Person sx={{ color: '#6FAF8F', fontSize: 20 }} />
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      backgroundColor: '#F8FAF9',
+                      '&:hover': { backgroundColor: '#F1F5F4' },
+                      '&.Mui-focused': {
+                        backgroundColor: '#FFFFFF',
+                        boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                      },
+                    },
+                  }}
                 />
               </Box>
             </Box>
 
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
-                Email *
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
+                Email Address *
               </Typography>
               <TextField
                 fullWidth
@@ -218,16 +272,26 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Email sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                      <Email sx={{ color: '#6FAF8F', fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': { backgroundColor: '#F1F5F4' },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
               />
             </Box>
 
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
                 Phone Number *
               </Typography>
               <TextField
@@ -240,16 +304,26 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Phone sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                      <Phone sx={{ color: '#6FAF8F', fontSize: 20 }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': { backgroundColor: '#F1F5F4' },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
               />
             </Box>
 
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
                 Password *
               </Typography>
               <TextField
@@ -263,23 +337,33 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Lock sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                      <Lock sx={{ color: '#6FAF8F', fontSize: 20 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#4B5563' }}>
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#64748B' }}>
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': { backgroundColor: '#F1F5F4' },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
               />
             </Box>
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}>
                 Confirm Password *
               </Typography>
               <TextField
@@ -293,18 +377,28 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Lock sx={{ color: '#5FAF8F', fontSize: 20 }} />
+                      <Lock sx={{ color: '#6FAF8F', fontSize: 20 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ color: '#4B5563' }}>
+                      <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ color: '#64748B' }}>
                         {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': { backgroundColor: '#F1F5F4' },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
               />
             </Box>
 
@@ -317,26 +411,46 @@ const Register = () => {
               sx={{
                 py: 1.8,
                 mb: 3,
-                background: 'linear-gradient(135deg, #5FAF8F 0%, #2E8B57 100%)',
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                 borderRadius: '50px',
-                fontWeight: 600,
-                boxShadow: '0 4px 14px rgba(95, 175, 143, 0.4)',
-                '&:hover': { 
-                  background: 'linear-gradient(135deg, #4E9A7A 0%, #1F6B42 100%)',
-                  boxShadow: '0 6px 20px rgba(95, 175, 143, 0.5)',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                  boxShadow: '0 8px 24px rgba(111, 175, 143, 0.5)',
+                  transform: 'translateY(-2px)',
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Register as Teacher'}
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#fff' }} />
+              ) : (
+                <>
+                  Create Account <ArrowForward sx={{ ml: 1, fontSize: 18 }} />
+                </>
+              )}
             </Button>
           </Box>
 
-          <Divider sx={{ my: 3, borderColor: '#EAF5F1' }} />
+          <Divider sx={{ my: 3, borderColor: 'rgba(111, 175, 143, 0.1)' }}>
+            <Typography variant="caption" sx={{ color: '#94A3B8', px: 1 }}>
+              OR
+            </Typography>
+          </Divider>
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#4B5563' }}>
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.9rem' }}>
               Already have an account?{' '}
-              <Link to="/login" style={{ color: '#5FAF8F', textDecoration: 'none', fontWeight: 600 }}>
+              <Link
+                to="/login"
+                style={{
+                  color: '#6FAF8F',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                }}
+              >
                 Sign in
               </Link>
             </Typography>

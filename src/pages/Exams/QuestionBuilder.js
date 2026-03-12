@@ -64,6 +64,8 @@ const QuestionBuilder = () => {
   const [examInfo, setExamInfo] = useState({
     title: isEditing ? 'Mid-Term Mathematics Examination' : '',
     type: 'Objective',
+    status: '',
+    hasStarted: false,
   });
 
   // Load existing questions and exam info
@@ -76,7 +78,14 @@ const QuestionBuilder = () => {
           setExamInfo({
             title: exam.title,
             type: enumToExamType(exam.examType),
+            status: exam.status,
+            hasStarted: exam.hasStarted || exam.status === 'Started',
           });
+          
+          // Check if exam has started - if so, show warning
+          if (exam.hasStarted || exam.status === 'Started') {
+            setError('This exam has already started. Questions cannot be edited while students are taking the exam.');
+          }
         }
       } catch (err) {
         console.error('Failed to fetch exam info:', err);
@@ -348,7 +357,21 @@ const QuestionBuilder = () => {
               {examInfo.title || 'Create and manage exam questions'}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {examInfo.status && (
+              <Chip
+                label={examInfo.status}
+                sx={{
+                  background: examInfo.status === 'Started' ? 'rgba(255, 152, 0, 0.2)' : 
+                              examInfo.status === 'Completed' ? 'rgba(76, 175, 80, 0.2)' : 
+                              'rgba(33, 150, 243, 0.2)',
+                  color: examInfo.status === 'Started' ? '#FF9800' : 
+                         examInfo.status === 'Completed' ? '#4CAF50' : 
+                         '#2196F3',
+                  fontWeight: 600,
+                }}
+              />
+            )}
             <Chip
               label={`${questions.length} Questions`}
               sx={{
@@ -804,26 +827,28 @@ const QuestionBuilder = () => {
                       variant="outlined"
                       component="span"
                       startIcon={<Description />}
+                      disabled={examInfo.hasStarted}
                       sx={{
-                        color: '#FF3E8A',
-                        borderColor: '#FF3E8A',
+                        color: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
+                        borderColor: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
                       }}
                     >
-                      Upload DOCX
+                      {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
                     </Button>
                   </label>
                   <Button
                     variant="contained"
                     startIcon={<Save />}
                     onClick={handleSaveExam}
+                    disabled={examInfo.hasStarted}
                     sx={{
-                      background: '#66BB6A',
+                      background: examInfo.hasStarted ? '#9e9e9e' : '#66BB6A',
                       '&:hover': {
-                        background: '#57A75A',
+                        background: examInfo.hasStarted ? '#9e9e9e' : '#57A75A',
                       },
                     }}
                   >
-                    Save Exam
+                    {examInfo.hasStarted ? 'Cannot Save' : 'Save Exam'}
                   </Button>
                 </Box>
               </Box>
@@ -1033,9 +1058,10 @@ const QuestionBuilder = () => {
                         size="small"
                         startIcon={<Edit />}
                         onClick={() => handleEditQuestion(index)}
+                        disabled={examInfo.hasStarted}
                         sx={{
-                          color: '#2196F3',
-                          borderColor: '#2196F3',
+                          color: examInfo.hasStarted ? '#9e9e9e' : '#2196F3',
+                          borderColor: examInfo.hasStarted ? '#9e9e9e' : '#2196F3',
                         }}
                       >
                         Edit
@@ -1044,9 +1070,10 @@ const QuestionBuilder = () => {
                         size="small"
                         startIcon={<Delete />}
                         onClick={() => handleDeleteClick(index)}
+                        disabled={examInfo.hasStarted}
                         sx={{
-                          color: '#ff6b6b',
-                          borderColor: '#ff6b6b',
+                          color: examInfo.hasStarted ? '#9e9e9e' : '#ff6b6b',
+                          borderColor: examInfo.hasStarted ? '#9e9e9e' : '#ff6b6b',
                         }}
                       >
                         Delete
@@ -1087,14 +1114,15 @@ const QuestionBuilder = () => {
                 variant="contained"
                 startIcon={<Add />}
                 onClick={handleAddQuestion}
+                disabled={examInfo.hasStarted}
                 sx={{
-                  background: '#FF3E8A',
+                  background: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
                   '&:hover': {
-                    background: '#FF5DA3',
+                    background: examInfo.hasStarted ? '#9e9e9e' : '#FF5DA3',
                   },
                 }}
               >
-                Add First Question
+                {examInfo.hasStarted ? 'Cannot Add - Exam Started' : 'Add First Question'}
               </Button>
             </CardContent>
           </Card>
@@ -1107,16 +1135,17 @@ const QuestionBuilder = () => {
               variant="outlined"
               startIcon={<Add />}
               onClick={handleAddQuestion}
+              disabled={examInfo.hasStarted}
               size="large"
               sx={{
-                color: '#FF3E8A',
-                borderColor: '#FF3E8A',
+                color: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
+                borderColor: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
                 fontSize: '1rem',
                 py: 1.5,
                 px: 4,
               }}
             >
-              Add Another Question
+              {examInfo.hasStarted ? 'Cannot Add - Exam Started' : 'Add Another Question'}
             </Button>
           </Box>
         )}

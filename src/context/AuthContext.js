@@ -23,16 +23,25 @@ export const AuthProvider = ({ children }) => {
   const normalizeUser = (userData) => {
     if (!userData) return null;
 
-    // Backend sends: { firstName, lastName, roles: [{ name }] } (camelCase)
-    // Frontend expects: { name, role } (lowercase properties)
+    // Backend sends: { firstName, lastName, roles: [{ name }], Id } (camelCase)
+    // Frontend expects: { name, role, id } (lowercase properties)
     const firstName = userData.firstName || userData.FirstName || '';
     const lastName = userData.lastName || userData.LastName || '';
     const roles = userData.roles || userData.Roles || [];
+    const roleName = roles && roles.length > 0 
+      ? (roles[0].name || roles[0].Name || roles[0].name || '') 
+      : (userData.role || userData.Role || '');
+
+    // Handle ID conversion - backend sends Id, frontend expects id
+    const userId = userData.id || userData.Id || userData.ID || '';
+
+    console.log('normalizeUser - roles:', roles, 'roleName:', roleName, 'userId:', userId);
 
     return {
       ...userData,
+      id: userId,  // Ensure lowercase id is available
       name: userData.fullName || userData.FullName || `${firstName} ${lastName}`.trim() || 'User',
-      role: (roles && roles.length > 0) ? (roles[0].name || roles[0].Name) : 'User',
+      role: roleName,
     };
   };
 

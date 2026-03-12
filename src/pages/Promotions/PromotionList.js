@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Container,
   Box,
   Typography,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -18,18 +16,16 @@ import {
   Grid,
   Card,
   CardContent,
-  useTheme,
 } from '@mui/material';
 import {
   School,
   CheckCircle,
-  Cancel,
   TrendingUp,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const PromotionsList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const [searchParams] = useSearchParams();
@@ -40,14 +36,10 @@ const PromotionsList = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (academicYearId) {
-      fetchPromotions();
-    }
+    fetchPromotions();
   }, [academicYearId]);
 
   const fetchPromotions = async () => {
-    // This would call the promotions API
-    // For now, showing mock data
     setLoading(false);
     setPromotions([
       {
@@ -85,158 +77,128 @@ const PromotionsList = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const promotedCount = promotions.filter(p => p.recommendation === 'Promoted').length;
+  const retainCount = promotions.filter(p => p.recommendation === 'Retain').length;
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 2, sm: 3, md: 4 },
-          borderRadius: 3,
-          background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(102, 187, 106, 0.1) 100%)'
-            : 'linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%)',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: { xs: 3, md: 4 },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: { xs: 2, sm: 0 },
-            textAlign: { xs: 'center', sm: 'left' },
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <TrendingUp sx={{ fontSize: { xs: 28, sm: 32 }, color: 'success.main' }} />
-            <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 700, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-              Student Promotions
+    <Box>
+      <PageHeader
+        title="Promotions"
+        subtitle="Manage student promotions and progression"
+      />
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Total Students</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>{promotions.length}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6FAF8F' }}>
+                  <School sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Promoted</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>{promotedCount}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #10B98115 0%, #10B98108 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
+                  <TrendingUp sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>To Retain</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>{retainCount}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #F59E0B15 0%, #F59E0B08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F59E0B' }}>
+                  <CheckCircle sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : promotions.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <School sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+            <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+              No promotions data available
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/dashboard/promotions/criteria')}
-            sx={{
-              bgcolor: '#66BB6A',
-              '&:hover': { bgcolor: '#81C784' },
-              borderRadius: 2,
-            }}
-          >
-            Promotion Criteria
-          </Button>
-        </Box>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Student</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Current Class</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Average Score</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Recommendation</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {promotions.map((promotion) => (
+                  <TableRow
+                    key={promotion.id}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 500, color: '#1E293B' }}>{promotion.studentName}</TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>{promotion.currentClass}</TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>{promotion.averageScore}%</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={promotion.recommendation}
+                        size="small"
+                        sx={{
+                          bgcolor: promotion.recommendation === 'Promoted' ? '#DCFCE7' : '#FEF3C7',
+                          color: promotion.recommendation === 'Promoted' ? '#166534' : '#92400E',
+                          fontWeight: 500,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={promotion.status} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
-
-        <Grid container spacing={3}>
-          {promotions.map((promotion) => (
-            <Grid item xs={12} md={6} lg={4} key={promotion.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  transition: 'transform 0.3s, box-shadow 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
-                  },
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="h6" sx={{ color: '#1976D2', fontWeight: 600, mb: 1 }}>
-                      {promotion.studentName}
-                    </Typography>
-                    <Chip
-                      label={promotion.currentClass}
-                      size="small"
-                      sx={{ bgcolor: '#E3F2FD', color: '#1976D2' }}
-                    />
-                  </Box>
-
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body2" sx={{ color: '#78909C' }}>
-                        Average Score:
-                      </Typography>
-                      <Typography variant="h6" sx={{ color: promotion.averageScore >= 70 ? '#66BB6A' : '#EF5350', fontWeight: 700 }}>
-                        {promotion.averageScore}%
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <School sx={{ fontSize: 16, color: '#78909C' }} />
-                      <Typography variant="body2" sx={{ color: '#78909C' }}>
-                        {promotion.recommendation}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={promotion.status}
-                      size="small"
-                      color={
-                        promotion.status === 'Approved'
-                          ? 'success'
-                          : promotion.status === 'Pending'
-                          ? 'warning'
-                          : 'default'
-                      }
-                      sx={{
-                        bgcolor:
-                          promotion.status === 'Approved'
-                            ? '#66BB6A'
-                            : promotion.status === 'Pending'
-                            ? '#FFC107'
-                            : '#9E9E9E',
-                        color: 'white',
-                      }}
-                    />
-                  </Box>
-
-                  {promotion.status === 'Pending' && (
-                    <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        startIcon={<CheckCircle />}
-                        onClick={() => console.log('Approve', promotion.id)}
-                        sx={{ borderRadius: 1 }}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<Cancel />}
-                        onClick={() => console.log('Reject', promotion.id)}
-                        sx={{ borderRadius: 1 }}
-                      >
-                        Reject
-                      </Button>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Paper>
-    </Container>
+      </Card>
+    </Box>
   );
 };
 

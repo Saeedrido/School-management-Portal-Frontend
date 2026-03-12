@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 import {
-  Container,
   Box,
   Typography,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -15,23 +12,27 @@ import {
   TableRow,
   IconButton,
   Chip,
-  Switch,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Grid,
+  Card,
+  CardContent,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
   Edit,
   Delete,
   DateRange,
+  CalendarToday,
 } from '@mui/icons-material';
 import { termsAPI, academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const TermList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const [terms, setTerms] = useState([]);
@@ -39,6 +40,8 @@ const TermList = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const basePath = '/admin-dashboard';
 
   useEffect(() => {
     fetchAcademicYears();
@@ -98,181 +101,170 @@ const TermList = () => {
   const handleSetActive = async (id) => {
     try {
       await termsAPI.setActive(id);
-      setTerms(
-        terms.map((t) => ({
-          ...t,
-          isActive: t.id === id,
-        }))
-      );
+      fetchTerms(selectedYear);
     } catch (err) {
       setError('Failed to set active term');
       console.error(err);
     }
   };
 
+  const getTermStatus = (term) => {
+    if (term.isActive) return { label: 'Active', bg: '#DCFCE7', color: '#166534' };
+    return { label: 'Inactive', bg: '#F1F5F9', color: '#475569' };
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        Loading...
+      <Box>
+        <PageHeader title="Terms" subtitle="Manage academic terms" />
+        <Card sx={{ borderRadius: 3, p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Card>
       </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 2, sm: 3, md: 4 },
-          borderRadius: { xs: 2, sm: 3 },
-          background: theme.palette.mode === 'dark'
-            ? 'rgba(30, 30, 30, 0.8)'
-            : 'linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%)',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            mb: { xs: 2, sm: 3, md: 4 },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: { xs: 2, sm: 0 },
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <DateRange sx={{ fontSize: { xs: 28, sm: 32 }, color: 'primary.main' }} />
-            <Typography variant="h4" sx={{ color: 'text.primary', fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-              Terms
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
-            {academicYears.length > 0 && (
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 200 } }}>
-                <InputLabel>Academic Year</InputLabel>
-                <Select
-                  value={selectedYear}
-                  label="Academic Year"
-                  onChange={(e) => {
-                    setSelectedYear(e.target.value);
-                    fetchTerms(e.target.value);
-                  }}
-                >
-                  {academicYears.map((year) => (
-                    <MenuItem key={year.id} value={year.id}>
-                      {year.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/admin-dashboard/terms/new')}
-              disabled={!hasRole('Admin')}
-              sx={{
-                bgcolor: 'primary.main',
-                '&:hover': { bgcolor: 'primary.dark' },
-                borderRadius: { xs: 1.5, sm: 2 },
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                px: { xs: 2, sm: 2.5 },
-                width: { xs: '100%', sm: 'auto' },
-              }}
+    <Box>
+      <PageHeader
+        title="Terms"
+        subtitle="Manage academic terms and semesters"
+        actionText={hasRole('Admin') ? 'Add Term' : undefined}
+        onAction={hasRole('Admin') ? () => navigate(`${basePath}/terms/new`) : undefined}
+      />
+
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <FormControl fullWidth sx={{ maxWidth: 300 }}>
+            <InputLabel>Academic Year</InputLabel>
+            <Select
+              value={selectedYear}
+              label="Academic Year"
+              onChange={(e) => setSelectedYear(e.target.value)}
+              sx={{ borderRadius: 2.5 }}
             >
-              {window.innerWidth < 600 ? 'Add' : 'Add Term'}
-            </Button>
-          </Box>
-        </Box>
+              {academicYears.map((year) => (
+                <MenuItem key={year.id} value={year.id}>
+                  {year.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </CardContent>
+      </Card>
 
-        {error && (
-          <Typography color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
-        )}
-
-        <Box sx={{ overflowX: 'auto' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Term</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Start Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>End Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                {hasRole('Admin') && (
+                  <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {terms.length === 0 ? (
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Start Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>End Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Active</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                    Actions
+                  <TableCell colSpan={hasRole('Admin') ? 5 : 4} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <CalendarToday sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+                        No terms found
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {terms.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography variant="body1" sx={{ color: 'text.secondary', py: 2 }}>
-                        No terms found. Select an academic year or add a new term.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  terms.map((term) => (
-                    <TableRow key={term.id} hover>
+              ) : (
+                terms.map((term) => {
+                  const status = getTermStatus(term);
+                  return (
+                    <TableRow
+                      key={term.id}
+                      sx={{
+                        borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                        '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                        transition: 'background-color 0.2s ease',
+                      }}
+                    >
                       <TableCell>
-                        <Typography sx={{ fontWeight: 600, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                          {term.name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                        {new Date(term.startDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                        {new Date(term.endDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {term.isActive && (
-                            <Chip
-                              label="Active"
-                              size="small"
-                              color="success"
-                            />
-                          )}
-                          <Switch
-                            checked={term.isActive}
-                            onChange={() => handleSetActive(term.id)}
-                            disabled={!hasRole('Admin') || term.isActive}
-                          />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: '#6FAF8F15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <DateRange sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                          </Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
+                            {term.name}
+                          </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          color="primary"
-                          onClick={() => navigate(`/admin-dashboard/terms/${term.id}/edit`)}
-                          disabled={!hasRole('Admin')}
-                          size="small"
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          onClick={() => handleDelete(term.id)}
-                          disabled={!hasRole('Admin')}
-                          size="small"
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {term.startDate ? new Date(term.startDate).toLocaleDateString() : '-'}
                       </TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>
+                        {term.endDate ? new Date(term.endDate).toLocaleDateString() : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={status.label}
+                          size="small"
+                          sx={{
+                            bgcolor: status.bg,
+                            color: status.color,
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      </TableCell>
+                      {hasRole('Admin') && (
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            {!term.isActive && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => handleSetActive(term.id)}
+                                sx={{
+                                  borderColor: '#6FAF8F',
+                                  color: '#6FAF8F',
+                                  fontSize: '0.75rem',
+                                  borderRadius: 2,
+                                }}
+                              >
+                                Set Active
+                              </Button>
+                            )}
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`${basePath}/terms/${term.id}/edit`)}
+                              sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(term.id)}
+                              sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      </Paper>
-    </Container>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Box>
   );
 };
 

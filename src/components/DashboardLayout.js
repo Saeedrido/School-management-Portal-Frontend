@@ -13,6 +13,11 @@ import {
   IconButton,
   Divider,
   Drawer,
+  useMediaQuery,
+  useTheme,
+  Tooltip,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -28,30 +33,48 @@ import {
   Note,
   Quiz,
   Logout,
+  ChevronLeft,
+  Settings,
+  Notifications,
+  Person,
+  KeyboardArrowDown,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
-const drawerWidth = 260;
+const drawerWidth = 280;
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleLogout = () => {
+    setAnchorEl(null);
     logout();
     navigate('/');
+  };
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Admin menu items
   const adminMenuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/admin-dashboard' },
     { text: 'Students', icon: <People />, path: '/admin-dashboard/students' },
+    { text: 'Parents', icon: <People />, path: '/admin-dashboard/parents' },
     { text: 'Classes', icon: <Class />, path: '/admin-dashboard/classes' },
     { text: 'Subjects', icon: <Book />, path: '/admin-dashboard/subjects' },
     { text: 'Users', icon: <School />, path: '/admin-dashboard/users' },
@@ -63,102 +86,270 @@ const DashboardLayout = () => {
     { text: 'Report Cards', icon: <Quiz />, path: '/admin-dashboard/report-cards' },
   ];
 
-  // Teacher menu items
   const teacherMenuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/teacher-dashboard' },
     { text: 'My Classes', icon: <Class />, path: '/teacher-dashboard/classes' },
     { text: 'Subjects', icon: <Book />, path: '/teacher-dashboard/subjects' },
     { text: 'Exams', icon: <Assignment />, path: '/teacher-dashboard/exams' },
     { text: 'Students', icon: <People />, path: '/teacher-dashboard/students' },
+    { text: 'Results', icon: <TrendingUp />, path: '/teacher-dashboard/results' },
     { text: 'My ID Card', icon: <School />, path: '/my-id-card' },
   ];
 
-  // Select menu based on role
-  const menuItems = user?.role === 'Admin' ? adminMenuItems : teacherMenuItems;
+  const parentMenuItems = [
+    { text: 'Dashboard', icon: <Dashboard />, path: '/parent-dashboard' },
+    { text: 'My Children', icon: <People />, path: '/parent-dashboard/children' },
+    { text: 'Settings', icon: <School />, path: '/parent-dashboard/settings' },
+  ];
 
-  // Drawer content (sidebar)
+  const menuItems = user?.role === 'Admin' ? adminMenuItems : user?.role === 'Teacher' ? teacherMenuItems : parentMenuItems;
+
+  const getRoleTitle = () => {
+    switch (user?.role) {
+      case 'Admin': return 'Admin Dashboard';
+      case 'Teacher': return 'Teacher Dashboard';
+      case 'Parent': return 'Parent Portal';
+      default: return 'Dashboard';
+    }
+  };
+
   const drawer = (
     <Box
-      onClick={() => {
-        if (window.innerWidth >= 960) {
-          setMobileOpen(false);
-        }
-      }}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        backgroundColor: '#EAF3EE',
+        background: 'linear-gradient(180deg, #F0F7F4 0%, #E8F2ED 100%)',
       }}
     >
-      {/* Logo Section */}
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mx: 'auto',
-            mb: 1,
-          }}
-        >
-          <School sx={{ fontSize: 28, color: 'white' }} />
-        </Box>
-        <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 700 }}>
-          EduFlow Pro
-        </Typography>
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
+        }}
+      >
+        {!collapsed && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 42,
+                height: 42,
+                borderRadius: 2.5,
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(111, 175, 143, 0.35)',
+              }}
+            >
+              <School sx={{ fontSize: 24, color: 'white' }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}>
+                EduFlow
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                PRO
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        {collapsed && (
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: 2.5,
+              background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(111, 175, 143, 0.35)',
+            }}
+          >
+            <School sx={{ fontSize: 24, color: 'white' }} />
+          </Box>
+        )}
+        {!isMobile && !collapsed && (
+          <IconButton
+            onClick={() => setCollapsed(!collapsed)}
+            sx={{
+              color: '#64748B',
+              '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.1)' },
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
       </Box>
 
-      <Divider sx={{ borderColor: '#E2E8F0' }} />
+      <Divider sx={{ borderColor: 'rgba(111, 175, 143, 0.15)', mx: 2 }} />
 
-      <List sx={{ flex: 1, overflowY: 'auto', py: 2 }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
-            <ListItemButton
-              onClick={() => {
-                navigate(item.path);
-                setMobileOpen(false);
-              }}
-              selected={location.pathname === item.path}
+      <Box sx={{ px: 2, py: 1.5 }}>
+        {!collapsed && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#94A3B8',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              px: 1,
+            }}
+          >
+            {user?.role === 'Admin' ? 'Administration' : user?.role === 'Teacher' ? 'Teacher Portal' : 'Parent Portal'}
+          </Typography>
+        )}
+      </Box>
+
+      <List sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 0 }}>
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <Tooltip title={collapsed ? item.text : ''} placement="right">
+                <ListItemButton
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) setMobileOpen(false);
+                  }}
+                  selected={isActive}
+                  sx={{
+                    borderRadius: 2.5,
+                    py: 1.25,
+                    px: collapsed ? 1.5 : 2,
+                    justifyContent: collapsed ? 'center' : 'flex-start',
+                    transition: 'all 0.2s ease',
+                    '&.Mui-selected': {
+                      background: 'linear-gradient(135deg, rgba(111, 175, 143, 0.15) 0%, rgba(111, 175, 143, 0.08) 100%)',
+                      borderLeft: '3px solid #6FAF8F',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, rgba(111, 175, 143, 0.2) 0%, rgba(111, 175, 143, 0.12) 100%)',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: '#4E8C70',
+                      },
+                      '& .MuiListItemText-primary': {
+                        color: '#1F2937',
+                        fontWeight: 600,
+                      },
+                    },
+                    '&:hover': {
+                      background: 'rgba(111, 175, 143, 0.08)',
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      color: '#64748B',
+                      minWidth: collapsed ? 0 : 40,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  {!collapsed && (
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        sx: {
+                          color: '#475569',
+                          fontWeight: 500,
+                          fontSize: '0.9rem',
+                        },
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      <Divider sx={{ borderColor: 'rgba(111, 175, 143, 0.15)', mx: 2 }} />
+
+      <Box sx={{ p: 2 }}>
+        {!collapsed ? (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2.5,
+              background: 'rgba(111, 175, 143, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+            }}
+          >
+            <Avatar
+              src={user?.profilePicture}
               sx={{
-                borderRadius: 2,
-                '&.Mui-selected': {
-                  background: 'rgba(111, 175, 143, 0.15)',
-                  borderRight: '3px solid #6FAF8F',
-                  '&:hover': {
-                    background: 'rgba(111, 175, 143, 0.2)',
-                  },
-                },
+                width: 40,
+                height: 40,
+                border: '2px solid #6FAF8F',
+                bgcolor: '#EAF3EE',
+              }}
+            >
+              {!user?.profilePicture && (
+                <Box sx={{ fontSize: 18, color: '#4E8C70', fontWeight: 600 }}>
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </Box>
+              )}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#1F2937', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {user?.name || 'User'}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: '#64748B', fontSize: '0.75rem' }}
+              >
+                {user?.role || 'User'}
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={handleLogout}
+              sx={{
+                color: '#64748B',
                 '&:hover': {
-                  background: 'rgba(111, 175, 143, 0.08)',
+                  color: '#EF4444',
+                  background: 'rgba(239, 68, 68, 0.1)',
                 },
               }}
             >
-              <ListItemIcon sx={{ color: '#4E8C70', minWidth: 40 }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                sx={{
-                  '& .MuiListItemText-primary': {
-                    color: '#1F2937',
-                    fontWeight: location.pathname === item.path ? 600 : 500,
-                    fontSize: '0.95rem',
-                  },
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-
-      <Divider sx={{ borderColor: '#E2E8F0' }} />
+              <Logout sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        ) : (
+          <Tooltip title="Logout" placement="right">
+            <IconButton
+              onClick={handleLogout}
+              sx={{
+                width: '100%',
+                color: '#64748B',
+                borderRadius: 2,
+                '&:hover': {
+                  color: '#EF4444',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                },
+              }}
+            >
+              <Logout />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     </Box>
   );
+
+  const currentDrawerWidth = collapsed ? 80 : drawerWidth;
 
   return (
     <Box
@@ -167,16 +358,15 @@ const DashboardLayout = () => {
         flexDirection: 'column',
         height: '100vh',
         width: '100%',
-        background: '#F5F7F6',
+        background: '#F8FAF9',
         overflow: 'hidden',
       }}
     >
-      {/* Navbar - Fixed at top */}
       <Box
         sx={{
           background: '#FFFFFF',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          borderBottom: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          borderBottom: '1px solid rgba(111, 175, 143, 0.1)',
           flexShrink: 0,
           zIndex: 1100,
         }}
@@ -187,111 +377,160 @@ const DashboardLayout = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             px: { xs: 2, sm: 3 },
-            py: 2,
+            py: 1.5,
+            minHeight: { xs: 64 },
           }}
         >
-          {/* Logo & Title */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ 
-                mr: 2, 
-                display: { sm: 'none' },
+              sx={{
+                mr: 1,
+                display: { md: 'none' },
                 color: '#1F2937',
               }}
             >
-              <MenuIcon sx={{ fontSize: 28 }} />
+              <MenuIcon sx={{ fontSize: 26 }} />
             </IconButton>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <School sx={{ fontSize: 24, color: 'white' }} />
-            </Box>
+            {!isMobile && collapsed && (
+              <IconButton
+                onClick={() => setCollapsed(false)}
+                sx={{
+                  color: '#64748B',
+                  background: 'rgba(111, 175, 143, 0.1)',
+                  '&:hover': { background: 'rgba(111, 175, 143, 0.2)' },
+                }}
+              >
+                <MenuIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+            )}
             <Typography
               variant="h6"
               noWrap
               sx={{
                 color: '#1F2937',
                 fontWeight: 700,
-                fontSize: { xs: '1rem', sm: '1.25rem' },
+                fontSize: { xs: '1rem', sm: '1.2rem' },
+                display: { xs: 'none', sm: 'block' },
               }}
             >
-              {user?.role === 'Admin' ? 'Admin Dashboard' : 'Teacher Dashboard'}
+              {getRoleTitle()}
             </Typography>
           </Box>
 
-          {/* User Info */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar
-              src={user?.profilePicture}
-              sx={{
-                width: { xs: 32, sm: 36 },
-                height: { xs: 32, sm: 36 },
-                border: '2px solid #6FAF8F',
-                bgcolor: '#EAF3EE',
-              }}
-            >
-              {!user?.profilePicture && (
-                <Box sx={{ fontSize: { xs: 16, sm: 20 }, color: '#4E8C70' }}>
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </Box>
-              )}
-            </Avatar>
-            <Typography
-              variant="body2"
-              sx={{ color: '#1F2937', display: { xs: 'none', sm: 'block' } }}
-            >
-              {user?.name || 'User'}
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton
               size="small"
-              aria-label="logout"
-              onClick={handleLogout}
               sx={{
-                color: '#6B7280',
+                color: '#64748B',
                 '&:hover': {
                   color: '#6FAF8F',
                   background: 'rgba(111, 175, 143, 0.1)',
                 },
               }}
             >
-              <Logout sx={{ fontSize: 20 }} />
+              <Notifications sx={{ fontSize: 22 }} />
             </IconButton>
+            <IconButton
+              size="small"
+              sx={{
+                color: '#64748B',
+                '&:hover': {
+                  color: '#6FAF8F',
+                  background: 'rgba(111, 175, 143, 0.1)',
+                },
+              }}
+            >
+              <Settings sx={{ fontSize: 22 }} />
+            </IconButton>
+            <Avatar
+              src={user?.profilePicture}
+              onClick={handleMenuOpen}
+              sx={{
+                width: 36,
+                height: 36,
+                border: '2px solid #6FAF8F',
+                bgcolor: '#EAF3EE',
+                ml: 1,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: '#4E8C70',
+                  transform: 'scale(1.05)',
+                },
+              }}
+            >
+              {!user?.profilePicture && (
+                <Box sx={{ fontSize: 16, color: '#4E8C70', fontWeight: 600 }}>
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </Box>
+              )}
+            </Avatar>
+            <KeyboardArrowDown
+              onClick={handleMenuOpen}
+              sx={{
+                color: '#64748B',
+                cursor: 'pointer',
+                ml: 0.5,
+                '&:hover': { color: '#6FAF8F' },
+              }}
+            />
+            
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                sx: {
+                  mt: 1,
+                  minWidth: 180,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  border: '1px solid rgba(111, 175, 143, 0.1)',
+                },
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(111, 175, 143, 0.1)' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#1E293B' }}>
+                  {user?.name || 'User'}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748B' }}>
+                  {user?.role || 'User'}
+                </Typography>
+              </Box>
+              <MenuItem onClick={handleLogout} sx={{ color: '#EF4444', py: 1.5 }}>
+                <ListItemIcon>
+                  <Logout fontSize="small" sx={{ color: '#EF4444' }} />
+                </ListItemIcon>
+                Logout
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </Box>
 
-      {/* Mobile Drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
-        ModalProps={{
-          keepMounted: true,
-        }}
+        ModalProps={{ keepMounted: true }}
         sx={{
+          display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            background: '#EAF3EE',
-            borderRight: '1px solid #E2E8F0',
+            width: 280,
+            background: 'linear-gradient(180deg, #F0F7F4 0%, #E8F2ED 100%)',
+            borderRight: '1px solid rgba(111, 175, 143, 0.15)',
           },
         }}
       >
         {drawer}
       </Drawer>
 
-      {/* Main Content Area */}
       <Box
         sx={{
           display: 'flex',
@@ -300,52 +539,43 @@ const DashboardLayout = () => {
           overflow: 'hidden',
         }}
       >
-        {/* Desktop Sidebar */}
-        <Box
-          component="nav"
-          sx={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            width: drawerWidth,
-            background: '#EAF3EE',
-            borderRight: '1px solid #E2E8F0',
-            display: { xs: 'none', sm: 'flex' },
-            flexDirection: 'column',
-            flexShrink: 0,
-            overflowY: 'auto',
-          }}
-        >
-          {drawer}
-        </Box>
+        {!isMobile && (
+          <Box
+            component="nav"
+            sx={{
+              position: 'sticky',
+              top: 0,
+              height: '100vh',
+              width: currentDrawerWidth,
+              flexShrink: 0,
+              transition: 'width 0.2s ease',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
+            {drawer}
+          </Box>
+        )}
 
-        {/* Page Content */}
         <Box
           component="main"
           sx={{
             flex: 1,
-            background: '#F5F7F6',
+            background: '#F8FAF9',
             overflowY: 'auto',
             overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             minWidth: 0,
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: '#E2E8F0',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: '#6FAF8F',
-              borderRadius: '4px',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: '#4E8C70',
-            },
+            '&::-webkit-scrollbar': { width: '8px' },
+            '&::-webkit-scrollbar-track': { background: '#F1F5F4' },
+            '&::-webkit-scrollbar-thumb': { background: '#CBD5E1', borderRadius: '4px' },
+            '&::-webkit-scrollbar-thumb:hover': { background: '#94A3B8' },
           }}
         >
-          <Outlet />
+          <Box sx={{ p: { xs: 2, sm: 3 } }}>
+            <Outlet />
+          </Box>
         </Box>
       </Box>
     </Box>

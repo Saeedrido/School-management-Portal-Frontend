@@ -21,7 +21,7 @@ import {
   Warning,
   Quiz,
 } from '@mui/icons-material';
-import { attemptsAPI, sharedAPI, getErrorMessage } from '../../services/api';
+import api, { attemptsAPI, sharedAPI, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const TakeExam = () => {
@@ -50,6 +50,79 @@ const TakeExam = () => {
     const fetchExamData = async () => {
       try {
         setLoading(true);
+        
+        // First, check if there's an existing attempt for this student
+        const userId = user?.id;
+        if (userId) {
+          try {
+            // Check for existing attempt - using exam endpoint and filtering client-side
+            const attemptRes = await sharedAPI.examAttempts.getByExamAndStudent(examId, userId);
+            if (attemptRes.data?.success && attemptRes.data?.data) {
+              // Handle paged response - find attempt for this specific student
+              const responseData = attemptRes.data.data;
+              const attemptsList = responseData.items || responseData.Items || [];
+              
+              // Find attempt for this student
+              const existingAttempt = attemptsList.find(a => 
+                a.studentProfileId === userId || 
+                a.studentId === userId
+              );
+              
+              if (existingAttempt && existingAttempt.status === 'InProgress') {
+                setAttemptId(existingAttempt.id);
+                setAttemptStarted(true);
+                
+                // Fetch exam details and questions
+                const examRes = await api.get(`/api/exams/${examId}`);
+                if (examRes.data?.success && examRes.data?.data) {
+                  const examData = examRes.data.data;
+                  setExam({
+                    title: examData.title,
+                    durationMinutes: examData.durationMinutes,
+                    instructions: examData.instructions || '',
+                  });
+                  
+                  // Calculate time remaining if there's a start time
+                  if (existingAttempt.startedAt) {
+                    const startTime = new Date(existingAttempt.startedAt);
+                    const endTime = new Date(startTime.getTime() + (examData.durationMinutes || 60) * 60000);
+                    const now = new Date();
+                    const remaining = Math.floor((endTime - now) / 1000);
+                    if (remaining > 0) {
+                      setTimeRemaining(remaining);
+                    } else {
+                      // Time has expired, auto-submit
+                      setTimeRemaining(0);
+                    }
+                  }
+                }
+                
+                // Fetch questions from cache
+                const questionsRes = await sharedAPI.questions.getByExam(examId);
+                if (questionsRes.data?.success && questionsRes.data?.data) {
+                  let questionsList = [];
+                  const questionsData = questionsRes.data.data;
+                  
+                  if (questionsData.data?.questions) {
+                    questionsList = questionsData.data.questions;
+                  } else if (Array.isArray(questionsData.data)) {
+                    questionsList = questionsData.data;
+                  } else if (questionsData.questions) {
+                    questionsList = questionsData.questions;
+                  } else if (Array.isArray(questionsData)) {
+                    questionsList = questionsData;
+                  }
+                  
+                  setQuestions(questionsList);
+                  setQuestionsLoaded(true);
+                }
+              }
+            }
+          } catch (attemptErr) {
+            console.log('No existing attempt found, will start fresh');
+          }
+        }
+        
         setLoading(false);
       } catch (err) {
         setError(getErrorMessage(err));
@@ -158,20 +231,12 @@ const TakeExam = () => {
   };
 
   const handleAnswerChange = (questionId, optionId) => {
-    setAnswers(prev => {
-      const currentAnswers = prev[questionId] || [];
-      if (currentAnswers.includes(optionId)) {
-        return {
-          ...prev,
-          [questionId]: currentAnswers.filter(id => id !== optionId)
-        };
-      } else {
-        return {
-          ...prev,
-          [questionId]: [...currentAnswers, optionId]
-        };
-      }
-    });
+    // For radio buttons (single choice), replace the previous selection
+    // This ensures only one option can be selected at a time
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: [optionId]
+    }));
   };
 
   const handleAutoSubmit = useCallback(async () => {
@@ -412,7 +477,10 @@ const TakeExam = () => {
 
             {question.options && question.options.length > 0 ? (
               <FormControl component="fieldset" sx={{ mt: 2, width: '100%' }}>
-                <RadioGroup value={''}>
+                <RadioGroup 
+                  value={answers[question.id]?.[0] || ''}
+                  onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                >
                   {question.options.map((option) => (
                     <Paper 
                       key={option.id}
@@ -420,14 +488,14 @@ const TakeExam = () => {
                         p: 1.5, 
                         mb: 1, 
                         border: '2px solid',
-                        borderColor: (answers[question.id] || []).includes(option.id) ? '#5FAF8F' : '#E5E7EB',
+                        borderColor: answers[question.id]?.includes(option.id) ? '#5FAF8F' : '#E5E7EB',
                         borderRadius: 2,
                         cursor: 'pointer',
                         transition: 'all 0.2s',
-                        bgcolor: (answers[question.id] || []).includes(option.id) ? '#EAF5F1' : 'transparent',
+                        bgcolor: answers[question.id]?.includes(option.id) ? '#FFFFFF' : 'transparent',
                         '&:hover': {
                           borderColor: '#5FAF8F',
-                          bgcolor: '#EAF5F1',
+                          bgcolor: '#F0FDF4',
                         },
                       }}
                       onClick={() => handleAnswerChange(question.id, option.id)}
@@ -435,7 +503,7 @@ const TakeExam = () => {
                       <FormControlLabel
                         value={option.id}
                         control={<Radio sx={{ color: '#5FAF8F', '&.Mui-checked': { color: '#5FAF8F' } }} />}
-                        label={`${option.key}) ${option.value}`}
+                        label={<Typography sx={{ color: answers[question.id]?.includes(option.id) ? '#15803D' : '#1F2937', fontWeight: answers[question.id]?.includes(option.id) ? 500 : 400 }}>{`${option.key}) ${option.value}`}</Typography>}
                         sx={{ width: '100%', m: 0 }}
                       />
                     </Paper>

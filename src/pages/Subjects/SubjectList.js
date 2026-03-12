@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 import {
-  Container,
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -18,9 +15,10 @@ import {
   InputAdornment,
   Chip,
   Avatar,
-  CircularProgress,
   Grid,
   Card,
+  CardContent,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -31,28 +29,23 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
-// School Level mapping
 const SCHOOL_LEVELS = {
   0: 'Primary',
   1: 'Junior Secondary',
   2: 'Senior Secondary',
 };
 
-const SCHOOL_LEVEL_COLORS = {
-  0: '#4CAF50',    // Primary - Green
-  1: '#2196F3',    // Junior Secondary - Blue
-  2: '#FF9800',    // Senior Secondary - Orange
-};
-
 const SubjectList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -73,7 +66,6 @@ const SubjectList = () => {
     fetchSubjects();
   }, []);
 
-  // Filter subjects based on search query
   const filteredSubjects = subjects.filter((subject) =>
     subject.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     subject.code?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -93,333 +85,198 @@ const SubjectList = () => {
     }
   };
 
-  const getRowStyle = (index) => ({
-    background: index % 2 === 0
-      ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
-      : 'transparent',
-    borderBottom: '1px solid',
-    borderColor: 'divider',
-    '&:hover': {
-      background: 'primary.main',
-      opacity: 0.05,
-    },
-  });
-
   const getSubjectColor = (name) => {
-    const colors = ['#2196F3', '#66BB6A', '#EF5350', '#FFA726', '#AB47BC', '#26C6DA', '#E91E63', '#9C27B0'];
+    const colors = ['#6FAF8F', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#10B981'];
     const index = name?.charCodeAt(0) % colors.length || 0;
     return colors[index];
   };
 
-  // Count subjects by school level
   const primaryCount = subjects.filter(s => s.schoolLevel === 0).length;
   const juniorCount = subjects.filter(s => s.schoolLevel === 1).length;
   const seniorCount = subjects.filter(s => s.schoolLevel === 2).length;
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
+      <Box>
+        <PageHeader title="Subjects" subtitle="Manage subjects" />
+        <Card sx={{ borderRadius: 3, p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Card>
       </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-      {/* Header */}
-      <Box
-        sx={{
-          mb: { xs: 2, sm: 3, md: 4 },
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.success.main} 100%)`,
-          borderRadius: { xs: 2, sm: 3, md: 4 },
-          p: { xs: 2, sm: 3, md: 4 },
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: { xs: -30, sm: -50 },
-            right: { xs: -30, sm: -50 },
-            width: { xs: 150, sm: 200 },
-            height: { xs: 150, sm: 200 },
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)',
-          }}
-        />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, position: 'relative', zIndex: 1, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
-          <Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>
-              📚 Subjects Management
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-              View and manage all subjects (Seeded from backend)
-            </Typography>
-          </Box>
-          {user?.role === 'Admin' && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/dashboard/subjects/new')}
-              sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-              }}
-            >
-              {window.innerWidth < 600 ? 'Add' : 'Add Subject'}
-            </Button>
-          )}
-        </Box>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Subjects"
+        subtitle="Manage all subjects and curricula"
+        actionText="Add Subject"
+        onAction={() => navigate(`${basePath}/subjects/new`)}
+      />
 
-      {/* Stats Cards */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              p: { xs: 2, sm: 3 },
-              borderRadius: { xs: 2, sm: 3, md: 4 },
-              background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              Primary School
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              {primaryCount}
-            </Typography>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Primary</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>{primaryCount}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #10B98115 0%, #10B98108 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
+                  <Book sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              p: { xs: 2, sm: 3 },
-              borderRadius: { xs: 2, sm: 3, md: 4 },
-              background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              Junior Secondary
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              {juniorCount}
-            </Typography>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Junior Secondary</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>{juniorCount}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #3B82F615 0%, #3B82F608 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+                  <Book sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              p: { xs: 2, sm: 3 },
-              borderRadius: { xs: 2, sm: 3, md: 4 },
-              background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              Senior Secondary
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              {seniorCount}
-            </Typography>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              p: { xs: 2, sm: 3 },
-              borderRadius: { xs: 2, sm: 3, md: 4 },
-              background: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              Total Subjects
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              {subjects.length}
-            </Typography>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Senior Secondary</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>{seniorCount}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #F59E0B15 0%, #F59E0B08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F59E0B' }}>
+                  <Book sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Search Bar */}
-      <Paper
-        sx={{
-          mb: { xs: 2, sm: 3 },
-          p: { xs: 1.5, sm: 2 },
-          borderRadius: { xs: 2, sm: 3 },
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <TextField
-          fullWidth
-          placeholder="Search subjects by name or code..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ color: 'primary.main' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: { xs: 1.5, sm: 2 },
-              '&:hover fieldset': { borderColor: 'primary.main' },
-              '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: 2 },
-            },
-          }}
-        />
-      </Paper>
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="Search subjects..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2.5,
+                backgroundColor: '#F8FAF9',
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: '#6FAF8F' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </CardContent>
+      </Card>
 
-      {/* Subjects Table */}
-      <Box sx={{ overflowX: 'auto' }}>
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: { xs: 2, sm: 3, md: 4 },
-            boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.08)',
-          }}
-        >
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.success.main} 100%)` }}>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Subject
-                </TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Code
-                </TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  School Level
-                </TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                  Order
-                </TableCell>
-                {user?.role === 'Admin' && (
-                  <TableCell align="right" sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
-                    Actions
-                  </TableCell>
-                )}
+              <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Subject</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Code</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Level</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredSubjects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={user?.role === 'Admin' ? 5 : 4} align="center" sx={{ py: { xs: 6, sm: 8 } }}>
-                    <Book sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.disabled', mb: 2 }} />
-                    <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                      No subjects found
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      {searchTerm ? 'Try a different search term' : 'Subjects are seeded from the backend'}
-                    </Typography>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Book sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+                        No subjects found
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredSubjects.map((subject, index) => (
+                filteredSubjects.map((subject) => (
                   <TableRow
                     key={subject.id}
-                    hover
-                    sx={getRowStyle(index)}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                      transition: 'background-color 0.2s ease',
+                    }}
                   >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
-                        <Avatar
-                          sx={{
-                            bgcolor: getSubjectColor(subject.name),
-                            fontWeight: 600,
-                            width: { xs: 32, sm: 40 },
-                            height: { xs: 32, sm: 40 },
-                          }}
-                        >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: getSubjectColor(subject.name), fontWeight: 600 }}>
                           {subject.name?.charAt(0).toUpperCase() || 'S'}
                         </Avatar>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                            {subject.name}
-                          </Typography>
-                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
+                          {subject.name}
+                        </Typography>
                       </Box>
                     </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      {subject.code || '-'}
+                    </TableCell>
                     <TableCell>
                       <Chip
-                        label={subject.code || 'N/A'}
+                        label={SCHOOL_LEVELS[subject.schoolLevel] || 'N/A'}
                         size="small"
                         sx={{
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                          opacity: 0.15,
+                          bgcolor: subject.schoolLevel === 0 ? '#DCFCE7' : subject.schoolLevel === 1 ? '#DBEAFE' : '#FEF3C7',
+                          color: subject.schoolLevel === 0 ? '#166534' : subject.schoolLevel === 1 ? '#1E40AF' : '#92400E',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
                         }}
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={SCHOOL_LEVELS[subject.schoolLevel] || 'Unknown'}
-                        size="small"
-                        sx={{
-                          bgcolor: SCHOOL_LEVEL_COLORS[subject.schoolLevel] || '#757575',
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                          opacity: 0.8,
-                        }}
-                      />
+                      <StatusBadge status="Active" />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                        {subject.subjectOrder || 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    {user?.role === 'Admin' && (
-                      <TableCell align="right">
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/dashboard/subjects/${subject.id}/edit`)}
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            mr: 1,
-                            opacity: 0.15,
-                            '&:hover': { bgcolor: 'primary.main', opacity: 1 },
-                          }}
+                          onClick={() => navigate(`${basePath}/subjects/${subject.id}/edit`)}
+                          sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
                           onClick={() => handleDelete(subject.id)}
-                          sx={{
-                            bgcolor: 'error.main',
-                            color: 'white',
-                            opacity: 0.15,
-                            '&:hover': { bgcolor: 'error.main', opacity: 1 },
-                          }}
+                          sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                         >
                           <Delete fontSize="small" />
                         </IconButton>
-                      </TableCell>
-                    )}
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
         </TableContainer>
-      </Box>
-    </Container>
+      </Card>
+    </Box>
   );
 };
 

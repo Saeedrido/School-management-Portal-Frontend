@@ -22,7 +22,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  useTheme,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Add,
@@ -34,12 +39,18 @@ import {
   People,
   Email,
   Phone,
-  Close,
+  Link as LinkIcon,
+  MoreVert,
 } from '@mui/icons-material';
+import { adminAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const ParentList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  
   const [parents, setParents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,98 +58,125 @@ const ParentList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, parent: null });
-  const [studentFilter, setStudentFilter] = useState('all');
-
-  // Mock parents data
-  const mockParents = [
-    {
-      id: 1,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      phone: '+234 567 8901',
-      occupation: 'Business Analyst',
-      address: '123 Main St, Lagos',
-      students: [
-        { id: 101, name: 'Jane Doe', class: 'JSS 3A', relationship: 'Father' },
-        { id: 102, name: 'John Doe Jr', class: 'JSS 1A', relationship: 'Father' },
-      ],
-    },
-    {
-      id: 2,
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      email: 'sarah.j@example.com',
-      phone: '+234 567 8902',
-      occupation: 'Teacher',
-      address: '456 Education Rd, Ikeja',
-      students: [
-        { id: 103, name: 'Michael Johnson', class: 'SS 2A', relationship: 'Mother' },
-      ],
-    },
-    {
-      id: 3,
-      firstName: 'Emeka',
-      lastName: 'Okafor',
-      email: 'emeka.o@example.com',
-      phone: '+234 567 8903',
-      occupation: 'Doctor',
-      address: '789 Hospital Rd, Abuja',
-      students: [
-        { id: 104, name: 'Chidi Okafor', class: 'JSS 1A', relationship: 'Mother' },
-        { id: 105, name: 'Adanna Okafor', class: 'JSS 2A', relationship: 'Mother' },
-      ],
-    },
-    {
-      id: 4,
-      firstName: 'Ibrahim',
-      lastName: 'Yussuf',
-      email: 'ibrahim.y@example.com',
-      phone: '+234 567 8904',
-      occupation: 'Engineer',
-      address: '234 Industrial Ave, Kano',
-      students: [
-        { id: 106, name: 'Fatima Yussuf', class: 'SS 1A', relationship: 'Father' },
-      ],
-    },
-  ];
-
-  // Mock students for filter dropdown
-  const mockStudents = [
-    { id: 'all', name: 'All Students' },
-    { id: 101, name: 'Jane Doe - JSS 3A' },
-    { id: 102, name: 'John Doe Jr. - JSS 1A' },
-    { id: 103, name: 'Michael Johnson - SS 2A' },
-    { id: 104, name: 'Chidi Okafor - JSS 1A' },
-    { id: 105, name: 'Adanna Okafor - JSS 2A' },
-    { id: 106, name: 'Fatima Yussuf - SS 1A' },
-  ];
+  const [linkDialog, setLinkDialog] = useState({ open: false, parent: null });
+  const [linkData, setLinkData] = useState({ studentId: '', relationship: 'Father' });
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setParents(mockParents);
-      setStudents(mockStudents);
-      setLoading(false);
-    }, 500);
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [parentsRes, studentsRes] = await Promise.all([
+          adminAPI.parents.getAll(1, 100),
+          adminAPI.students.getAll(),
+        ]);
+        
+        if (parentsRes.data) {
+          const parentsData = parentsRes.data.data?.items || parentsRes.data.data || parentsRes.data;
+          const transformedParents = Array.isArray(parentsData) ? parentsData.map(p => ({
+            id: p.id || p.Id,
+            firstName: p.parent?.firstName || p.Parent?.firstName || '',
+            lastName: p.parent?.lastName || p.Parent?.lastName || '',
+            email: p.parent?.email || p.Parent?.email || '',
+            phone: p.parent?.phoneNumber || p.Parent?.phoneNumber || '',
+            occupation: p.occupation || '',
+            address: p.address || '',
+            students: (p.students || p.Students || []).map(s => ({
+              id: s.studentProfileId || s.StudentProfileId || s.id,
+              name: s.fullName || s.FullName || '',
+              relationship: s.relationship || s.Relationship || '',
+              class: s.className || s.ClassName || '',
+            })),
+          })) : [];
+          setParents(transformedParents);
+        }
+        
+        if (studentsRes.data) {
+          const studentsData = studentsRes.data.data?.items || studentsRes.data.data || studentsRes.data;
+          setStudents(Array.isArray(studentsData) ? studentsData : []);
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-  };
+    fetchData();
+  }, []);
 
   const handleDeleteClick = (parent) => {
     setDeleteDialog({ open: true, parent });
   };
 
-  const handleDeleteConfirm = () => {
-    // Mock delete
-    setParents(parents.filter((p) => p.id !== deleteDialog.parent.id));
-    setDeleteDialog({ open: false, parent: null });
+  const handleDeleteConfirm = async () => {
+    try {
+      await adminAPI.parents.delete(deleteDialog.parent.id);
+      setParents(parents.filter((p) => p.id !== deleteDialog.parent.id));
+      setDeleteDialog({ open: false, parent: null });
+    } catch (err) {
+      console.error('Error deleting parent:', err);
+      setError('Failed to delete parent');
+    }
+  };
+
+  const handleLinkClick = (parent) => {
+    setLinkDialog({ open: true, parent });
+    setLinkData({ studentId: '', relationship: 'Father' });
+  };
+
+  const handleLinkStudent = async () => {
+    if (!linkData.studentId) {
+      setError('Please select a student');
+      return;
+    }
+    
+    setLinking(true);
+    setError('');
+    
+    try {
+      await adminAPI.parents.linkStudent(
+        linkDialog.parent.id, 
+        linkData.studentId,
+        {
+          relationship: linkData.relationship,
+          isPrimaryContact: true,
+        }
+      );
+      
+      const parentsRes = await adminAPI.parents.getAll(1, 100);
+      if (parentsRes.data) {
+        const parentsData = parentsRes.data.data?.items || parentsRes.data.data || parentsRes.data;
+        const transformedParents = Array.isArray(parentsData) ? parentsData.map(p => ({
+          id: p.id || p.Id,
+          firstName: p.parent?.firstName || p.Parent?.firstName || '',
+          lastName: p.parent?.lastName || p.Parent?.lastName || '',
+          email: p.parent?.email || p.Parent?.email || '',
+          phone: p.parent?.phoneNumber || p.Parent?.phoneNumber || '',
+          occupation: p.occupation || '',
+          address: p.address || '',
+          students: (p.students || p.Students || []).map(s => ({
+            id: s.studentProfileId || s.StudentProfileId || s.id,
+            name: s.fullName || s.FullName || '',
+            relationship: s.relationship || s.Relationship || '',
+            class: s.className || s.ClassName || '',
+          })),
+        })) : [];
+        setParents(transformedParents);
+      }
+      
+      setLinkDialog({ open: false, parent: null });
+    } catch (err) {
+      console.error('Error linking student:', err);
+      setError(err.response?.data?.message || 'Failed to link student');
+    } finally {
+      setLinking(false);
+    }
   };
 
   const getAvatarColor = (name) => {
-    const colors = ['#2196F3', '#66BB6A', '#EF5350', '#FFA726', '#AB47BC'];
+    const colors = ['#6FAF8F', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4'];
     const index = name?.charCodeAt(0) % colors.length || 0;
     return colors[index];
   };
@@ -146,13 +184,13 @@ const ParentList = () => {
   const getRelationshipColor = (relationship) => {
     switch (relationship) {
       case 'Father':
-        return { bgcolor: '#E3F2FD', color: '#1976D2' };
+        return { bgcolor: '#DBEAFE', color: '#1E40AF' };
       case 'Mother':
-        return { bgcolor: '#FFF3E0', color: '#F57C00' };
+        return { bgcolor: '#FCE7F3', color: '#9D174D' };
       case 'Guardian':
-        return { bgcolor: '#E3F2FD', color: '#1976D2' };
+        return { bgcolor: '#E0E7FF', color: '#4338CA' };
       default:
-        return { bgcolor: '#F5F5F5', color: '#757575' };
+        return { bgcolor: '#F1F5F9', color: '#475569' };
     }
   };
 
@@ -162,481 +200,446 @@ const ParentList = () => {
     parent.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const paginatedParents = filteredParents;
-
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
-          : 'background.default',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            color: 'text.primary',
-            mb: 1,
-            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-          }}
-        >
-          Parents & Guardians
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{ color: 'text.secondary' }}
-        >
-          Manage student parents and guardians, link parents to students, and update contact information.
-        </Typography>
+    <Box>
+      <PageHeader
+        title="Parents & Guardians"
+        subtitle="Manage student parents and guardians, link parents to students"
+        actionText={isAdmin ? 'Add Parent' : undefined}
+        onAction={isAdmin ? () => navigate('/admin-dashboard/parents/new') : undefined}
+      />
 
-        {/* Action Bar */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 4,
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>
+                    Total Parents
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
+                    {parents.length}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #FF3E8A15 0%, #FF3E8A08 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FF3E8A',
+                  }}
+                >
+                  <FamilyRestroom sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>
+                    Linked Students
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
+                    {students.length}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6FAF8F',
+                  }}
+                >
+                  <People sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>
+                    Fathers
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
+                    {parents.filter(p => p.students?.some(s => s.relationship === 'Father')).length}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #1E40AF15 0%, #1E40AF08 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#1E40AF',
+                  }}
+                >
+                  <Person sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>
+                    Mothers
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
+                    {parents.filter(p => p.students?.some(s => s.relationship === 'Mother')).length}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2.5,
+                    background: 'linear-gradient(135deg, #9D174D15 0%, #9D174D08 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9D174D',
+                  }}
+                >
+                  <Person sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Action Bar */}
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <TextField
               placeholder="Search parents..."
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                flex: 1,
+                minWidth: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2.5,
+                  backgroundColor: '#F8FAF9',
+                },
+              }}
               InputProps={{
                 startAdornment: (
-                  <Search sx={{ color: 'rgba(255, 255, 255, 0.4)' }} />
+                  <InputAdornment position="start">
+                    <Search sx={{ color: '#6FAF8F' }} />
+                  </InputAdornment>
                 ),
               }}
-              sx={{
-                width: 300,
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF3E8A',
-                  },
-                },
-              }}
             />
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/dashboard/parents/new')}
-              sx={{
-                background: 'secondary.main',
-                borderRadius: '50px',
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': {
-                  background: 'secondary.dark',
-                },
-              }}
-            >
-              {window.innerWidth < 600 ? 'Add' : 'Add Parent'}
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background: 'rgba(17, 17, 17, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 3,
-                '&:hover': {
-                  border: '1px solid #FF3E8A',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <FamilyRestroom
-                    sx={{ fontSize: 40, color: '#FF3E8A' }}
-                  />
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      sx={{ fontWeight: 700, color: '#ffffff' }}
-                    >
-                      {parents.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                    >
-                      Total Parents
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background: 'rgba(17, 17, 17, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 3,
-                '&:hover': {
-                  border: '1px solid #FF3E8A',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Person sx={{ fontSize: 40, color: '#66BB6A' }} />
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      sx={{ fontWeight: 700, color: '#ffffff' }}
-                    >
-                      {students.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                    >
-                      Total Linkages
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background: 'rgba(17, 17, 17, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 3,
-                '&:hover': {
-                  border: '1px solid #FF3E8A',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Email sx={{ fontSize: 40, color: '#2196F3' }} />
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      sx={{ fontWeight: 700, color: '#ffffff' }}
-                    >
-                      {new Set().toLocaleString('en-NG', { month: 'long' })}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                    >
-                      This Month
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background: 'rgba(17, 17, 17, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 3,
-                '&:hover': {
-                  border: '1px solid #FF3E8A',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Phone sx={{ fontSize: 40, color: '#EF5350' }} />
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      sx={{ fontWeight: 700, color: '#ffffff' }}
-                    >
-                      96%
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                    >
-                      Contact Rate
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Parents List */}
-        <Card
-          sx={{
-            background: 'rgba(17, 17, 17, 0.8)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 3,
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            {loading ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Loading parents...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography sx={{ color: '#ff6b6b' }}>
-                  {error}
-                </Typography>
-              </Box>
-            ) : paginatedParents.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <Person sx={{ fontSize: 60, color: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
-                <Typography
-                  variant="h6"
-                  sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 2 }}
+            {isAdmin && (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => navigate('/admin-dashboard/parents/new')}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                    borderRadius: 2.5,
+                    boxShadow: '0 4px 14px rgba(111, 175, 143, 0.3)',
+                  }}
                 >
-                  No Parents Found
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                  Add Parent
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<LinkIcon />}
+                  onClick={() => navigate('/admin-dashboard/students/add-student-parent')}
+                  sx={{
+                    borderColor: '#FF3E8A',
+                    color: '#FF3E8A',
+                    borderRadius: 2.5,
+                    '&:hover': {
+                      borderColor: '#FF5DA3',
+                      background: 'rgba(255, 62, 138, 0.08)',
+                    },
+                  }}
                 >
-                  {searchTerm
-                    ? `No parents match "${searchTerm}"`
-                    : 'Get started by adding parents'}
-                </Typography>
+                  Link Student
+                </Button>
               </Box>
-            ) : (
-              <>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Parent</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell>Phone</TableCell>
-                        <TableCell>Occupation</TableCell>
-                        <TableCell>Students</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {paginatedParents.map((parent) => (
-                        <TableRow
-                          key={parent.id}
-                          sx={{
-                            '&:hover': {
-                              background: 'rgba(255, 62, 138, 0.05)',
-                            },
-                          }}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  bgcolor: getAvatarColor(parent.firstName),
-                                  color: '#ffffff',
-                                  fontSize: 14,
-                                }}
-                              >
-                                {parent.firstName?.charAt(0) || 'P'}
-                              </Avatar>
-                              <Box>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 500, color: '#ffffff' }}
-                                >
-                                  {parent.firstName} {parent.lastName}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
-                                >
-                                  {parent.occupation}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>{parent.email}</TableCell>
-                          <TableCell>{parent.phone}</TableCell>
-                          <TableCell>{parent.occupation}</TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                              {parent.students.map((student, idx) => (
-                                <Chip
-                                  key={idx}
-                                  size="small"
-                                  label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                      <Person sx={{ fontSize: 12 }} />
-                                      <Box>
-                                        <Typography variant="caption" noWrap>
-                                          {student.name}
-                                        </Typography>
-                                        <Chip
-                                          size="small"
-                                          label={student.relationship}
-                                          sx={{
-                                            ml: 0.5,
-                                            ...getRelationshipColor(student.relationship),
-                                          }}
-                                        />
-                                      </Box>
-                                    </Box>
-                                  }
-                                  sx={{ height: 24 }}
-                                />
-                              ))}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/dashboard/parents/${parent.id}/edit`)}
-                                sx={{
-                                  color: '#FF3E8A',
-                                  '&:hover': {
-                                    background: 'rgba(255, 62, 138, 0.1)',
-                                  },
-                                }}
-                              >
-                                <Edit sx={{ fontSize: 18 }} />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/dashboard/parents/${parent.id}/students`)}
-                                sx={{
-                                  color: '#2196F3',
-                                  '&:hover': {
-                                    background: 'rgba(33, 150, 243, 0.1)',
-                                  },
-                                }}
-                              >
-                                <People sx={{ fontSize: 18 }} />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteClick(parent)}
-                                sx={{
-                                  color: '#ff6b6b',
-                                  '&:hover': {
-                                    background: 'rgba(211, 47, 47, 0.1)',
-                                  },
-                                }}
-                              >
-                                <Delete sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                {/* Pagination */}
-                {paginatedParents.length > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                    >
-                      Showing {paginatedParents.length} of {parents.length} parents
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        size="small"
-                        onClick={() => setPage(Math.max(1, page - 1))}
-                        disabled={page === 1}
-                        sx={{
-                          color: '#ffffff',
-                          '&:hover': {
-                            background: 'rgba(255, 255, 255, 0.1)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                          },
-                        }}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        size="small"
-                        onClick={() => setPage(Math.min(Math.ceil(parents.length / 10), page + 1))}
-                        disabled={page >= Math.ceil(parents.length / 10)}
-                        sx={{
-                          color: '#ffffff',
-                          '&:hover': {
-                            background: 'rgba(255, 255, 255, 0.1)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                          },
-                        }}
-                      >
-                        Next
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-              </>
             )}
-          </CardContent>
-        </Card>
+          </Box>
+        </CardContent>
+      </Card>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog
-          open={deleteDialog.open}
-          onClose={() => setDeleteDialog({ open: false, parent: null })}
-          maxWidth="sm"
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Delete sx={{ color: '#ff6b6b', fontSize: 28 }} />
-              <Typography variant="h6">Delete Parent</Typography>
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              Are you sure you want to delete{' '}
-              <strong>{deleteDialog.parent?.firstName} {deleteDialog.parent?.lastName}</strong>?
-              {' '}This action cannot be undone. All associated student links will be removed.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialog({ open: false, parent: null })}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              color="error"
-              variant="contained"
-              autoFocus
+      {/* Parents Table */}
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : filteredParents.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+              }}
             >
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+              <Person sx={{ fontSize: 40, color: '#6FAF8F' }} />
+            </Box>
+            <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 600, mb: 1 }}>
+              No Parents Found
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>
+              {searchTerm ? `No parents match "${searchTerm}"` : 'Get started by adding parents'}
+            </Typography>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                onClick={() => navigate('/admin-dashboard/parents/new')}
+                sx={{
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                  borderRadius: 2.5,
+                }}
+              >
+                Add Parent
+              </Button>
+            )}
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Parent</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Phone</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Occupation</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Students</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredParents.map((parent) => (
+                  <TableRow
+                    key={parent.id}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                      transition: 'background-color 0.2s ease',
+                    }}
+                  >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: getAvatarColor(parent.firstName) }}>
+                          {parent.firstName?.charAt(0) || 'P'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
+                            {parent.firstName} {parent.lastName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B' }}>
+                            {parent.occupation || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Email sx={{ fontSize: 16, color: '#6FAF8F' }} />
+                        {parent.email || 'N/A'}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Phone sx={{ fontSize: 16, color: '#6FAF8F' }} />
+                        {parent.phone || 'N/A'}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      {parent.occupation || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {parent.students.length > 0 ? (
+                          parent.students.map((student, idx) => (
+                            <Chip
+                              key={idx}
+                              size="small"
+                              label={student.name}
+                              sx={{
+                                bgcolor: getRelationshipColor(student.relationship).bgcolor,
+                                color: getRelationshipColor(student.relationship).color,
+                                fontWeight: 500,
+                                fontSize: '0.7rem',
+                              }}
+                            />
+                          ))
+                        ) : (
+                          <Typography variant="caption" sx={{ color: '#94A3B8' }}>
+                            No linked students
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/admin-dashboard/parents/${parent.id}/edit`)}
+                          sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        {isAdmin && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleLinkClick(parent)}
+                            sx={{ color: '#10B981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
+                          >
+                            <LinkIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/admin-dashboard/parents/${parent.id}/students`)}
+                          sx={{ color: '#8B5CF6', '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' } }}
+                        >
+                          <People fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick(parent)}
+                          sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Card>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, parent: null })} maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Delete sx={{ color: '#EF4444' }} />
+            Delete Parent
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to delete <strong>{deleteDialog.parent?.firstName} {deleteDialog.parent?.lastName}</strong>?
+            This action cannot be undone. All associated student links will be removed.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ open: false, parent: null })}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Link Student Dialog */}
+      <Dialog open={linkDialog.open} onClose={() => setLinkDialog({ open: false, parent: null })} maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <LinkIcon sx={{ color: '#10B981' }} />
+            Link Student to Parent
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            Link a student to <strong>{linkDialog.parent?.firstName} {linkDialog.parent?.lastName}</strong>
+          </Typography>
+          
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Select Student</InputLabel>
+            <Select
+              value={linkData.studentId}
+              onChange={(e) => setLinkData({ ...linkData, studentId: e.target.value })}
+              label="Select Student"
+            >
+              <MenuItem value="">Choose a student</MenuItem>
+              {students.map((student) => (
+                <MenuItem key={student.id} value={student.id}>
+                  {student.firstName} {student.lastName} ({student.studentNumber})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel>Relationship</InputLabel>
+            <Select
+              value={linkData.relationship}
+              onChange={(e) => setLinkData({ ...linkData, relationship: e.target.value })}
+              label="Relationship"
+            >
+              <MenuItem value="Father">Father</MenuItem>
+              <MenuItem value="Mother">Mother</MenuItem>
+              <MenuItem value="Guardian">Guardian</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLinkDialog({ open: false, parent: null })}>Cancel</Button>
+          <Button
+            onClick={handleLinkStudent}
+            variant="contained"
+            disabled={linking || !linkData.studentId}
+            startIcon={linking ? <CircularProgress size={20} /> : <LinkIcon />}
+            sx={{ background: '#10B981' }}
+          >
+            {linking ? 'Linking...' : 'Link Student'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

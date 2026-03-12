@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 import {
-  Container,
   Box,
   Typography,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -15,7 +12,10 @@ import {
   TableRow,
   IconButton,
   Chip,
-  Switch,
+  Grid,
+  Card,
+  CardContent,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -25,20 +25,21 @@ import {
 } from '@mui/icons-material';
 import { academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const AcademicYearList = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const [academicYears, setAcademicYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const basePath = '/admin-dashboard';
+
   useEffect(() => {
     fetchAcademicYears();
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchAcademicYears = async () => {
     try {
       setLoading(true);
@@ -83,145 +84,153 @@ const AcademicYearList = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        Loading...
+      <Box>
+        <PageHeader title="Academic Years" subtitle="Manage academic years" />
+        <Card sx={{ borderRadius: 3, p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Card>
       </Box>
     );
   }
 
+  const activeYear = academicYears.find(y => y.isActive);
+
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 2, sm: 3, md: 4 },
-          borderRadius: { xs: 2, sm: 3 },
-          background: theme.palette.mode === 'dark'
-            ? 'rgba(30, 30, 30, 0.8)'
-            : 'linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%)',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            mb: { xs: 2, sm: 3, md: 4 },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: { xs: 2, sm: 0 },
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <CalendarToday sx={{ fontSize: { xs: 28, sm: 32 }, color: 'primary.main' }} />
-            <Typography variant="h4" sx={{ color: 'text.primary', fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-              Academic Years
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/admin-dashboard/academic-years/new')}
-            disabled={!hasRole('Admin')}
-            sx={{
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-              borderRadius: { xs: 1.5, sm: 2 },
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              px: { xs: 2, sm: 2.5 },
-            }}
-          >
-            {window.innerWidth < 600 ? 'Add' : 'Add Academic Year'}
-          </Button>
-        </Box>
+    <Box>
+      <PageHeader
+        title="Academic Years"
+        subtitle="Manage academic years and sessions"
+        actionText={hasRole('Admin') ? 'Add Academic Year' : undefined}
+        onAction={hasRole('Admin') ? () => navigate(`${basePath}/academic-years/new`) : undefined}
+      />
 
-        {error && (
-          <Typography color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Total Years</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>{academicYears.length}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6FAF8F' }}>
+                  <CalendarToday sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        {activeYear && (
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Active Year</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#10B981' }}>{activeYear.name}</Typography>
+                  </Box>
+                  <Chip label="Active" size="small" sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         )}
+      </Grid>
 
-        <Box sx={{ overflowX: 'auto' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Academic Year</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Start Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>End Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                {hasRole('Admin') && (
+                  <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {academicYears.length === 0 ? (
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Start Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>End Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>Active</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                    Actions
+                  <TableCell colSpan={hasRole('Admin') ? 5 : 4} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <CalendarToday sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+                        No academic years found
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {academicYears.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography variant="body1" sx={{ color: 'text.secondary', py: 2 }}>
-                        No academic years found. Add your first academic year to get started.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  academicYears.map((year) => (
-                    <TableRow key={year.id} hover>
-                      <TableCell>
-                        <Typography sx={{ fontWeight: 600, color: 'text.primary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+              ) : (
+                academicYears.map((year) => (
+                  <TableRow
+                    key={year.id}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                    }}
+                  >
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: '#6FAF8F15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <CalendarToday sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
                           {year.name}
                         </Typography>
-                      </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                        {new Date(year.startDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                        {new Date(year.endDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {year.isActive && (
-                            <Chip
-                              label="Active"
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      {year.startDate ? new Date(year.startDate).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>
+                      {year.endDate ? new Date(year.endDate).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={year.isActive ? 'Active' : 'Inactive'} />
+                    </TableCell>
+                    {hasRole('Admin') && (
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                          {!year.isActive && (
+                            <Button
                               size="small"
-                              color="success"
-                            />
+                              variant="outlined"
+                              onClick={() => handleSetActive(year.id)}
+                              sx={{ borderColor: '#6FAF8F', color: '#6FAF8F', fontSize: '0.75rem', borderRadius: 2 }}
+                            >
+                              Set Active
+                            </Button>
                           )}
-                          <Switch
-                            checked={year.isActive}
-                            onChange={() => handleSetActive(year.id)}
-                            disabled={!hasRole('Admin') || year.isActive}
-                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => navigate(`${basePath}/academic-years/${year.id}/edit`)}
+                            sx={{ color: '#6FAF8F', '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.1)' } }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(year.id)}
+                            sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
                         </Box>
                       </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          color="primary"
-                          onClick={() => navigate(`/admin-dashboard/academic-years/${year.id}/edit`)}
-                          disabled={!hasRole('Admin')}
-                          size="small"
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          onClick={() => handleDelete(year.id)}
-                          disabled={!hasRole('Admin')}
-                          size="small"
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      </Paper>
-    </Container>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Box>
   );
 };
 

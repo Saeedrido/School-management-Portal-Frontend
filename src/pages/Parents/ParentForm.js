@@ -15,7 +15,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  useTheme,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -27,9 +26,10 @@ import {
   LocationOn,
   PersonAdd,
 } from '@mui/icons-material';
+import { adminAPI } from '../../services/api';
+import { PageHeader } from '../../components/ui';
 
 const ParentForm = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -50,38 +50,47 @@ const ParentForm = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Mock students for linking
-  const mockAvailableStudents = [
-    { id: 101, name: 'Jane Doe', class: 'JSS 3A', currentParent: null },
-    { id: 102, name: 'John Doe Jr.', class: 'JSS 1A', currentParent: null },
-    { id: 103, name: 'Michael Johnson', class: 'SS 2A', currentParent: null },
-    { id: 104, name: 'Chidi Okafor', class: 'JSS 1A', currentParent: null },
-    { id: 105, name: 'Adanna Okafor', class: 'JSS 2A', currentParent: null },
-    { id: 106, name: 'Fatima Yussuf', class: 'SS 1A', currentParent: null },
-    { id: 107, name: 'David Wilson', class: 'SS 3A', currentParent: null },
-    { id: 108, name: 'Grace Adebayo', class: 'SS 2A', currentParent: null },
-  ];
-
   useEffect(() => {
-    if (isEditing) {
-      // Mock load parent data
-      setTimeout(() => {
-        setFormData({
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          phone: '+234 567 8901',
-          occupation: 'Business Analyst',
-          address: '123 Main St, Lagos',
-          studentIds: [101, 102],
-        });
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Load students for linking
+        const studentsRes = await adminAPI.students.getAll();
+        if (studentsRes.data) {
+          const studentsData = studentsRes.data.data || studentsRes.data;
+          setStudents(Array.isArray(studentsData) ? studentsData.map(s => ({
+            id: s.id,
+            name: `${s.firstName} ${s.lastName}`,
+            class: s.class?.name || 'N/A',
+            currentParent: null
+          })) : []);
+        }
+
+        if (isEditing && id) {
+          // Fetch parent data
+          const parentRes = await adminAPI.parents.getById(parseInt(id));
+          if (parentRes.data) {
+            const parentData = parentRes.data;
+            setFormData({
+              firstName: parentData.firstName || '',
+              lastName: parentData.lastName || '',
+              email: parentData.email || '',
+              phone: parentData.phoneNumber || '',
+              occupation: parentData.occupation || '',
+              address: parentData.address || '',
+              studentIds: [],
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      } finally {
         setLoading(false);
-      }, 500);
-    }
-    // Load available students
-    setStudents(mockAvailableStudents);
-    setLoading(false);
-  }, [id]);
+      }
+    };
+
+    fetchData();
+  }, [id, isEditing]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,9 +117,6 @@ const ParentForm = () => {
     if (!formData.phone.trim()) {
       errors.phone = 'Phone number is required';
     }
-    if (formData.studentIds.length === 0) {
-      errors.studentIds = 'At least one student must be linked';
-    }
 
     return Object.keys(errors).length === 0;
   };
@@ -126,17 +132,34 @@ const ParentForm = () => {
     setError('');
     setSuccess(false);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Form submitted:', formData);
-      setSuccess(true);
-      setSubmitting(false);
+    try {
+      const payload = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phone,
+        occupation: formData.occupation,
+        address: formData.address,
+      };
 
+      if (isEditing) {
+        await adminAPI.parents.update(parseInt(id), payload);
+      } else {
+        await adminAPI.parents.create(payload);
+      }
+
+      setSuccess(true);
+      
       // Redirect after 2 seconds
       setTimeout(() => {
-        navigate('/dashboard/parents');
+        navigate('/admin-dashboard/parents');
       }, 2000);
-    }, 1000);
+    } catch (err) {
+      console.error('Error saving parent:', err);
+      setError(err.response?.data?.message || 'Failed to save parent');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleStudentSelection = (studentId) => {
@@ -152,32 +175,17 @@ const ParentForm = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
-          : 'background.default',
-      }}
-    >
-      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 900, mx: 'auto' }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, md: 4 }, gap: 2, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
-          <IconButton onClick={() => navigate('/dashboard/parents')} sx={{ color: 'text.primary', mr: 1 }}>
-            <ArrowBack />
-          </IconButton>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              flexGrow: 1,
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-            }}
-          >
-            {isEditing ? 'Edit Parent' : 'Add New Parent'}
-          </Typography>
-        </Box>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAF9' }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
+        <PageHeader
+          title={isEditing ? 'Edit Parent' : 'Add New Parent'}
+          subtitle={isEditing ? 'Update parent information' : 'Add a new parent or guardian'}
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/admin-dashboard' },
+            { label: 'Parents', href: '/admin-dashboard/parents' },
+            { label: isEditing ? 'Edit Parent' : 'Add Parent' },
+          ]}
+        />
 
         {/* Error Alert */}
         {error && (
@@ -488,7 +496,7 @@ const ParentForm = () => {
                   >
                     <Button
                       variant="outlined"
-                      onClick={() => navigate('/dashboard/parents')}
+                      onClick={() => navigate('/admin-dashboard/parents')}
                       disabled={submitting}
                       sx={{
                         color: '#ffffff',

@@ -11,7 +11,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { School } from '@mui/icons-material';
+import { School, ArrowForward } from '@mui/icons-material';
 import { authAPI, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -44,13 +44,9 @@ const StudentLogin = () => {
     setLoading(true);
 
     try {
-      console.log('🎓 STUDENT LOGIN ATTEMPT:', { studentNumber: formData.studentNumber });
-
       const response = await authAPI.studentLogin({
         studentNumber: formData.studentNumber,
       });
-
-      console.log('📨 STUDENT LOGIN RESPONSE:', response.data);
 
       if (response.data?.success) {
         const { token, refreshToken, user } = response.data.data;
@@ -63,8 +59,6 @@ const StudentLogin = () => {
           name: user.fullName || user.FullName || `${firstName} ${lastName}`.trim() || 'Student',
           role: (roles && roles.length > 0) ? (roles[0].name || roles[0].Name) : 'Student',
         };
-
-        console.log('✅ Student login successful - normalized user:', normalizedUser);
 
         localStorage.setItem('token', token);
         if (refreshToken) {
@@ -79,13 +73,6 @@ const StudentLogin = () => {
         setError(response.data?.message || 'Login failed');
       }
     } catch (err) {
-      console.error('🚨 STUDENT LOGIN ERROR:', {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data
-      });
-
-      // Use getErrorMessage for consistent error handling
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
@@ -96,73 +83,133 @@ const StudentLogin = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #EAF5F1 0%, #D4EBE3 100%)',
+        background: 'linear-gradient(135deg, #F0F7F4 0%, #E8F2ED 50%, #D4EBE3 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        p: { xs: 2, sm: 3 },
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Background Decorations */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.08)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -50,
+          left: -50,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'rgba(111, 175, 143, 0.06)',
+        }}
+      />
+
       <Card
         sx={{
-          maxWidth: 420,
+          maxWidth: 440,
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          borderRadius: 4,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
           backgroundColor: '#FFFFFF',
+          position: 'relative',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          {/* Logo */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
               sx={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #5FAF8F 0%, #2E8B57 100%)',
+                width: 60,
+                height: 60,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
+                boxShadow: '0 8px 24px rgba(111, 175, 143, 0.35)',
               }}
             >
-              <School sx={{ fontSize: 40, color: '#FFFFFF' }} />
+              <School sx={{ fontSize: 32, color: 'white' }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1F2937', mb: 1 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                color: '#1F2937',
+                mb: 0.5,
+                fontSize: { xs: '1.5rem', sm: '1.75rem' },
+              }}
+            >
               Student Login
             </Typography>
-            <Typography variant="body2" sx={{ color: '#4B5563' }}>
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
               Enter your student number to access your exams
             </Typography>
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+              }}
+            >
               {error}
             </Alert>
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Typography variant="body2" sx={{ color: '#1F2937', mb: 1, fontWeight: 500 }}>
-              Student Number
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="Enter your student number"
-              name="studentNumber"
-              value={formData.studentNumber}
-              onChange={handleChange}
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <School sx={{ color: '#5FAF8F' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 4, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#EAF5F1' } }}
-            />
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}
+              >
+                Student Number
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="Enter your student number"
+                name="studentNumber"
+                value={formData.studentNumber}
+                onChange={handleChange}
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <School sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2.5,
+                    backgroundColor: '#F8FAF9',
+                    '&:hover': {
+                      backgroundColor: '#F1F5F4',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
+              />
+            </Box>
 
             <Button
               type="submit"
@@ -173,24 +220,40 @@ const StudentLogin = () => {
               sx={{
                 py: 1.8,
                 mb: 3,
-                background: 'linear-gradient(135deg, #5FAF8F 0%, #2E8B57 100%)',
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                 borderRadius: '50px',
-                fontWeight: 600,
-                boxShadow: '0 4px 14px rgba(95, 175, 143, 0.4)',
-                '&:hover': { 
-                  background: 'linear-gradient(135deg, #4E9A7A 0%, #1F6B42 100%)',
-                  boxShadow: '0 6px 20px rgba(95, 175, 143, 0.5)',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                  boxShadow: '0 8px 24px rgba(111, 175, 143, 0.5)',
+                  transform: 'translateY(-2px)',
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Login'}
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#fff' }} />
+              ) : (
+                <>
+                  Login <ArrowForward sx={{ ml: 1, fontSize: 18 }} />
+                </>
+              )}
             </Button>
           </Box>
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#4B5563' }}>
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.9rem' }}>
               Are you a staff member?{' '}
-              <Link to="/login" style={{ color: '#5FAF8F', textDecoration: 'none', fontWeight: 600 }}>
+              <Link
+                to="/login"
+                style={{
+                  color: '#6FAF8F',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                }}
+              >
                 Login here
               </Link>
             </Typography>

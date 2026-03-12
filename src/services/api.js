@@ -198,13 +198,14 @@ export const adminAPI = {
     delete: (id) => api.delete(`/api/classsubjects/${id}`),
   },
   students: {
-    getAll: () => api.get('/api/students'),
+    getAll: (page = 1, pageSize = 10) => api.get(`/api/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/students/${id}`),
     getByClass: (classId) => api.get(`/api/students/class/${classId}`),
     getByClassPaged: (classId, page = 1, pageSize = 10) => api.get(`/api/students/class/${classId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getPaged: (page = 1, pageSize = 10) => api.get(`/api/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
     create: (data) => api.post('/api/students', data),
     registerStudent: (data) => api.post('/api/students/register', data),
+    registerWithParents: (data) => api.post('/api/students/register-with-parents', data),
     update: (id, data) => api.put(`/api/students/${id}`, data),
     delete: (id) => api.delete(`/api/students/${id}`),
     enroll: (data) => api.post('/api/students/enroll', data),
@@ -214,8 +215,9 @@ export const adminAPI = {
   exams: {
     getAll: () => api.get('/api/exams'),
     getById: (id) => api.get(`/api/exams/${id}`),
-    getByClass: (classId, page = 1, pageSize = 20) => api.get(`/api/exams/class/${classId}?pageNumber=${page}&pageSize=${pageSize}`),
-    getMyExams: (page = 1, pageSize = 20) => api.get(`/api/exams/my-exams?pageNumber=${page}&pageSize=${pageSize}`),
+    getByClass: (classId, page = 1, pageSize = 20, teacherId = null) => api.get(`/api/exams/class/${classId}?pageNumber=${page}&pageSize=${pageSize}${teacherId ? `&teacherId=${teacherId}` : ''}`),
+    getMyExams: (page = 1, pageSize = 20) => api.get(`/api/exams/all?pageNumber=${page}&pageSize=${pageSize}`),
+    getSchedule: (teacherId) => api.get(`/api/exams/schedule${teacherId ? `?teacherId=${teacherId}` : ''}`),
     create: (data) => api.post('/api/exams', data),
     update: (id, data) => api.put(`/api/exams/${id}`, data),
     delete: (id) => api.delete(`/api/exams/${id}`),
@@ -236,9 +238,11 @@ export const adminAPI = {
     getStudentResults: (studentId, page = 1, pageSize = 20) => api.get(`/api/results/student/${studentId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getCumulativeResults: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
     getById: (id) => api.get(`/api/results/${id}`),
+    getStudentAvailableTerms: (studentId) => api.get(`/api/results/student/${studentId}/available-terms`),
     publish: (data) => api.post('/api/results/publish', data),
     updateRemarks: (id, data) => api.put(`/api/results/${id}`, data),
     delete: (id) => api.delete(`/api/results/${id}`),
+    calculatePositions: (data) => api.post('/api/results/positions/calculate', data),
   },
   reportCards: {
     getByStudentAndTerm: (studentId, termId) => api.get(`/api/reportcards/students/${studentId}/terms/${termId}`),
@@ -262,6 +266,21 @@ export const adminAPI = {
     clear: () => api.post('/api/cache/clear'),
     getStats: () => api.get('/api/cache/stats'),
     getHealth: () => api.get('/api/cache/health'),
+  },
+  parents: {
+    getAll: (page = 1, pageSize = 10) => api.get(`/api/parents?pageNumber=${page}&PageSize=${pageSize}`),
+    getById: (id) => api.get(`/api/parents/${id}`),
+    create: (data) => api.post('/api/parents/register', data),
+    update: (id, data) => api.put(`/api/parents/${id}`, data),
+    delete: (id) => api.delete(`/api/parents/${id}`),
+    linkStudent: (parentId, studentId, data) => {
+      const params = data ? `?relationship=${data.relationship || ''}&isPrimaryContact=${data.isPrimaryContact || false}&canAccessResults=${data.canAccessResults !== false}` : '';
+      return api.post(`/api/parents/${parentId}/link-student/${studentId}${params}`);
+    },
+    unlinkStudent: (parentId, studentId) => api.delete(`/api/parents/${parentId}/unlink-student/${studentId}`),
+    createWithUser: (data) => api.post('/api/parents/register', data),
+    createStudentAndParent: (data) => api.post('/api/parents/create-student-parent', data),
+    getMyChildren: () => api.get('/api/parents/my-children'),
   },
 };
 
@@ -334,7 +353,7 @@ export const sharedAPI = {
     submit: (data) => api.post('/api/examattempts/submit', data),
     getByStudent: (studentId, page = 1, pageSize = 20) => api.get(`/api/examattempts/student/${studentId}?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/examattempts/${id}`),
-    getByExamAndStudent: (examId, studentId) => api.get(`/api/examattempts/exam/${examId}/student/${studentId}`),
+    getByExamAndStudent: (examId, studentId) => api.get(`/api/examattempts/exam/${examId}`),
   },
   questions: { 
     // Use QuestionsController endpoint: GET /api/exam/{examId}

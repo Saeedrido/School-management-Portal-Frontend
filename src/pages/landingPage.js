@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Star,
   TrendingUp,
+  School,
 } from '@mui/icons-material';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 
@@ -125,6 +126,73 @@ const LandingPage = () => {
 
   return (
     <Box sx={{ overflow: 'hidden', bgcolor: '#EAF5F1' }}>
+      {/* Navbar */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(111, 175, 143, 0.1)',
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 2.5,
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(111, 175, 143, 0.35)',
+                }}
+              >
+                <School sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 800, fontSize: '1.3rem' }}>
+                <Box component="span" sx={{ color: '#6FAF8F' }}>EduFlow</Box> Pro
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Button
+                onClick={() => navigate('/login')}
+                sx={{
+                  color: '#4B5563',
+                  fontWeight: 600,
+                  display: { xs: 'none', sm: 'flex' },
+                  '&:hover': { color: '#6FAF8F', background: 'transparent' },
+                }}
+              >
+                Sign In
+              </Button>
+              <Button
+                onClick={() => navigate('/register')}
+                sx={{
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                  color: '#ffffff',
+                  px: 3,
+                  fontWeight: 600,
+                  borderRadius: '50px',
+                  boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(111, 175, 143, 0.5)',
+                    background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                  },
+                }}
+              >
+                Get Started
+              </Button>
+            </Stack>
+          </Box>
+        </Container>
+      </Box>
       {/* Hero Section */}
       <Box
         sx={{

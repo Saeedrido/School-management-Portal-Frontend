@@ -10,6 +10,8 @@ import {
   Grid,
   CircularProgress,
   Alert,
+  Avatar,
+  LinearProgress,
 } from '@mui/material';
 import {
   People,
@@ -19,9 +21,15 @@ import {
   Person,
   TrendingUp,
   ArrowForward,
+  PersonAdd,
+  Assignment,
+  CalendarToday,
+  School as SchoolIcon,
+  SupervisedUserCircle,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
+import { PageHeader, InfoCard } from '../../components/ui';
 
 const AdminDashboard = () => {
   const theme = useTheme();
@@ -56,7 +64,6 @@ const AdminDashboard = () => {
           ? usersResponse.data.data.items.filter(u => u.roles?.some(r => r.name === 'Teacher')).length
           : 0;
 
-        // Fetch exams for each class to count active exams
         let activeExamsCount = 0;
         const classesData = classesResponse.data?.data || [];
         
@@ -91,15 +98,14 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  // Green theme colors
   const greenPrimary = '#6FAF8F';
   const greenHover = '#4E8C70';
 
   const dashboardCards = [
     {
       title: 'Students',
-      description: 'Manage student records',
-      icon: <People sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      description: 'Manage student records and enrollments',
+      icon: <People sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/students',
       value: stats.totalStudents,
       label: 'Total Students',
@@ -107,300 +113,326 @@ const AdminDashboard = () => {
     },
     {
       title: 'Teachers',
-      description: 'Manage teacher accounts',
-      icon: <School sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      description: 'Manage teacher accounts and assignments',
+      icon: <School sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/users',
       value: stats.totalTeachers,
       label: 'Total Teachers',
-      color: greenPrimary,
+      color: '#8B5CF6',
     },
     {
       title: 'Classes',
       description: 'Manage classes and sections',
-      icon: <Book sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      icon: <Book sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/classes',
       value: stats.totalClasses,
       label: 'Total Classes',
-      color: greenPrimary,
+      color: '#F59E0B',
     },
     {
       title: 'Subjects',
-      description: 'Manage subjects',
-      icon: <TrendingUp sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      description: 'Manage subjects and curricula',
+      icon: <TrendingUp sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/subjects',
       value: stats.totalSubjects,
       label: 'Total Subjects',
-      color: greenPrimary,
+      color: '#EC4899',
     },
     {
       title: 'Exams',
       description: 'Manage exams and assessments',
-      icon: <Quiz sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      icon: <Quiz sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/exams',
       value: stats.activeExams,
       label: 'Active Exams',
-      color: greenPrimary,
+      color: '#06B6D4',
     },
     {
       title: 'Parents',
       description: 'Manage parent/guardian info',
-      icon: <Person sx={{ fontSize: { xs: 28, sm: 32 } }} />,
+      icon: <Person sx={{ fontSize: 28 }} />,
       route: '/admin-dashboard/parents',
       value: stats.totalParents,
       label: 'Total Parents',
-      color: greenPrimary,
+      color: '#84CC16',
     },
+  ];
+
+  const quickActions = [
+    { label: 'Assign Teacher', icon: <SupervisedUserCircle />, path: '/admin-dashboard/teacher-assignments', color: '#8B5CF6' },
+    { label: 'Add Student', icon: <People />, path: '/admin-dashboard/students/new', color: greenPrimary },
+    { label: 'Create Exam', icon: <Assignment />, path: '/admin-dashboard/exams/new', color: '#F59E0B' },
+    { label: 'Add Class', icon: <SchoolIcon />, path: '/admin-dashboard/classes/new', color: '#06B6D4' },
   ];
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
+      <Box>
+        <PageHeader
+          title="Dashboard"
+          subtitle={`Welcome back, ${user?.name || 'Admin'}`}
+        />
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: '#E8F2ED' }} />
+                    <Box>
+                      <Box sx={{ width: 80, height: 24, bgcolor: '#E8F2ED', borderRadius: 1, mb: 1 }} />
+                      <Box sx={{ width: 60, height: 16, bgcolor: '#E8F2ED', borderRadius: 1 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 0 }}>
-      {/* Welcome Header */}
-      <Card
-        sx={{
-          mb: { xs: 2, sm: 3 },
-          background: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: { xs: 2, sm: 3 },
-        }}
-      >
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 }, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Box
-              sx={{
-                width: { xs: 50, sm: 60, md: 70 },
-                height: { xs: 50, sm: 60, md: 70 },
-                borderRadius: '50%',
-                background: `linear-gradient(135deg, ${greenPrimary} 0%, ${greenHover} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <School sx={{ fontSize: { xs: 24, sm: 32, md: 40 }, color: 'white' }} />
-            </Box>
-            <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 700,
-                  color: '#1F2937',
-                  mb: 0.5,
-                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
-                }}
-              >
-                Welcome back, {user?.name || 'Admin'}!
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: '#6B7280', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-              >
-                {user?.email} • {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/admin-dashboard/teacher-assignments')}
-                sx={{
-                  background: `linear-gradient(135deg, ${greenPrimary} 0%, ${greenHover} 100%)`,
-                  '&:hover': { background: `linear-gradient(135deg, ${greenHover} 0%, #3D7B5F 100%)` },
-                  px: { xs: 2, sm: 3 },
-                  py: { xs: 1, sm: 1.5 },
-                  fontWeight: 600,
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
-                }}
-              >
-                Assign Teachers
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/admin-dashboard/users/new')}
-                sx={{
-                  background: `linear-gradient(135deg, ${greenPrimary} 0%, ${greenHover} 100%)`,
-                  '&:hover': { background: `linear-gradient(135deg, ${greenHover} 0%, #3D7B5F 100%)` },
-                  px: { xs: 2, sm: 3 },
-                  py: { xs: 1, sm: 1.5 },
-                  fontWeight: 600,
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
-                }}
-              >
-                Add Teacher
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+    <Box>
+      <PageHeader
+        title={`Welcome back, ${user?.name?.split(' ')[0] || 'Admin'}`}
+        subtitle="Here's what's happening with your school today"
+      />
 
-      {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      {/* Quick Stats */}
-      <Grid container spacing={{ xs: 2, sm: 2, md: 2 }}>
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {dashboardCards.map((card, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid item xs={12} sm={6} lg={4} key={index}>
             <Card
+              onClick={() => navigate(card.route)}
               sx={{
                 background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: { xs: 2, sm: 3 },
-                height: '100%',
+                borderRadius: 3,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
+                border: '1px solid rgba(111, 175, 143, 0.08)',
                 '&:hover': {
-                  border: `1px solid ${greenPrimary}`,
-                  boxShadow: `0 8px 24px rgba(111, 175, 143, 0.2)`,
                   transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 32px rgba(111, 175, 143, 0.15)',
+                  border: `1px solid ${card.color}30`,
                 },
               }}
-              onClick={() => navigate(card.route)}
             >
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 } }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#64748B',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        fontSize: '0.7rem',
+                        mb: 1,
+                      }}
+                    >
+                      {card.label}
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        fontWeight: 700,
+                        color: '#1E293B',
+                        fontSize: '2rem',
+                        lineHeight: 1.2,
+                        mb: 0.5,
+                      }}
+                    >
+                      {card.value}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: '#64748B', fontSize: '0.8rem' }}
+                    >
+                      {card.description}
+                    </Typography>
+                  </Box>
                   <Box
                     sx={{
-                      width: { xs: 50, sm: 60 },
-                      height: { xs: 50, sm: 60 },
-                      borderRadius: { xs: 2, sm: 3 },
-                      background: `${greenPrimary}20`,
+                      width: 56,
+                      height: 56,
+                      borderRadius: 3,
+                      background: `linear-gradient(135deg, ${card.color}15 0%, ${card.color}08 100%)`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: greenPrimary,
+                      color: card.color,
                     }}
                   >
                     {card.icon}
                   </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1F2937', mb: 0.5, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-                      {card.value}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#6B7280', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      {card.label}
-                    </Typography>
-                  </Box>
                 </Box>
-                <Box sx={{ mt: { xs: 1.5, sm: 2 }, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ color: '#1F2937', fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                    {card.title}
-                  </Typography>
-                  <ArrowForward sx={{ color: greenPrimary }} />
-                </Box>
-                <Typography variant="caption" sx={{ color: '#6B7280', mt: 0.5, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                  {card.description}
-                </Typography>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Quick Actions */}
-      <Card
-        sx={{
-          mt: { xs: 2, sm: 3 },
-          background: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: { xs: 2, sm: 3 },
-        }}
-      >
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 600, mb: { xs: 1.5, sm: 2 }, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-            Quick Actions
-          </Typography>
-          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<School />}
-                onClick={() => navigate('/admin-dashboard/users/new')}
-                sx={{
-                  color: greenPrimary,
-                  borderColor: greenPrimary,
-                  '&:hover': {
-                    borderColor: greenHover,
-                    background: `${greenPrimary}10`,
-                  },
-                  py: { xs: 1, sm: 1.5 },
-                }}
-              >
-                Create Teacher
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<People />}
-                onClick={() => navigate('/admin-dashboard/students/new')}
-                sx={{
-                  color: greenPrimary,
-                  borderColor: greenPrimary,
-                  '&:hover': {
-                    borderColor: greenHover,
-                    background: `${greenPrimary}10`,
-                  },
-                  py: { xs: 1, sm: 1.5 },
-                }}
-              >
-                Add Student
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Quiz />}
-                onClick={() => navigate('/admin-dashboard/exams/new')}
-                sx={{
-                  color: greenPrimary,
-                  borderColor: greenPrimary,
-                  '&:hover': {
-                    borderColor: greenHover,
-                    background: `${greenPrimary}10`,
-                  },
-                  py: { xs: 1, sm: 1.5 },
-                }}
-              >
-                Create Exam
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Book />}
-                onClick={() => navigate('/admin-dashboard/subjects')}
-                sx={{
-                  color: greenPrimary,
-                  borderColor: greenPrimary,
-                  '&:hover': {
-                    borderColor: greenHover,
-                    background: `${greenPrimary}10`,
-                  },
-                  py: { xs: 1, sm: 1.5 },
-                }}
-              >
-                View Subjects
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+      {/* Quick Actions & Activity */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.08)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700, fontSize: '1.1rem' }}>
+                  Quick Actions
+                </Typography>
+              </Box>
+              <Grid container spacing={2}>
+                {quickActions.map((action, index) => (
+                  <Grid item xs={6} sm={3} key={index}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => navigate(action.path)}
+                      sx={{
+                        py: 2,
+                        px: 1,
+                        flexDirection: 'column',
+                        gap: 1,
+                        borderRadius: 2.5,
+                        borderColor: `${action.color}30`,
+                        color: action.color,
+                        backgroundColor: `${action.color}05`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: action.color,
+                          backgroundColor: `${action.color}12`,
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ fontSize: 24 }}>{action.icon}</Box>
+                      <Typography variant="caption" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                        {action.label}
+                      </Typography>
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} lg={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.08)', height: '100%' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700, fontSize: '1.1rem', mb: 3 }}>
+                School Overview
+              </Typography>
+              
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                    Students
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#1E293B', fontWeight: 600 }}>
+                    {stats.totalStudents}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={stats.totalStudents > 0 ? 85 : 0}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(111, 175, 143, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      background: 'linear-gradient(90deg, #6FAF8F 0%, #4E8C70 100%)',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                    Teachers
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#1E293B', fontWeight: 600 }}>
+                    {stats.totalTeachers}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={stats.totalTeachers > 0 ? 60 : 0}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(139, 92, 246, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      background: 'linear-gradient(90deg, #8B5CF6 0%, #7C3AED 100%)',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                    Classes
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#1E293B', fontWeight: 600 }}>
+                    {stats.totalClasses}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={stats.totalClasses > 0 ? 45 : 0}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(245, 158, 11, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      background: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                    Active Exams
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#1E293B', fontWeight: 600 }}>
+                    {stats.activeExams}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={stats.activeExams > 0 ? 30 : 0}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(6, 182, 212, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      background: 'linear-gradient(90deg, #06B6D4 0%, #0891B2 100%)',
+                    },
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

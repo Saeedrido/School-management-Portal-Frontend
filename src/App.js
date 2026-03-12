@@ -12,6 +12,7 @@ import StudentDashboard from './pages/Students/StudentDashboard';
 import IdCard from './pages/IdCard';
 import StudentList from './pages/Students/StudentList';
 import StudentForm from './pages/Students/StudentForm';
+import AddStudentParent from './pages/Students/AddStudentParent';
 import ClassList from './pages/Classes/ClassList';
 import ClassForm from './pages/Classes/ClassForm';
 import SubjectList from './pages/Subjects/SubjectList';
@@ -29,14 +30,18 @@ import ExamForm from './pages/Exams/ExamForm';
 import TakeExam from './pages/Exams/TakeExam';
 import QuestionBuilder from './pages/Exams/QuestionBuilder';
 import ResultList from './pages/Results/ResultList';
+import StudentResult from './pages/Results/StudentResult';
+import ParentStudentResult from './pages/Results/ParentStudentResult';
 import GradeTheory from './pages/Results/GradeTheory';
 import ParentList from './pages/Parents/ParentList';
 import ParentForm from './pages/Parents/ParentForm';
+import MyChildren from './pages/Parents/MyChildren';
 import TeacherDashboard from './pages/Dashboard/TeacherDashboard';
 import TeacherSchedule from './pages/Teachers/TeacherSchedule';
 import TeacherTopStudents from './pages/Teachers/TeacherTopStudents';
 import TeacherAssignments from './pages/Teachers/TeacherAssignments';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
+import ParentDashboard from './pages/Dashboard/ParentDashboard';
 import SystemStatus from './pages/Admin/SystemStatus';
 import Settings from './pages/Settings';
 import LandingPage from './pages/landingPage';
@@ -93,9 +98,11 @@ const RoleBasedDashboardRedirect = () => {
     return <Navigate to="/teacher-dashboard" replace />;
   } else if (user.role === 'Student') {
     return <Navigate to="/student-dashboard" replace />;
+  } else if (user.role === 'Parent') {
+    return <Navigate to="/parent-dashboard" replace />;
   }
 
-  return <Navigate to="/admin-dashboard" replace />;
+  return <Navigate to="/login" replace />;
 };
 
 // Public Route Component
@@ -117,6 +124,8 @@ const PublicRoute = ({ children }) => {
       return <Navigate to="/teacher-dashboard" replace />;
     } else if (user.role === 'Admin') {
       return <Navigate to="/admin-dashboard" replace />;
+    } else if (user.role === 'Parent') {
+      return <Navigate to="/parent-dashboard" replace />;
     }
   }
 
@@ -142,8 +151,10 @@ const HomeRoute = () => {
       return <Navigate to="/teacher-dashboard" replace />;
     } else if (user.role === 'Student') {
       return <Navigate to="/student-dashboard" replace />;
+    } else if (user.role === 'Parent') {
+      return <Navigate to="/parent-dashboard" replace />;
     }
-    return <Navigate to="/admin-dashboard" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <LandingPage />;
@@ -166,7 +177,9 @@ function AppRoutes() {
         <Route path="system-status" element={<SystemStatus />} />
         <Route path="students" element={<StudentList />} />
         <Route path="students/new" element={<StudentForm />} />
+        <Route path="students/add-student-parent" element={<AddStudentParent />} />
         <Route path="students/:id/edit" element={<StudentForm />} />
+        <Route path="students/:studentId/grade" element={<GradeTheory />} />
         <Route path="classes" element={<ClassList />} />
         <Route path="classes/new" element={<ClassForm />} />
         <Route path="classes/:id/edit" element={<ClassForm />} />
@@ -190,6 +203,7 @@ function AppRoutes() {
         <Route path="exams/:examId/questions" element={<QuestionBuilder />} />
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
+        <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="parents" element={<ParentList />} />
         <Route path="parents/new" element={<ParentForm />} />
         <Route path="parents/:id/edit" element={<ParentForm />} />
@@ -205,6 +219,7 @@ function AppRoutes() {
         <Route path="students" element={<StudentList />} />
         <Route path="students/new" element={<StudentForm />} />
         <Route path="students/:id/edit" element={<StudentForm />} />
+        <Route path="students/:studentId/grade" element={<GradeTheory />} />
         <Route path="classes" element={<ClassList />} />
         <Route path="subjects" element={<SubjectList />} />
         <Route path="exams" element={<ExamList />} />
@@ -213,6 +228,7 @@ function AppRoutes() {
         <Route path="exams/:examId/questions" element={<QuestionBuilder />} />
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
+        <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
         <Route path="settings" element={<Settings />} />
@@ -244,6 +260,14 @@ function AppRoutes() {
 
       {/* Student Dashboard Route */}
       <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['Student']}><StudentDashboard /></ProtectedRoute>} />
+
+      {/* Parent Dashboard Route */}
+      <Route path="/parent-dashboard" element={<ProtectedRoute allowedRoles={['Parent']}><DashboardLayout /></ProtectedRoute>}>
+        <Route index element={<ParentDashboard />} />
+        <Route path="children" element={<MyChildren />} />
+        <Route path="results/:studentId" element={<ParentStudentResult />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
 
       {/* ID Card Route */}
       <Route path="/my-id-card" element={<ProtectedRoute allowedRoles={['Teacher', 'Student']}><IdCard /></ProtectedRoute>} />

@@ -15,7 +15,6 @@ import {
   InputLabel,
   Select,
   CircularProgress,
-  useTheme,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -29,10 +28,11 @@ import {
 import {
   adminAPI,
   teacherAPI,
+  academicYearsAPI,
   termsAPI,
   examsAPI,
-  academicYearsAPI,
 } from '../../services/api';
+import { PageHeader } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import {
   mapExamFormToCreateDto,
@@ -60,7 +60,6 @@ const DropdownMenuProps = {
 };
 
 const ExamForm = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
@@ -617,42 +616,17 @@ const ExamForm = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
-          : 'background.default',
-      }}
-    >
-      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 900, mx: 'auto' }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, md: 4 }, gap: 2, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
-          <IconButton
-            onClick={() => navigate(`${basePath}/exams`)}
-            sx={{ color: 'text.primary' }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: 'text.primary',
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-              }}
-            >
-              {isEditing ? 'Edit Exam' : 'Create New Exam'}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary' }}
-            >
-              {isEditing ? 'Update exam details' : 'Fill in the exam details below'}
-            </Typography>
-          </Box>
-        </Box>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAF9' }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
+        <PageHeader
+          title={isEditing ? 'Edit Exam' : 'Create New Exam'}
+          subtitle={isEditing ? 'Update exam details' : 'Set up a new exam for your class'}
+          breadcrumbs={[
+            { label: 'Dashboard', href: basePath },
+            { label: 'Exams', href: `${basePath}/exams` },
+            { label: isEditing ? 'Edit Exam' : 'Create Exam' },
+          ]}
+        />
 
         {/* Error Alert */}
         {error && (

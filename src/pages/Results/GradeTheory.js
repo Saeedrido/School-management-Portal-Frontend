@@ -30,13 +30,14 @@ import {
   CheckCircle,
   Cancel,
   Visibility,
+  AssignmentTurnedIn,
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const GradeTheory = () => {
   const navigate = useNavigate();
-  const { examId } = useParams();
+  const { examId, studentId } = useParams();
   const { user, hasRole } = useAuth();
 
   const basePath = hasRole('Admin') ? '/admin-dashboard' : '/teacher-dashboard';
@@ -45,10 +46,11 @@ const GradeTheory = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [exam, setExam] = useState(null);
+  const [student, setStudent] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
+  const [exam, setExam] = useState(null);
 
   const [gradingForm, setGradingForm] = useState({
     theoryScore: '',
@@ -56,8 +58,12 @@ const GradeTheory = () => {
   });
 
   useEffect(() => {
-    fetchExamAndAttempts();
-  }, [examId]);
+    if (examId) {
+      fetchExamAndAttempts();
+    } else if (studentId) {
+      fetchStudentAttempts();
+    }
+  }, [examId, studentId]);
 
   const fetchExamAndAttempts = async () => {
     try {
@@ -72,11 +78,28 @@ const GradeTheory = () => {
       // Fetch attempts for this exam
       const attemptsResponse = await teacherAPI.examAttempts.getByExam(examId);
       if (attemptsResponse.data?.success) {
-        // Filter only attempts that need theory grading (submitted but not completed/graded)
+        // For exam-based grading, show all submitted attempts (with or without theory score)
         const attemptsList = attemptsResponse.data.data.items || [];
-        const needsGrading = attemptsList.filter(
-          (attempt) => attempt.status === 'Submitted' || (attempt.status === 'Completed' && attempt.theoryScore === null)
-        );
+        console.log('=== RAW EXAM ATTEMPTS ===', attemptsList);
+        
+        // Filter attempts that have been submitted
+        const needsGrading = attemptsList.filter((attempt) => {
+          const isSubmitted = attempt.status === 'Submitted' || attempt.status === 'Completed';
+          const needsTheoryGrading = attempt.theoryScore === null || attempt.theoryScore === undefined;
+          
+          console.log('=== EXAM FILTER CHECK ===', {
+            id: attempt.id,
+            studentName: attempt.studentName,
+            status: attempt.status,
+            theoryScore: attempt.theoryScore,
+            needsTheoryGrading
+          });
+          
+          // Show all submitted attempts - they may need grading
+          return isSubmitted;
+        });
+        
+        console.log('=== FILTERED EXAM ATTEMPTS ===', needsGrading);
         setAttempts(needsGrading);
       }
     } catch (err) {
@@ -87,12 +110,88 @@ const GradeTheory = () => {
     }
   };
 
-  const handleOpenGrading = (attempt) => {
+  const fetchStudentAttempts = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch student details
+      const studentResponse = await adminAPI.students.getById(studentId);
+      if (studentResponse.data?.success) {
+        setStudent(studentResponse.data.data);
+      }
+
+      // Fetch all exam attempts for this student
+      const attemptsResponse = await teacherAPI.examAttempts.getByStudent(studentId);
+      if (attemptsResponse.data?.success) {
+        const attemptsList = attemptsResponse.data.data.items || [];
+        console.log('=== RAW ATTEMPTS ===', attemptsList);
+        
+        // Filter attempts that have theory component and need grading
+        // Only show attempts that: have been submitted AND have theory questions that aren't graded
+        const needsGrading = attemptsList.filter((attempt) => {
+          // Now we have examType directly from the response
+          // ExamType enum: Objective=1, Theory=2, Mixed=3
+          // If examType is not set (0/null), treat as Objective (no theory grading needed)
+          const examType = attempt.examType || 1; // Default to Objective if not set
+          const hasTheory = examType === 2 || examType === 3; // Theory or Mixed (Objective+Theory)
+          const needsTheoryGrading = attempt.theoryScore === null || attempt.theoryScore === undefined;
+          const isSubmitted = attempt.status === 'Submitted' || attempt.status === 'Completed';
+          
+          console.log('=== FILTER CHECK ===', {
+            id: attempt.id,
+            examType,
+            hasTheory,
+            needsTheoryGrading,
+            theoryScore: attempt.theoryScore,
+            status: attempt.status
+          });
+          
+          return hasTheory && needsTheoryGrading && isSubmitted;
+        });
+        
+        console.log('=== FILTERED ATTEMPTS ===', needsGrading);
+        setAttempts(needsGrading);
+      }
+    } catch (err) {
+      console.error('Error fetching student attempts:', err);
+      setError('Failed to load student data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchExamForAttempt = async (attemptId) => {
+    try {
+      const response = await teacherAPI.examAttempts.getById(attemptId);
+      if (response.data?.success) {
+        setExam(response.data.data.exam);
+      }
+    } catch (err) {
+      console.error('Error fetching exam:', err);
+    }
+  };
+
+  const handleOpenGrading = async (attempt) => {
     setSelectedAttempt(attempt);
     setGradingForm({
       theoryScore: attempt.theoryScore || '',
       teacherRemarks: attempt.teacherRemarks || '',
     });
+    
+    // For exam-based grading (examId), use the already fetched exam
+    // For student-based grading (studentId), we may need to fetch exam details
+    if (studentId && !exam) {
+      // Try to fetch exam details
+      try {
+        const response = await teacherAPI.examAttempts.getById(attempt.id);
+        if (response.data?.success) {
+          setExam(response.data.data.exam);
+        }
+      } catch (err) {
+        console.error('Error fetching exam:', err);
+      }
+    }
+    
     setGradingDialogOpen(true);
     setError('');
     setSuccess('');
@@ -137,8 +236,12 @@ const GradeTheory = () => {
 
       if (response.data?.success) {
         setSuccess('Theory graded successfully! Result has been updated.');
-        // Refresh the attempts list
-        await fetchExamAndAttempts();
+        // Refresh the attempts list based on current view
+        if (studentId) {
+          await fetchStudentAttempts();
+        } else {
+          await fetchExamAndAttempts();
+        }
         // Close dialog after short delay
         setTimeout(() => {
           handleCloseGrading();
@@ -174,6 +277,50 @@ const GradeTheory = () => {
     );
   }
 
+  const getPageTitle = () => {
+    if (studentId && student) {
+      const firstName = student.firstName || student.user?.firstName || '';
+      const lastName = student.lastName || student.user?.lastName || '';
+      return `${firstName} ${lastName} - Theory Grading`;
+    }
+    return exam?.title ? `${exam.title} - Theory Grading` : 'Grade Theory';
+  };
+
+  const getBackLink = () => {
+    if (studentId) {
+      return `${basePath}/students`;
+    }
+    return `${basePath}/exams`;
+  };
+
+  // Check if we need to show student column (only in exam view)
+  const showStudentColumn = !studentId;
+
+  // Helper to get exam for each attempt 
+  const getExamForAttempt = (attempt) => {
+    // If we have examId (exam-based grading), create exam object from attempt data
+    if (examId) {
+      return {
+        title: attempt.subjectName || exam?.title,
+        examType: attempt.examType,
+        objectiveMark: attempt.objectiveMark || exam?.objectiveMark,
+        theoryMark: attempt.theoryMark || exam?.theoryMark,
+        totalMarks: attempt.totalMarks || exam?.totalMarks
+      };
+    }
+    // If we have studentId (student-based grading), use attempt data
+    if (studentId) {
+      return {
+        title: attempt.subjectName,
+        examType: attempt.examType,
+        objectiveMark: attempt.objectiveMark,
+        theoryMark: attempt.theoryMark,
+        totalMarks: attempt.totalMarks
+      };
+    }
+    return exam;
+  };
+
   return (
     <Box
       sx={{
@@ -185,15 +332,16 @@ const GradeTheory = () => {
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
-          <IconButton onClick={() => navigate(`${basePath}/exams`)} sx={{ color: '#ffffff' }}>
+          <IconButton onClick={() => navigate(getBackLink())} sx={{ color: '#ffffff' }}>
             <ArrowBack />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h4" sx={{ fontWeight: 700, color: '#ffffff' }}>
-              Grade Theory
+              <AssignmentTurnedIn sx={{ mr: 1, verticalAlign: 'middle' }} />
+              {studentId ? 'Student Theory Grades' : 'Grade Theory'}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              {exam?.title || 'Exam'} - Theory Grading
+              {getPageTitle()}
             </Typography>
           </Box>
         </Box>
@@ -265,7 +413,12 @@ const GradeTheory = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Student</TableCell>
+                      {showStudentColumn && (
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Student</TableCell>
+                      )}
+                      {!studentId && (
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Exam</TableCell>
+                      )}
                       <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Attempt</TableCell>
                       <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Objective Score</TableCell>
                       <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Theory Score</TableCell>
@@ -276,22 +429,31 @@ const GradeTheory = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {attempts.map((attempt) => (
+                    {attempts.map((attempt) => {
+                      const attemptExam = getExamForAttempt(attempt);
+                      return (
                       <TableRow key={attempt.id} hover>
-                        <TableCell sx={{ color: '#ffffff' }}>
-                          {attempt.studentName || `Student #${attempt.studentProfileId}`}
-                        </TableCell>
+                        {showStudentColumn && (
+                          <TableCell sx={{ color: '#ffffff' }}>
+                            {attempt.studentName || `Student #${attempt.studentProfileId}`}
+                          </TableCell>
+                        )}
+                        {!studentId && (
+                          <TableCell sx={{ color: '#ffffff' }}>
+                            {attemptExam?.title || 'Unknown Exam'}
+                          </TableCell>
+                        )}
                         <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                           Attempt #{attempt.attemptNumber}
                         </TableCell>
                         <TableCell sx={{ color: '#ffffff' }}>
-                          {attempt.objectiveScore !== null ? `${attempt.objectiveScore}/${exam?.objectiveMark || 0}` : '-'}
+                          {attempt.objectiveScore !== null ? `${attempt.objectiveScore}/${attemptExam?.objectiveMark || 0}` : '-'}
                         </TableCell>
                         <TableCell sx={{ color: '#ffffff' }}>
-                          {attempt.theoryScore !== null ? `${attempt.theoryScore}/${exam?.theoryMark || 0}` : 'Not graded'}
+                          {attempt.theoryScore !== null ? `${attempt.theoryScore}/${attemptExam?.theoryMark || 0}` : 'Not graded'}
                         </TableCell>
                         <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>
-                          {attempt.totalScore !== null ? `${attempt.totalScore}/${exam?.totalMarks || 0}` : '-'}
+                          {attempt.totalScore !== null ? `${attempt.totalScore}/${attemptExam?.totalMarks || 0}` : '-'}
                         </TableCell>
                         <TableCell>{getStatusChip(attempt.status)}</TableCell>
                         <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -307,7 +469,8 @@ const GradeTheory = () => {
                           </IconButton>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -348,9 +511,26 @@ const GradeTheory = () => {
                   Student
                 </Typography>
                 <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 600 }}>
-                  {selectedAttempt.studentName || `Student #${selectedAttempt.studentProfileId}`}
+                  {studentId 
+                    ? `${student?.firstName || student?.user?.firstName || ''} ${student?.lastName || student?.user?.lastName || ''}`
+                    : selectedAttempt.studentName || `Student #${selectedAttempt.studentProfileId}`}
                 </Typography>
               </Box>
+
+              {/* Exam Info (show when viewing from student) */}
+              {studentId && exam && (
+                <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
+                  <Typography variant="body2" sx={{ color: '#64B5F6', mb: 0.5 }}>
+                    Exam
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                    {exam.title}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                    Theory Marks: {exam.theoryMark} | Objective Marks: {exam.objectiveMark}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Objective Score Display */}
               <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(102, 187, 106, 0.1)', borderRadius: 2 }}>

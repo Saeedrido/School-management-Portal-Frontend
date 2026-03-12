@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Box,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -13,392 +12,281 @@ import {
   Chip,
   Grid,
   Card,
+  CardContent,
   Avatar,
   CircularProgress,
-  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Alert,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
-import { Assessment, EmojiEvents, School } from '@mui/icons-material';
-import { resultsAPI } from '../../services/api';
+import {
+  Assessment,
+  School,
+  Search,
+  Visibility,
+  TrendingUp,
+} from '@mui/icons-material';
+import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { PageHeader, StatusBadge } from '../../components/ui';
 
 const ResultList = () => {
-  const theme = useTheme();
-  const { user } = useAuth();
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user, hasRole } = useAuth();
+  
+  const basePath = hasRole('Admin') ? '/admin-dashboard' : '/teacher-dashboard';
+  
+  const isAdmin = hasRole('Admin');
+  const isTeacher = hasRole('Teacher');
+
+  const resultsAPI = isTeacher ? teacherAPI : adminAPI;
+  
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [classes, setClasses] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [students, setStudents] = useState([]);
+  
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetchResults();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchInitialData();
   }, []);
 
-  const fetchResults = async () => {
+  const fetchInitialData = async () => {
     try {
       setLoading(true);
-      let response;
-      if (user?.role === 'Student') {
-        response = await resultsAPI.getStudentResults(user.id);
-      } else {
-        setResults([]);
-        setLoading(false);
-        return;
+      setError('');
+
+      const termsResponse = await resultsAPI.terms.getAll();
+      if (termsResponse.data?.success) {
+        setTerms(termsResponse.data.data || []);
+        const activeTerm = termsResponse.data.data?.find(t => t.isActive);
+        if (activeTerm) {
+          setSelectedTerm(activeTerm.id);
+        }
       }
-      if (response.data?.success) {
-        setResults(response.data.data.items || []);
-      } else {
-        setError(response.data?.message || 'Failed to fetch results');
+
+      if (isAdmin) {
+        const classesResponse = await resultsAPI.classes.getAll();
+        if (classesResponse.data?.success) {
+          setClasses(classesResponse.data.data || []);
+        }
+      } else if (isTeacher) {
+        const assignmentsResponse = await resultsAPI.classSubjects.getMyAssignments();
+        if (assignmentsResponse.data?.success) {
+          const assignments = assignmentsResponse.data.data?.items || [];
+          const uniqueClasses = [];
+          const seenClassIds = new Set();
+          assignments.forEach(a => {
+            if (a.class && !seenClassIds.has(a.classId)) {
+              seenClassIds.add(a.classId);
+              uniqueClasses.push(a.class);
+            }
+          });
+          setClasses(uniqueClasses);
+        }
       }
     } catch (err) {
-      setError('Failed to fetch results');
-      console.error(err);
+      console.error('Error fetching data:', err);
+      setError('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  const getGradeColor = (grade) => {
-    if (!grade) return { bgcolor: '#F5F5F5', color: '#757575' };
-    const firstChar = grade.toUpperCase().charAt(0);
-    if (['A', 'B'].includes(firstChar)) return { bgcolor: '#E8F5E9', color: '#2E7D32' };
-    if (['C', 'D'].includes(firstChar)) return { bgcolor: '#FFF3E0', color: '#F57C00' };
-    return { bgcolor: '#FFEBEE', color: '#C62828' };
+  useEffect(() => {
+    if (selectedClass && selectedTerm) {
+      fetchStudents();
+    }
+  }, [selectedClass, selectedTerm]);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await resultsAPI.students.getByClassPaged(selectedClass, 1, 100);
+      if (response.data?.success) {
+        setStudents(response.data.data?.items || []);
+      }
+    } catch (err) {
+      console.error('Error fetching students:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getPercentageColor = (percentage) => {
-    if (percentage >= 70) return { color: '#2E7D32', bgcolor: '#E8F5E9' };
-    if (percentage >= 50) return { color: '#F57C00', bgcolor: '#FFF3E0' };
-    return { color: '#C62828', bgcolor: '#FFEBEE' };
-  };
-
-  const calculateAverage = () => {
-    if (!results.length) return 0;
-    const percentages = results.map(r => r.totalMarks ? (r.score / r.totalMarks) * 100 : 0);
-    const avg = percentages.reduce((sum, p) => sum + p, 0) / percentages.length;
-    return avg.toFixed(1);
-  };
+  const filteredStudents = students.filter(s => 
+    searchQuery === '' ||
+    `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.studentNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <Container maxWidth="xl">
-      {/* Header */}
-      <Box
-        sx={{
-          mb: { xs: 3, md: 4 },
-          background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(171, 71, 188, 0.8) 0%, rgba(123, 31, 162, 0.8) 100%)'
-            : 'linear-gradient(135deg, #AB47BC 0%, #7B1FA2 100%)',
-          borderRadius: { xs: 2, sm: 3, md: 4 },
-          p: { xs: 2, sm: 3, md: 4 },
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)',
-          }}
-        />
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 }, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
-            <Avatar
-              sx={{
-                width: { xs: 56, sm: 64 },
-                height: { xs: 56, sm: 64 },
-                bgcolor: 'rgba(255,255,255,0.2)',
-              }}
-            >
-              <Assessment sx={{ fontSize: { xs: 28, sm: 32 } }} />
-            </Avatar>
-            <Box>
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
-                🏆 My Results
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Track your academic performance
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Results"
+        subtitle="View and manage student results"
+      />
 
       {error && (
-        <Typography color="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
           {error}
-        </Typography>
+        </Alert>
       )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-          <CircularProgress sx={{ color: '#AB47BC' }} />
-        </Box>
-      ) : results.length === 0 ? (
-        <Paper
-          sx={{
-            p: 8,
-            textAlign: 'center',
-            borderRadius: 4,
-            background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F7FA 100%)',
-          }}
-        >
-          <Assessment sx={{ fontSize: 64, color: '#B0BEC5', mb: 2 }} />
-          <Typography variant="h6" sx={{ color: '#78909C', mb: 1 }}>
-            No results available yet
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#B0BEC5' }}>
-            Complete your exams to see your results here
-          </Typography>
-        </Paper>
-      ) : (
-        <>
-          {/* Stats Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #AB47BC 0%, #7B1FA2 100%)',
-                  color: 'white',
-                }}
-              >
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                  Average Score
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {calculateAverage()}%
-                </Typography>
-              </Card>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, mb: 0.5 }}>Total Students</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>{students.length}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: 2.5, background: 'linear-gradient(135deg, #6FAF8F15 0%, #6FAF8F08 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6FAF8F' }}>
+                  <School sx={{ fontSize: 24 }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Select Class</InputLabel>
+                <Select
+                  value={selectedClass}
+                  label="Select Class"
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  sx={{ borderRadius: 2.5 }}
+                >
+                  <MenuItem value=""><em>Select a class</em></MenuItem>
+                  {classes.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>
+                      {cls.displayName || cls.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #66BB6A 0%, #388E3C 100%)',
-                  color: 'white',
-                }}
-              >
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                  Passed
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {results.filter(r => r.passed).length}/{results.length}
-                </Typography>
-              </Card>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Select Term</InputLabel>
+                <Select
+                  value={selectedTerm}
+                  label="Select Term"
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  sx={{ borderRadius: 2.5 }}
+                >
+                  <MenuItem value=""><em>Select a term</em></MenuItem>
+                  {terms.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-                  color: 'white',
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, backgroundColor: '#F8FAF9' } }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><Search sx={{ color: '#6FAF8F' }} /></InputAdornment>,
                 }}
-              >
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                  Highest Score
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {Math.max(...results.map(r => r.totalMarks ? (r.score / r.totalMarks) * 100 : 0)).toFixed(0)}%
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #EF5350 0%, #C62828 100%)',
-                  color: 'white',
-                }}
-              >
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                  Exams Taken
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {results.length}
-                </Typography>
-              </Card>
+              />
             </Grid>
           </Grid>
+        </CardContent>
+      </Card>
 
-          {/* Results Table */}
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: 4,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            }}
-          >
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : !selectedClass || !selectedTerm ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Assessment sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+            <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+              Select a class and term to view results
+            </Typography>
+          </Box>
+        ) : filteredStudents.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <School sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
+            <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
+              No students found in this class
+            </Typography>
+          </Box>
+        ) : (
+          <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ background: 'linear-gradient(90deg, #AB47BC 0%, #7B1FA2 100%)' }}>
-                  <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Exam
-                  </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Subject
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Score
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Total
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Percentage
-                  </TableCell>
-                  <TableCell align="center" sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Grade
-                  </TableCell>
-                  <TableCell align="center" sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Status
-                  </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>
-                    Date
-                  </TableCell>
+                <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Student</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Student ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {results.map((result, index) => {
-                  const percentage = result.percentage || 0;
-                  const percentageColor = getPercentageColor(Number(percentage));
-                  const gradeColor = getGradeColor(result.grade);
-
-                  return (
-                    <TableRow
-                      key={result.id}
-                      hover
-                      sx={{
-                        '&:hover': { background: '#F5F7FA' },
-                        background: index % 2 === 0 ? 'white' : '#FAFAFA',
-                      }}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: '#AB47BC',
-                              width: 32,
-                              height: 32,
-                              fontSize: 14,
-                            }}
-                          >
-                            <School sx={{ fontSize: 16 }} />
-                          </Avatar>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#1976D2' }}>
-                            {result.examTitle || result.exam?.title || 'Exam'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: '#546E7A' }}>
-                          {result.subjectName || result.subject?.name || 'Subject'}
+                {filteredStudents.map((student) => (
+                  <TableRow
+                    key={student.id}
+                    sx={{
+                      borderBottom: '1px solid rgba(111, 175, 143, 0.08)',
+                      '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.03)' },
+                    }}
+                  >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: '#6FAF8F' }}>
+                          {student.firstName?.charAt(0) || 'S'}
+                        </Avatar>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#1E293B' }}>
+                          {student.firstName} {student.lastName}
                         </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#1976D2' }}>
-                          {result.score}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ color: '#546E7A' }}>
-                          {result.totalMarks}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box
-                          sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {percentage}%
-                          </Typography>
-                          {result.totalMarks && (
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                bgcolor: percentageColor.color,
-                              }}
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={result.grade || 'N/A'}
-                          size="small"
-                          sx={{
-                            bgcolor: gradeColor.bgcolor,
-                            color: gradeColor.color,
-                            fontWeight: 700,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={result.passed ? 'Passed' : 'Failed'}
-                          size="small"
-                          sx={{
-                            bgcolor: result.passed ? '#E8F5E9' : '#FFEBEE',
-                            color: result.passed ? '#2E7D32' : '#C62828',
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: '#78909C' }}>
-                          {result.completedAt
-                            ? new Date(result.completedAt).toLocaleDateString()
-                            : '-'}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>{student.studentNumber || 'N/A'}</TableCell>
+                    <TableCell>
+                      <StatusBadge status="Active" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Visibility />}
+                        onClick={() => navigate(`${basePath}/results/student/${student.id}?termId=${selectedTerm}`)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        View Results
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
-
-          {/* Performance Summary */}
-          <Box
-            sx={{
-              mt: 4,
-              p: 3,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)',
-              border: '1px solid #AB47BC',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <EmojiEvents sx={{ color: '#7B1FA2', fontSize: 24 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#4A148C' }}>
-                Performance Summary
-              </Typography>
-            </Box>
-            <Typography variant="body2" sx={{ color: '#6A1B9A' }}>
-              {calculateAverage() >= 70
-                ? '🎉 Excellent performance! Keep up the good work!'
-                : calculateAverage() >= 50
-                  ? '💪 Good effort! There\'s room for improvement.'
-                  : '📚 Don\'t give up! With more practice, you can do better.'}
-            </Typography>
-          </Box>
-        </>
-      )}
-    </Container>
+        )}
+      </Card>
+    </Box>
   );
 };
 
