@@ -48,106 +48,16 @@ export const AuthProvider = ({ children }) => {
   // Validate token with backend on mount
   useEffect(() => {
     const validateAuth = async () => {
-      const token = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-
-      console.log('🔄 AuthContext - Starting token validation...');
-
-      // If no token, clear everything and finish loading
-      if (!token) {
-        console.log('❌ AuthContext - No token found, clearing auth state');
-        localStorage.removeItem('user');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-        setTokenValidated(false);
-        setLoading(false);
-        return;
-      }
-
-      // If token exists but no user data, clear token
-      if (!savedUser) {
-        console.log('❌ AuthContext - Token exists but no user data, clearing token');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-        setTokenValidated(false);
-        setLoading(false);
-        return;
-      }
-
-      // Parse saved user and preserve role from localStorage
-      let parsedUser = null;
-      try {
-        parsedUser = JSON.parse(savedUser);
-      } catch (e) {
-        console.error('❌ AuthContext - Failed to parse saved user');
-      }
-
-      const savedRole = parsedUser?.role; // Preserve the role from login
-      console.log('🔍 AuthContext - Saved role from localStorage:', savedRole);
-
-      // Token and saved user exist - validate with backend
-      console.log('🔍 AuthContext - Token found, validating with backend...');
-
-      try {
-        // Call backend /me endpoint to validate token
-        const response = await authAPI.getCurrentUser();
-
-        if (response.data?.success && response.data?.data) {
-          // Token is valid, update user state
-          const userData = response.data.data;
-          const normalizedUser = normalizeUser(userData);
-          
-          // Preserve the role from localStorage if backend doesn't provide it
-          if (savedRole && (!normalizedUser.roles || normalizedUser.roles.length === 0)) {
-            normalizedUser.role = savedRole;
-            console.log('🔧 AuthContext - Preserved role from localStorage:', savedRole);
-          }
-          
-          console.log('✅ AuthContext - Token validated successfully:', normalizedUser);
-          setUser(normalizedUser);
-          setTokenValidated(true);
-
-          // Update stored user data with fresh data from the backend
-          localStorage.setItem('user', JSON.stringify(normalizedUser));
-        } else {
-          // Backend returned success: false - use localStorage data as fallback
-          // IMPORTANT: Do NOT clear token - just use localStorage data
-          console.log('⚠️ AuthContext - Backend validation failed, using localStorage data');
-          if (parsedUser) {
-            setUser(parsedUser);
-            setTokenValidated(true);
-          } else {
-            // No localStorage data, need to clear
-            console.log('⚠️ AuthContext - No localStorage data');
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            setUser(null);
-            setTokenValidated(false);
-          }
-        }
-      } catch (error) {
-        // Token is invalid/expired OR backend is unreachable
-        console.error('❌ AuthContext - Token validation error:', error.message);
-        
-        // IMPORTANT: Use localStorage data as fallback - DO NOT clear token!
-        if (parsedUser) {
-          console.log('⚠️ AuthContext - Using localStorage data as fallback (backend unreachable or token invalid)');
-          setUser(parsedUser);
-          setTokenValidated(true);
-        } else {
-          // No valid localStorage data - clear everything
-          console.log('❌ AuthContext - No valid localStorage data, clearing auth');
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          setUser(null);
-          setTokenValidated(false);
-        }
-      } finally {
-        setLoading(false);
-      }
+      // Always clear token on app startup - users must login every time
+      // This ensures landing page is always shown first
+      console.log('🔄 AuthContext - Clearing auth state on startup');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      setUser(null);
+      setTokenValidated(false);
+      setLoading(false);
+      return;
     };
 
     validateAuth();

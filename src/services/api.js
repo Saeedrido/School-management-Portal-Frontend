@@ -236,13 +236,25 @@ export const adminAPI = {
   results: {
     getByStudentAndTerm: (studentId, termId) => api.get(`/api/results/student/${studentId}/term/${termId}`),
     getStudentResults: (studentId, page = 1, pageSize = 20) => api.get(`/api/results/student/${studentId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
+    getCumulative: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
     getCumulativeResults: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
+    calculateCumulative: (academicYearId, classId) => api.post(`/api/results/cumulative/calculate?academicYearId=${academicYearId}${classId ? `&classId=${classId}` : ''}`),
     getById: (id) => api.get(`/api/results/${id}`),
     getStudentAvailableTerms: (studentId) => api.get(`/api/results/student/${studentId}/available-terms`),
     publish: (data) => api.post('/api/results/publish', data),
     updateRemarks: (id, data) => api.put(`/api/results/${id}`, data),
     delete: (id) => api.delete(`/api/results/${id}`),
     calculatePositions: (data) => api.post('/api/results/positions/calculate', data),
+  },
+  grades: {
+    getAll: () => api.get('/api/grades'),
+    getBySchoolLevel: (schoolLevel) => api.get(`/api/grades/school-level/${schoolLevel}`),
+    getById: (id) => api.get(`/api/grades/${id}`),
+    create: (data) => api.post('/api/grades', data),
+    update: (id, data) => api.put(`/api/grades/${id}`, data),
+    delete: (id) => api.delete(`/api/grades/${id}`),
+    seedDefaults: () => api.post('/api/grades/seed-defaults'),
+    updateBySchoolLevel: (data) => api.put('/api/grades/school-level', data),
   },
   reportCards: {
     getByStudentAndTerm: (studentId, termId) => api.get(`/api/reportcards/students/${studentId}/terms/${termId}`),
@@ -253,6 +265,8 @@ export const adminAPI = {
   promotions: {
     getCalculated: (academicYearId, classId, status, page = 1, pageSize = 20) =>
       api.get(`/api/promotions/calculated?academicYearId=${academicYearId}${classId ? `&classId=${classId}` : ''}${status ? `&statusFilter=${status}` : ''}&pageNumber=${page}&pageSize=${pageSize}`),
+    calculate: (academicYearId, classId) => 
+      api.post(`/api/promotions/calculate?academicYearId=${academicYearId}${classId ? `&classId=${classId}` : ''}`),
     getStudentStatus: (studentId, academicYearId) => api.get(`/api/promotions/students/${studentId}/status?academicYearId=${academicYearId}`),
     getMyStatus: (studentId, academicYearId) => api.get(`/api/students/${studentId}/my-promotion-status?academicYearId=${academicYearId}`),
     override: (studentId, academicYearId, data) => api.put(`/api/promotions/${studentId}/override?academicYearId=${academicYearId}`, data),
@@ -378,6 +392,7 @@ export const academicYearsAPI = adminAPI.academicYears;
 export const termsAPI = adminAPI.terms;
 export const dashboardAPI = sharedAPI.dashboard;
 export const reportCardsAPI = adminAPI.reportCards;
+export const gradesAPI = adminAPI.grades;
 export const promotionsAPI = adminAPI.promotions;
 
 export default api;

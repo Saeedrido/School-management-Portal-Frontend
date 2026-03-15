@@ -24,6 +24,7 @@ import AcademicYearForm from './pages/AcademicYears/AcademicYearForm';
 import TermList from './pages/Terms/TermList';
 import TermForm from './pages/Terms/TermForm';
 import PromotionList from './pages/Promotions/PromotionList';
+import PromotionCriteria from './pages/Promotions/PromotionCriteria';
 import ReportCardList from './pages/ReportCards/ReportCardList';
 import ExamList from './pages/Exams/ExamList';
 import ExamForm from './pages/Exams/ExamForm';
@@ -44,6 +45,8 @@ import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import ParentDashboard from './pages/Dashboard/ParentDashboard';
 import SystemStatus from './pages/Admin/SystemStatus';
 import Settings from './pages/Settings';
+import GradeManagement from './pages/Grades/GradeManagement';
+import StudentProfile from './pages/Students/StudentProfile';
 import LandingPage from './pages/landingPage';
 import PaymentPage from './pages/PaymentPage';
 
@@ -196,6 +199,7 @@ function AppRoutes() {
         <Route path="terms/new" element={<TermForm />} />
         <Route path="terms/:id/edit" element={<TermForm />} />
         <Route path="promotions" element={<PromotionList />} />
+        <Route path="promotion-criteria" element={<PromotionCriteria />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="exams" element={<ExamList />} />
         <Route path="exams/new" element={<ExamForm />} />
@@ -208,6 +212,8 @@ function AppRoutes() {
         <Route path="parents/new" element={<ParentForm />} />
         <Route path="parents/:id/edit" element={<ParentForm />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="grade-management" element={<GradeManagement />} />
+        <Route path="student-profiles" element={<StudentProfile />} />
         <Route path="teacher-assignments" element={<TeacherAssignments />} />
       </Route>
 

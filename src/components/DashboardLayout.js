@@ -24,7 +24,6 @@ import {
   Dashboard,
   People,
   Class,
-  School,
   Book,
   Assignment,
   Assessment,
@@ -38,7 +37,11 @@ import {
   Notifications,
   Person,
   KeyboardArrowDown,
+  School,
+  Badge,
+  EmojiEvents,
 } from '@mui/icons-material';
+import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 280;
@@ -77,13 +80,16 @@ const DashboardLayout = () => {
     { text: 'Parents', icon: <People />, path: '/admin-dashboard/parents' },
     { text: 'Classes', icon: <Class />, path: '/admin-dashboard/classes' },
     { text: 'Subjects', icon: <Book />, path: '/admin-dashboard/subjects' },
-    { text: 'Users', icon: <School />, path: '/admin-dashboard/users' },
+    { text: 'Users', icon: <People />, path: '/admin-dashboard/users' },
     { text: 'Exams', icon: <Assignment />, path: '/admin-dashboard/exams' },
     { text: 'Results', icon: <TrendingUp />, path: '/admin-dashboard/results' },
     { text: 'Academic Years', icon: <CalendarMonth />, path: '/admin-dashboard/academic-years' },
     { text: 'Terms', icon: <Note />, path: '/admin-dashboard/terms' },
     { text: 'Promotions', icon: <Assessment />, path: '/admin-dashboard/promotions' },
+    { text: 'Promotion Criteria', icon: <EmojiEvents />, path: '/admin-dashboard/promotion-criteria' },
     { text: 'Report Cards', icon: <Quiz />, path: '/admin-dashboard/report-cards' },
+    { text: 'Grade Management', icon: <TrendingUp />, path: '/admin-dashboard/grade-management' },
+    { text: 'Student Profiles', icon: <Person />, path: '/admin-dashboard/student-profiles' },
   ];
 
   const teacherMenuItems = [
@@ -93,13 +99,13 @@ const DashboardLayout = () => {
     { text: 'Exams', icon: <Assignment />, path: '/teacher-dashboard/exams' },
     { text: 'Students', icon: <People />, path: '/teacher-dashboard/students' },
     { text: 'Results', icon: <TrendingUp />, path: '/teacher-dashboard/results' },
-    { text: 'My ID Card', icon: <School />, path: '/my-id-card' },
+    { text: 'My ID Card', icon: <Badge />, path: '/my-id-card' },
   ];
 
   const parentMenuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/parent-dashboard' },
     { text: 'My Children', icon: <People />, path: '/parent-dashboard/children' },
-    { text: 'Settings', icon: <School />, path: '/parent-dashboard/settings' },
+    { text: 'Settings', icon: <Settings />, path: '/parent-dashboard/settings' },
   ];
 
   const menuItems = user?.role === 'Admin' ? adminMenuItems : user?.role === 'Teacher' ? teacherMenuItems : parentMenuItems;
@@ -133,44 +139,40 @@ const DashboardLayout = () => {
         {!collapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
+              component="img"
+              src={schoolLogo}
+              alt="School Logo"
               sx={{
-                width: 42,
-                height: 42,
-                borderRadius: 2.5,
-                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(111, 175, 143, 0.35)',
+                width: 50,
+                height: 50,
+                borderRadius: 1.5,
+                objectFit: 'contain',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
               }}
-            >
-              <School sx={{ fontSize: 24, color: 'white' }} />
-            </Box>
+            />
             <Box>
-              <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}>
-                EduFlow
+              <Typography variant="h6" sx={{ color: '#1F2937', fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.2 }}>
+                300 Arundel
               </Typography>
-              <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.5px' }}>
-                PRO
+              <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.3px' }}>
+                Learning Centre
               </Typography>
             </Box>
           </Box>
         )}
         {collapsed && (
           <Box
+            component="img"
+            src={schoolLogo}
+            alt="School Logo"
             sx={{
-              width: 42,
-              height: 42,
-              borderRadius: 2.5,
-              background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(111, 175, 143, 0.35)',
+              width: 45,
+              height: 45,
+              borderRadius: 1.5,
+              objectFit: 'contain',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             }}
-          >
-            <School sx={{ fontSize: 24, color: 'white' }} />
-          </Box>
+          />
         )}
         {!isMobile && !collapsed && (
           <IconButton

@@ -42,6 +42,7 @@ import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI, studentAPI } from '../../services/api';
 import { enumToExamType } from '../../utils/dataMapping';
 import { PageHeader, StatusBadge } from '../../components/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const ExamList = () => {
   const navigate = useNavigate();
@@ -60,6 +61,10 @@ const ExamList = () => {
   const [error, setError] = useState('');
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteExamId, setDeleteExamId] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -220,14 +225,18 @@ const ExamList = () => {
     }
   };
 
-  const handleDelete = async (examId) => {
-    if (!window.confirm('Are you sure you want to delete this exam?')) {
-      return;
-    }
+  const handleDeleteClick = (examId) => {
+    setDeleteExamId(examId);
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteExamId) return;
     try {
-      const response = await adminAPI.exams.delete(examId);
+      const response = await adminAPI.exams.delete(deleteExamId);
       if (response.data?.success) {
-        setExams(exams.filter((e) => e.id !== examId));
+        setExams(exams.filter((e) => e.id !== deleteExamId));
       } else {
         setError(response.data?.message || 'Failed to delete exam');
       }
@@ -235,6 +244,7 @@ const ExamList = () => {
       console.error('Error deleting exam:', err);
       setError(err.response?.data?.message || 'Failed to delete exam');
     }
+    setDeleteExamId(null);
   };
 
   const handleStartExam = async (examId) => {
@@ -610,7 +620,7 @@ const ExamList = () => {
                             {(hasRole('Admin') || (exam.isOwner && !exam.isActive)) && (
                               <IconButton
                                 size="small"
-                                onClick={() => handleDelete(exam.id)}
+                                onClick={() => handleDeleteClick(exam.id)}
                                 disabled={exam.isActive}
                                 sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                                 title={exam.isOwner && !hasRole('Admin') ? "Cannot delete - exam has started" : "Delete"}
@@ -629,6 +639,15 @@ const ExamList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Exam"
+        message="Are you sure you want to delete this exam? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };

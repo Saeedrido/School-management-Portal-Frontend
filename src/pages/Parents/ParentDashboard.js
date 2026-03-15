@@ -220,7 +220,7 @@ const ParentDashboard = () => {
                         variant="contained"
                         size="small"
                         startIcon={<Visibility />}
-                        onClick={() => navigate(`/parent-dashboard/children/${selectedChild.id}/results`)}
+                        onClick={() => navigate(`/parent-dashboard/results/${selectedChild.id}`)}
                         sx={{ borderRadius: 2 }}
                       >
                         View Results

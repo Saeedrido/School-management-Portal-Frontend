@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import api, { attemptsAPI, sharedAPI, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const TakeExam = () => {
   const navigate = useNavigate();
@@ -42,6 +43,9 @@ const TakeExam = () => {
   const [attemptId, setAttemptId] = useState(null);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
   
   const timerRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -275,12 +279,13 @@ const TakeExam = () => {
     }
   }, [attemptId, answers, questions, navigate]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (isSubmittingRef.current) return;
-    
-    const confirmed = window.confirm('Are you sure you want to submit your exam? You cannot undo this action.');
-    if (!confirmed) return;
+    setConfirmOpen(true);
+  };
 
+  const handleConfirmSubmit = async () => {
+    setConfirmOpen(false);
     isSubmittingRef.current = true;
     setSubmitting(true);
     setError('');
@@ -399,7 +404,8 @@ const TakeExam = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ pb: 4 }}>
+    <>
+      <Container maxWidth="lg" sx={{ pb: 4 }}>
       <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #5FAF8F 0%, #2E8B57 100%)', color: 'white' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Box>
@@ -567,6 +573,16 @@ const TakeExam = () => {
         </Box>
       </Box>
     </Container>
+
+    <ConfirmDialog
+      open={confirmOpen}
+      onClose={() => setConfirmOpen(false)}
+      onConfirm={handleConfirmSubmit}
+      title="Submit Exam"
+      message="Are you sure you want to submit your exam? You cannot undo this action."
+      confirmText="Submit"
+    />
+  </>
   );
 };
 

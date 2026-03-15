@@ -145,7 +145,7 @@ const MyChildren = () => {
                     <Button
                       variant="contained"
                       startIcon={<Visibility />}
-                      onClick={() => navigate(`/parent-dashboard/children/${child.id}/results`)}
+                      onClick={() => navigate(`/parent-dashboard/results/${child.id}`)}
                       sx={{
                         background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                         borderRadius: 2.5,

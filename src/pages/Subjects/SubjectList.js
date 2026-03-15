@@ -30,6 +30,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
 import { PageHeader, StatusBadge } from '../../components/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const SCHOOL_LEVELS = {
   0: 'Primary',
@@ -44,6 +45,10 @@ const SubjectList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
 
@@ -71,18 +76,22 @@ const SubjectList = () => {
     subject.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = async (subjectId) => {
-    if (!window.confirm('Are you sure you want to delete this subject?')) {
-      return;
-    }
+  const handleDeleteClick = (subjectId) => {
+    setDeleteId(subjectId);
+    setConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteId) return;
     try {
-      await adminAPI.subjects.delete(subjectId);
-      setSubjects(subjects.filter((s) => s.id !== subjectId));
+      await adminAPI.subjects.delete(deleteId);
+      setSubjects(subjects.filter((s) => s.id !== deleteId));
     } catch (err) {
       console.error('Error deleting subject:', err);
       setError('Failed to delete subject');
     }
+    setDeleteId(null);
   };
 
   const getSubjectColor = (name) => {
@@ -262,7 +271,7 @@ const SubjectList = () => {
                         </IconButton>
                         <IconButton
                           size="small"
-                          onClick={() => handleDelete(subject.id)}
+                          onClick={() => handleDeleteClick(subject.id)}
                           sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                         >
                           <Delete fontSize="small" />
@@ -274,8 +283,17 @@ const SubjectList = () => {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+            </TableContainer>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Subject"
+        message="Are you sure you want to delete this subject? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };

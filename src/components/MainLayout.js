@@ -27,13 +27,13 @@ import {
   Quiz,
   Assessment,
   Logout,
-  School,
   CalendarMonth,
   Note,
   TrendingUp,
   Celebration,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 
 const drawerWidth = 260;
 
@@ -98,32 +98,31 @@ const MainLayout = () => {
         }}
       >
         <Box
+          component="img"
+          src={schoolLogo}
+          alt="School Logo"
           sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            background: 'rgba(255,255,255,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: 50,
+            height: 50,
+            borderRadius: 1.5,
+            objectFit: 'contain',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
           }}
-        >
-          <School sx={{ fontSize: 28, color: 'white' }} />
-        </Box>
+        />
         <Box>
           <Typography
             variant="h6"
             noWrap
             component="div"
-            sx={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}
+            sx={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}
           >
-            School
+            300 Arundel
           </Typography>
           <Typography
             variant="caption"
             sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}
           >
-            Management System
+            Learning Centre
           </Typography>
         </Box>
       </Box>

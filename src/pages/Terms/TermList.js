@@ -31,6 +31,7 @@ import {
 import { termsAPI, academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader, StatusBadge } from '../../components/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const TermList = () => {
   const navigate = useNavigate();
@@ -40,6 +41,10 @@ const TermList = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const basePath = '/admin-dashboard';
 
@@ -84,18 +89,22 @@ const TermList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this term?')) {
-      return;
-    }
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteId) return;
     try {
-      await termsAPI.delete(id);
-      setTerms(terms.filter((t) => t.id !== id));
+      await termsAPI.delete(deleteId);
+      setTerms(terms.filter((t) => t.id !== deleteId));
     } catch (err) {
       setError('Failed to delete term');
       console.error(err);
     }
+    setDeleteId(null);
   };
 
   const handleSetActive = async (id) => {
@@ -248,7 +257,7 @@ const TermList = () => {
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => handleDelete(term.id)}
+                              onClick={() => handleDeleteClick(term.id)}
                               sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                             >
                               <Delete fontSize="small" />
@@ -264,6 +273,15 @@ const TermList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Term"
+        message="Are you sure you want to delete this term? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };

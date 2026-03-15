@@ -237,7 +237,7 @@ const ParentDashboard = () => {
                       fullWidth
                       variant="contained"
                       startIcon={<TrendingUp />}
-                      onClick={() => navigate(`/parent-dashboard/results?studentId=${child.studentProfileId}`)}
+                      onClick={() => navigate(`/parent-dashboard/results/${child.studentProfileId}`)}
                       sx={{
                         bgcolor: '#FF3E8A',
                         '&:hover': { bgcolor: '#FF5DA3' },

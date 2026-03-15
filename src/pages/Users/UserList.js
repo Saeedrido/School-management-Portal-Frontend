@@ -32,6 +32,7 @@ import {
 import { usersAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader, StatusBadge } from '../../components/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -43,6 +44,10 @@ const UserList = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [totalCount, setTotalCount] = useState(0);
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const basePath = '/admin-dashboard';
 
@@ -64,19 +69,23 @@ const UserList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteId) return;
     try {
-      await usersAPI.delete(id);
-      setUsers(users.filter((u) => u.id !== id));
+      await usersAPI.delete(deleteId);
+      setUsers(users.filter((u) => u.id !== deleteId));
       setTotalCount(totalCount - 1);
     } catch (err) {
       setError('Failed to delete user');
       console.error(err);
     }
+    setDeleteId(null);
   };
 
   const filteredUsers = users.filter((user) =>
@@ -272,7 +281,7 @@ const UserList = () => {
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => handleDelete(userItem.id)}
+                              onClick={() => handleDeleteClick(userItem.id)}
                               sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                             >
                               <Delete fontSize="small" />
@@ -288,6 +297,15 @@ const UserList = () => {
           </TableContainer>
         )}
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };

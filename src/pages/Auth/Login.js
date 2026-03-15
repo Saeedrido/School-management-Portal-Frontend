@@ -20,9 +20,9 @@ import {
   Lock,
   Visibility,
   VisibilityOff,
-  School,
   ArrowForward,
 } from '@mui/icons-material';
+import schoolLogo from '../../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
@@ -88,11 +88,11 @@ const Login = () => {
     <Box
       sx={{
         minHeight: '100vh',
+        width: '100vw',
         background: 'linear-gradient(135deg, #F0F7F4 0%, #E8F2ED 50%, #D4EBE3 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: { xs: 2, sm: 3 },
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -133,37 +133,34 @@ const Login = () => {
         }}
       >
         <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
-          {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          {/* Logo inside the card */}
+          <Box sx={{ textAlign: 'center' }}>
             <Box
+              component="img"
+              src={schoolLogo}
+              alt="School Logo"
               sx={{
-                width: 60,
-                height: 60,
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-                boxShadow: '0 8px 24px rgba(111, 175, 143, 0.35)',
+                width: 200,
+                height: 200,
+                objectFit: 'contain',
               }}
-            >
-              <School sx={{ fontSize: 32, color: 'white' }} />
-            </Box>
+            />
+          </Box>
+          {/* Welcome Text */}
+          <Box sx={{ textAlign: 'center', mt: -5 }}>
             <Typography
-              variant="h4"
+              variant="h5"
               sx={{
                 fontWeight: 800,
                 color: '#1F2937',
                 mb: 0.5,
-                fontSize: { xs: '1.5rem', sm: '1.75rem' },
+                fontSize: { xs: '1.4rem', sm: '1.6rem' },
               }}
             >
               Welcome Back
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
-              Sign in to continue to EduFlow Pro
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.9rem' }}>
+              Sign in to continue
             </Typography>
           </Box>
 

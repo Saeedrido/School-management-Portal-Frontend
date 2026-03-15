@@ -36,6 +36,7 @@ import {
   Book,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -71,6 +72,10 @@ const TeacherAssignments = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState('');
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   // Filter available subjects based on selected class's school level
   const availableSubjects = selectedClass
@@ -216,13 +221,17 @@ const TeacherAssignments = () => {
     }
   };
 
-  const handleDeleteAssignment = async (assignmentId) => {
-    if (!window.confirm('Are you sure you want to delete this assignment?')) {
-      return;
-    }
+  const handleDeleteClick = (assignmentId) => {
+    setDeleteId(assignmentId);
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteId) return;
 
     try {
-      await adminAPI.classSubjects.delete(assignmentId);
+      await adminAPI.classSubjects.delete(deleteId);
 
       // Refresh assignments
       const response = await adminAPI.classSubjects.getByClass(selectedClass);
@@ -233,6 +242,7 @@ const TeacherAssignments = () => {
       console.error('Error deleting assignment:', err);
       setError('Failed to delete assignment');
     }
+    setDeleteId(null);
   };
 
   const getTeacherName = (teacher) => {
@@ -542,7 +552,7 @@ const TeacherAssignments = () => {
                           <TableCell align="right" sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
                             <IconButton
                               size="small"
-                              onClick={() => handleDeleteAssignment(assignment.id)}
+                              onClick={() => handleDeleteClick(assignment.id)}
                               sx={{ color: 'error.main' }}
                             >
                               <Delete fontSize="small" />
@@ -558,6 +568,15 @@ const TeacherAssignments = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Assignment"
+        message="Are you sure you want to delete this assignment? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };

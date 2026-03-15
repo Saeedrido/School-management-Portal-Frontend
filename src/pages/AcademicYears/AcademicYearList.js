@@ -26,6 +26,7 @@ import {
 import { academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader, StatusBadge } from '../../components/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const AcademicYearList = () => {
   const navigate = useNavigate();
@@ -33,6 +34,10 @@ const AcademicYearList = () => {
   const [academicYears, setAcademicYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const basePath = '/admin-dashboard';
 
@@ -53,18 +58,22 @@ const AcademicYearList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this academic year?')) {
-      return;
-    }
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    setConfirmOpen(false);
+    if (!deleteId) return;
     try {
-      await academicYearsAPI.delete(id);
-      setAcademicYears(academicYears.filter((y) => y.id !== id));
+      await academicYearsAPI.delete(deleteId);
+      setAcademicYears(academicYears.filter((y) => y.id !== deleteId));
     } catch (err) {
       setError('Failed to delete academic year');
       console.error(err);
     }
+    setDeleteId(null);
   };
 
   const handleSetActive = async (id) => {
@@ -215,7 +224,7 @@ const AcademicYearList = () => {
                           </IconButton>
                           <IconButton
                             size="small"
-                            onClick={() => handleDelete(year.id)}
+                            onClick={() => handleDeleteClick(year.id)}
                             sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                           >
                             <Delete fontSize="small" />
@@ -230,6 +239,15 @@ const AcademicYearList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Academic Year"
+        message="Are you sure you want to delete this academic year? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Box>
   );
 };
