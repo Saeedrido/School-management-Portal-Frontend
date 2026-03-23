@@ -5,6 +5,7 @@ import {
   Container,
   Typography,
   Button,
+  IconButton,
   Grid,
   Card,
   CardContent,
@@ -21,6 +22,7 @@ import {
   Menu,
   CheckCircle,
   Star,
+  PhotoLibrary,
 } from '@mui/icons-material';
 import { motion, useInView } from 'framer-motion';
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
@@ -98,7 +100,9 @@ const LandingPage = () => {
         background: 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(0,0,0,0.05)'
-      }}>
+      }}
+      onClick={(e) => e.stopPropagation()}
+      >
         <Container maxWidth="xl">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 400 }}>
@@ -118,13 +122,19 @@ const LandingPage = () => {
             </motion.div>
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 3 }}>
-              {['Home', 'About', 'Programs', 'Testimonials', 'Contact'].map((item, index) => {
-                const ids = ['', 'about', 'features', 'testimonials', 'contact'];
-                const id = item === 'Home' ? '' : ids[index];
+              {['Home', 'About', 'Gallery', 'Programs', 'Testimonials', 'Contact'].map((item, index) => {
+                const ids = ['', 'about', 'gallery', 'features', 'testimonials', 'contact'];
+                const id = ids[index];
                 return (
                   <motion.div key={item} whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 400 }}>
                     <Button 
-                      onClick={() => id ? document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }) : window.scrollTo({ top: 0, behavior: 'smooth' })} 
+                      onClick={() => {
+                        if (item === 'Gallery') {
+                          navigate('/gallery');
+                        } else {
+                          id ? document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }) : window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }} 
                       sx={{ 
                         color: '#333', 
                         fontWeight: 500, 
@@ -153,66 +163,111 @@ const LandingPage = () => {
               })}
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+              <Box sx={{ display: { xs: 'block', md: 'none' }, zIndex: 1002 }}>
+                <motion.div whileTap={{ scale: 0.9 }}>
+                  <IconButton onClick={() => setMenuOpen(!menuOpen)} sx={{ color: '#333' }}>
+                    <Menu />
+                  </IconButton>
+                </motion.div>
+              </Box>
               <AnimatedButton 
                 onClick={() => navigate('/login')}
                 sx={{ 
                   background: '#1a1a1a', 
                   color: 'white', 
-                  px: 2.5, 
-                  py: 1, 
+                  px: { xs: 1.5, md: 2.5 }, 
+                  py: { xs: 0.75, md: 1 }, 
                   fontWeight: 600, 
-                  fontSize: '0.8rem',
+                  fontSize: { xs: '0.65rem', md: '0.8rem' },
                   borderRadius: '25px',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
                   '&:hover': { background: '#333', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }
                 }}
               >
-                Staff Login
+                Staff
               </AnimatedButton>
               <AnimatedButton 
                 onClick={() => navigate('/student-login')}
                 sx={{ 
                   background: '#6FAF8F', 
                   color: 'white', 
-                  px: 2.5, 
-                  py: 1, 
+                  px: { xs: 1.5, md: 2.5 }, 
+                  py: { xs: 0.75, md: 1 }, 
                   fontWeight: 600, 
-                  fontSize: '0.8rem',
+                  fontSize: { xs: '0.65rem', md: '0.8rem' },
                   borderRadius: '25px',
                   boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
                   '&:hover': { background: '#5FA08A', boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
                 }}
               >
-                Student Portal
+                Student
               </AnimatedButton>
               <AnimatedButton 
                 onClick={() => navigate('/payment')} 
                 sx={{ 
                   background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)', 
                   color: 'white', 
-                  px: 3, 
-                  py: 1, 
+                  px: { xs: 1.5, md: 3 }, 
+                  py: { xs: 0.75, md: 1 }, 
                   fontWeight: 600, 
-                  fontSize: '0.85rem',
+                  fontSize: { xs: '0.65rem', md: '0.85rem' },
                   borderRadius: '25px',
                   boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
                   '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
                 }}
               >
-                Enroll Now
+                Enroll
               </AnimatedButton>
-              <Box sx={{ display: { xs: 'block', md: 'none' }}}>
-                <motion.div whileTap={{ scale: 0.9 }}>
-                  <Button onClick={() => setMenuOpen(!menuOpen)} sx={{ color: '#333' }}>
-                    <Menu />
-                  </Button>
-                </motion.div>
-              </Box>
             </Box>
           </Box>
         </Container>
       </Box>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 64, 
+          left: 0, 
+          right: 0, 
+          zIndex: 1001, 
+          background: 'white', 
+          boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+          maxHeight: 150,
+          overflowY: 'auto',
+        }}
+        onClick={(e) => e.stopPropagation()}
+        >
+          {['Home', 'About', 'Gallery', 'Programs', 'Testimonials', 'Contact'].map((item, index) => {
+            const ids = ['', 'about', 'gallery', 'features', 'testimonials', 'contact'];
+            const id = ids[index];
+            return (
+              <Box key={item}>
+                <Button 
+                  fullWidth
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (item === 'Gallery') {
+                      navigate('/gallery');
+                    } else {
+                      id ? document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }) : window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }} 
+                  sx={{ 
+                    color: '#333', 
+                    fontWeight: 500, 
+                    py: 1.5,
+                    justifyContent: 'flex-start',
+                  }}
+                >
+                  {item}
+                </Button>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
 
       {/* Hero Section */}
       <Box sx={{ 
@@ -447,6 +502,101 @@ const LandingPage = () => {
                       </Typography>
                     </Card>
                   </motion.div>
+                </FadeIn>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Gallery Section */}
+      <Box id="gallery" sx={{ py: { xs: 8, md: 12 }, background: '#fff' }}>
+        <Container maxWidth="lg">
+          <FadeIn>
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography sx={{ color: '#6FAF8F', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', mb: 2, fontSize: '0.85rem' }}>
+                Photo Gallery
+              </Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: { xs: '2rem', md: '2.8rem' }, color: '#1a1a1a', fontFamily: 'Georgia, serif', mb: 3 }}>
+                Explore Our Campus Life
+              </Typography>
+              <Typography sx={{ color: '#666', maxWidth: 600, mx: 'auto', lineHeight: 1.8, fontFamily: 'Georgia, serif', mb: 4 }}>
+                Discover our state-of-the-art facilities, vibrant learning environment, and memorable school moments.
+              </Typography>
+              <AnimatedButton 
+                onClick={() => navigate('/gallery')} 
+                sx={{ 
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
+                  color: 'white', 
+                  px: 4, 
+                  py: 1.5, 
+                  fontWeight: 600, 
+                  borderRadius: '25px',
+                  boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
+                  '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
+                }}
+              >
+                View Gallery
+              </AnimatedButton>
+            </Box>
+          </FadeIn>
+          <Grid container spacing={2}>
+            {[
+              { src: '/images/school-building.jpg', label: 'Campus' },
+              { src: '/images/students-learning.jpg', label: 'Students' },
+              { src: '/images/classroom.jpg', label: 'Classroom' },
+              { src: '/images/library.jpg', label: 'Library' },
+            ].map((item, i) => (
+              <Grid item xs={6} md={3} key={i}>
+                <FadeIn delay={i * 0.1}>
+                  <Box
+                    onClick={() => navigate('/gallery')}
+                    sx={{ 
+                      position: 'relative',
+                      paddingTop: '75%',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 15px 40px rgba(0,0,0,0.15)',
+                        '& .overlay': { opacity: 1 },
+                      },
+                    }}
+                  >
+                    <Box sx={{ 
+                      position: 'absolute', 
+                      top: 0, left: 0, right: 0, bottom: 0, 
+                      background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography sx={{ color: 'white', fontSize: '0.8rem', opacity: 0.7 }}>
+                        {item.label}
+                      </Typography>
+                    </Box>
+                    <Box className="overlay" sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(111, 175, 143, 0.8)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Typography sx={{ color: 'white', fontWeight: 600, fontSize: '1rem' }}>
+                        <PhotoLibrary sx={{ fontSize: 20, mr: 0.5, verticalAlign: 'middle' }} />
+                        View Gallery
+                      </Typography>
+                    </Box>
+                  </Box>
                 </FadeIn>
               </Grid>
             ))}

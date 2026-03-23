@@ -28,6 +28,11 @@ import {
   InputLabel,
   CircularProgress,
   Alert,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Add,
@@ -53,13 +58,18 @@ const ParentList = () => {
   
   const [parents, setParents] = useState([]);
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, parent: null });
   const [linkDialog, setLinkDialog] = useState({ open: false, parent: null });
-  const [linkData, setLinkData] = useState({ studentId: '', relationship: 'Father' });
+  const [linkData, setLinkData] = useState({ 
+    selectedClassId: '', 
+    selectedStudentIds: [], 
+    relationship: 'Father' 
+  });
   const [linking, setLinking] = useState(false);
 
   useEffect(() => {
@@ -68,7 +78,7 @@ const ParentList = () => {
       try {
         const [parentsRes, studentsRes] = await Promise.all([
           adminAPI.parents.getAll(1, 100),
-          adminAPI.students.getAll(),
+          adminAPI.students.getAll(1, 100),
         ]);
         
         if (parentsRes.data) {
@@ -94,6 +104,40 @@ const ParentList = () => {
         if (studentsRes.data) {
           const studentsData = studentsRes.data.data?.items || studentsRes.data.data || studentsRes.data;
           setStudents(Array.isArray(studentsData) ? studentsData : []);
+        }
+
+        // Fetch classes separately for better error handling
+        const classesRes = await adminAPI.classes.getAll()
+          .then(res => {
+            console.log('Classes API raw response:', res);
+            console.log('Classes API data:', res.data);
+            return res;
+          })
+          .catch(err => {
+            console.error('Classes API error:', err);
+            console.error('Classes API error response:', err.response);
+            return { data: { data: [] } };
+          });
+        
+        if (classesRes?.data) {
+          const responseData = classesRes.data;
+          
+          let classesData = [];
+          if (Array.isArray(responseData)) {
+            classesData = responseData;
+          } else if (responseData.data) {
+            classesData = Array.isArray(responseData.data) ? responseData.data : [responseData.data];
+          } else if (responseData.items) {
+            classesData = responseData.items;
+          }
+          
+          console.log('Processed classes data:', classesData);
+          console.log('First class sample:', classesData[0] ? {
+            id: classesData[0].id,
+            name: classesData[0].name,
+            idType: typeof classesData[0].id
+          } : 'No classes');
+          setClasses(classesData);
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -123,12 +167,50 @@ const ParentList = () => {
 
   const handleLinkClick = (parent) => {
     setLinkDialog({ open: true, parent });
-    setLinkData({ studentId: '', relationship: 'Father' });
+    setLinkData({ selectedClassId: '', selectedStudentIds: [], relationship: 'Father' });
+  };
+
+  const fetchStudentsByClass = async (classId) => {
+    console.log('Fetching students for class:', classId);
+    
+    if (!classId) {
+      console.log('No class ID provided');
+      return;
+    }
+    
+    try {
+      // Use getByClassPaged like the results page does
+      const response = await adminAPI.students.getByClassPaged(classId, 1, 100);
+      console.log('Students by class response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
+      
+      if (response.status === 200 && response.data) {
+        if (response.data.success) {
+          const studentsData = response.data.data?.items || response.data.data || [];
+          console.log('Students list:', studentsData);
+          setStudents(studentsData);
+        } else {
+          console.log('API returned unsuccessful response:', response.data);
+          setStudents([]);
+        }
+      } else {
+        console.log('Unexpected response status or data');
+        setStudents([]);
+      }
+    } catch (err) {
+      console.error('Error fetching students by class:', err);
+      console.error('Error response status:', err.response?.status);
+      console.error('Error response data:', err.response?.data);
+      
+      // If there's an error, set students to empty
+      setStudents([]);
+    }
   };
 
   const handleLinkStudent = async () => {
-    if (!linkData.studentId) {
-      setError('Please select a student');
+    if (linkData.selectedStudentIds.length === 0) {
+      setError('Please select at least one student');
       return;
     }
     
@@ -136,14 +218,17 @@ const ParentList = () => {
     setError('');
     
     try {
-      await adminAPI.parents.linkStudent(
-        linkDialog.parent.id, 
-        linkData.studentId,
-        {
-          relationship: linkData.relationship,
-          isPrimaryContact: true,
-        }
-      );
+      // Link each selected student
+      for (const studentId of linkData.selectedStudentIds) {
+        await adminAPI.parents.linkStudent(
+          linkDialog.parent.id, 
+          studentId,
+          {
+            relationship: linkData.relationship,
+            isPrimaryContact: true,
+          }
+        );
+      }
       
       const parentsRes = await adminAPI.parents.getAll(1, 100);
       if (parentsRes.data) {
@@ -169,7 +254,7 @@ const ParentList = () => {
       setLinkDialog({ open: false, parent: null });
     } catch (err) {
       console.error('Error linking student:', err);
-      setError(err.response?.data?.message || 'Failed to link student');
+      setError(err.response?.data?.message || 'Failed to link student(s)');
     } finally {
       setLinking(false);
     }
@@ -257,7 +342,16 @@ const ParentList = () => {
                     Linked Students
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
-                    {students.length}
+                    {(() => {
+                      // Count unique students across all parents
+                      const uniqueStudentIds = new Set();
+                      parents.forEach(parent => {
+                        parent.students?.forEach(student => {
+                          uniqueStudentIds.add(student.id);
+                        });
+                      });
+                      return uniqueStudentIds.size;
+                    })()}
                   </Typography>
                 </Box>
                 <Box
@@ -540,13 +634,6 @@ const ParentList = () => {
                         )}
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/admin-dashboard/parents/${parent.id}/students`)}
-                          sx={{ color: '#8B5CF6', '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' } }}
-                        >
-                          <People fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
                           onClick={() => handleDeleteClick(parent)}
                           sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                         >
@@ -585,35 +672,95 @@ const ParentList = () => {
       </Dialog>
 
       {/* Link Student Dialog */}
-      <Dialog open={linkDialog.open} onClose={() => setLinkDialog({ open: false, parent: null })} maxWidth="sm">
+      <Dialog open={linkDialog.open} onClose={() => setLinkDialog({ open: false, parent: null })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <LinkIcon sx={{ color: '#10B981' }} />
-            Link Student to Parent
+            Link Student(s) to Parent
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 3 }}>
-            Link a student to <strong>{linkDialog.parent?.firstName} {linkDialog.parent?.lastName}</strong>
+            Select students to link to <strong>{linkDialog.parent?.firstName} {linkDialog.parent?.lastName}</strong>
           </Typography>
           
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Select Student</InputLabel>
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Select Class</InputLabel>
             <Select
-              value={linkData.studentId}
-              onChange={(e) => setLinkData({ ...linkData, studentId: e.target.value })}
-              label="Select Student"
+              value={linkData.selectedClassId}
+              onChange={(e) => {
+                const newClassId = e.target.value;
+                setLinkData({ ...linkData, selectedClassId: newClassId, selectedStudentIds: [] });
+                if (newClassId) {
+                  fetchStudentsByClass(newClassId);
+                }
+              }}
+              label="Select Class"
             >
-              <MenuItem value="">Choose a student</MenuItem>
-              {students.map((student) => (
-                <MenuItem key={student.id} value={student.id}>
-                  {student.firstName} {student.lastName} ({student.studentNumber})
+              <MenuItem value="">Choose a class</MenuItem>
+              {classes.map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>
+                  {cls.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          <FormControl fullWidth>
+          {linkData.selectedClassId && (
+            <>
+              <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+                Select students from this class:
+              </Typography>
+              <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                {students.length > 0 ? (
+                  <List>
+                    {students.map((student) => {
+                      const isSelected = linkData.selectedStudentIds.includes(student.id);
+                      const studentName = student.fullName || student.FullName || `${student.firstName} ${student.lastName}`;
+                      const studentNumber = student.studentNumber || student.StudentNumber || '';
+                      
+                      return (
+                        <ListItem
+                          key={student.id}
+                          sx={{
+                            cursor: 'pointer',
+                            bgcolor: isSelected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                            '&:hover': { bgcolor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0, 0, 0, 0.04)' },
+                          }}
+                          onClick={() => {
+                            const newSelectedIds = isSelected
+                              ? linkData.selectedStudentIds.filter(id => id !== student.id)
+                              : [...linkData.selectedStudentIds, student.id];
+                            setLinkData({ ...linkData, selectedStudentIds: newSelectedIds });
+                          }}
+                        >
+                          <ListItemIcon>
+                            <Checkbox
+                              checked={isSelected}
+                              color="success"
+                              size="small"
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={studentName}
+                            secondary={studentNumber}
+                          />
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                ) : (
+                  <Box sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#64748B' }}>
+                      No students found in this class
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </>
+          )}
+
+          <FormControl fullWidth sx={{ mt: 3 }}>
             <InputLabel>Relationship</InputLabel>
             <Select
               value={linkData.relationship}
@@ -632,11 +779,11 @@ const ParentList = () => {
           <Button
             onClick={handleLinkStudent}
             variant="contained"
-            disabled={linking || !linkData.studentId}
+            disabled={linking || linkData.selectedStudentIds.length === 0}
             startIcon={linking ? <CircularProgress size={20} /> : <LinkIcon />}
             sx={{ background: '#10B981' }}
           >
-            {linking ? 'Linking...' : 'Link Student'}
+            {linking ? 'Linking...' : `Link ${linkData.selectedStudentIds.length > 0 ? `(${linkData.selectedStudentIds.length})` : ''} Student(s)`}
           </Button>
         </DialogActions>
       </Dialog>

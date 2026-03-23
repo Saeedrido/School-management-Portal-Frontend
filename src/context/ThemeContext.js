@@ -12,56 +12,6 @@ const TEXT_DARK = '#1F2937';
 
 // Light Theme (Default - Premium Green)
 const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: PRIMARY,
-      light: '#8DC9B3',
-      dark: PRIMARY_HOVER,
-      contrastText: '#fff',
-    },
-    secondary: {
-      main: PRIMARY_HOVER,
-      light: PRIMARY,
-      dark: '#3D6B57',
-      contrastText: '#fff',
-    },
-    success: {
-      main: PRIMARY,
-      light: '#8DC9B3',
-      dark: PRIMARY_HOVER,
-      contrastText: '#fff',
-    },
-    info: {
-      main: PRIMARY,
-      light: '#8DC9B3',
-      dark: PRIMARY_HOVER,
-      contrastText: '#fff',
-    },
-    warning: {
-      main: '#F59E0B',
-      light: '#FBBF24',
-      dark: '#D97706',
-      contrastText: '#fff',
-    },
-    error: {
-      main: '#DC2626',
-      light: '#EF4444',
-      dark: '#B91C1C',
-      contrastText: '#fff',
-    },
-    background: {
-      default: LIGHT_BG,
-      paper: '#FFFFFF',
-      sidebar: SIDEBAR,
-    },
-    text: {
-      primary: TEXT_DARK,
-      secondary: '#4B5563',
-      disabled: '#9CA3AF',
-    },
-    divider: BORDERS,
-  },
   typography: {
     fontFamily: [
       '"Segoe UI"',
@@ -70,41 +20,30 @@ const lightTheme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
+    htmlFontSize: 16,
     h1: {
       fontWeight: 600,
-      fontSize: {
-        xs: '2rem',
-        sm: '2.5rem',
-      },
+      fontSize: '2rem',
       color: TEXT_DARK,
     },
     h2: {
       fontWeight: 600,
-      fontSize: {
-        xs: '1.5rem',
-        sm: '2rem',
-      },
+      fontSize: '1.75rem',
       color: PRIMARY,
     },
     h3: {
       fontWeight: 600,
-      fontSize: {
-        xs: '1.25rem',
-        sm: '1.75rem',
-      },
+      fontSize: '1.5rem',
       color: TEXT_DARK,
     },
     h4: {
       fontWeight: 600,
-      fontSize: {
-        xs: '1.1rem',
-        sm: '1.5rem',
-      },
+      fontSize: '1.25rem',
       color: PRIMARY,
     },
     h5: {
       fontWeight: 500,
-      fontSize: '1.25rem',
+      fontSize: '1.1rem',
       color: '#4B5563',
     },
     h6: {
@@ -113,24 +52,45 @@ const lightTheme = createTheme({
       color: '#4B5563',
     },
     body1: {
-      fontSize: '1rem',
+      fontSize: '0.9375rem',
       color: '#4B5563',
     },
     body2: {
-      fontSize: '0.875rem',
+      fontSize: '0.8125rem',
       color: '#6B7280',
     },
     button: {
       textTransform: 'none',
       fontWeight: 600,
+      fontSize: '0.875rem',
+    },
+    caption: {
+      fontSize: '0.75rem',
     },
   },
+  spacing: 8,
+  shape: {
+    borderRadius: 8,
+  },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: `
+        html {
+          font-size: 16px;
+        }
+        body {
+          font-size: 1rem;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `,
+    },
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: 8,
           boxShadow: 'none',
+          padding: '8px 16px',
           '&:hover': {
             boxShadow: '0 4px 12px rgba(111, 175, 143, 0.3)',
           },
@@ -139,6 +99,9 @@ const lightTheme = createTheme({
           '&:hover': {
             boxShadow: 'none',
           },
+        },
+        sizeMedium: {
+          padding: '8px 16px',
         },
       },
     },
@@ -160,18 +123,17 @@ const lightTheme = createTheme({
         },
       },
     },
-    MuiDrawer: {
-      styleOverrides: {
-        paper: {
-          backgroundColor: SIDEBAR,
-          borderRight: `1px solid ${BORDERS}`,
-        },
-      },
-    },
     MuiPaper: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
+        },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          minHeight: '56px !important',
         },
       },
     },
@@ -181,16 +143,6 @@ const lightTheme = createTheme({
           backgroundColor: '#FFFFFF',
           color: TEXT_DARK,
           boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        },
-      },
-    },
-  },
-  overrides: {
-    MuiCssBaseline: {
-      '@global': {
-        body: {
-          backgroundColor: LIGHT_BG,
-          color: TEXT_DARK,
         },
       },
     },

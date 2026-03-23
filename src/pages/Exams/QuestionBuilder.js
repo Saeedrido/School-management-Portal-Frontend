@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import {
@@ -33,7 +33,6 @@ import {
   Edit,
   ExpandMore,
   CheckCircle,
-  DragIndicator,
   Quiz,
   Description,
 } from '@mui/icons-material';
@@ -61,12 +60,28 @@ const QuestionBuilder = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, index: null });
+  const [uploadFormatDialog, setUploadFormatDialog] = useState(false);
   const [examInfo, setExamInfo] = useState({
     title: isEditing ? 'Mid-Term Mathematics Examination' : '',
     type: 'Objective',
     status: '',
     hasStarted: false,
   });
+
+  const fileInputRef = useRef(null);
+
+  const handleUploadClick = () => {
+    if (!examInfo.hasStarted) {
+      setUploadFormatDialog(true);
+    }
+  };
+
+  const handleUploadConfirm = () => {
+    setUploadFormatDialog(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   // Load existing questions and exam info
   useEffect(() => {
@@ -325,9 +340,7 @@ const QuestionBuilder = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
-          : 'background.default',
+        bgcolor: '#E8F5E9',
       }}
     >
       <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
@@ -376,7 +389,7 @@ const QuestionBuilder = () => {
               label={`${questions.length} Questions`}
               sx={{
                 background: 'rgba(255, 62, 138, 0.2)',
-                color: '#FF3E8A',
+                color: '#6FAF8F',
                 fontWeight: 600,
               }}
             />
@@ -410,9 +423,8 @@ const QuestionBuilder = () => {
           <Card
             sx={{
               mb: 4,
-              background: 'rgba(17, 17, 17, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 62, 138, 0.3)',
+              background: '#C8E6C9',
+              border: '1px solid rgba(111, 175, 143, 0.3)',
               borderRadius: 3,
             }}
           >
@@ -421,7 +433,7 @@ const QuestionBuilder = () => {
                 variant="h6"
                 sx={{
                   fontWeight: 600,
-                  color: '#FF3E8A',
+                  color: '#6FAF8F',
                   mb: 3,
                 }}
               >
@@ -454,7 +466,7 @@ const QuestionBuilder = () => {
                         sx={{
                           color: 'rgba(255, 255, 255, 0.7)',
                           '&.Mui-selected': {
-                            background: '#FF3E8A',
+                            background: '#6FAF8F',
                             color: '#ffffff',
                           },
                         }}
@@ -488,8 +500,16 @@ const QuestionBuilder = () => {
                         color: 'rgba(255, 255, 255, 0.7)',
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -522,6 +542,19 @@ const QuestionBuilder = () => {
                                 '& .MuiInputLabel-root': {
                                   color: 'rgba(255, 255, 255, 0.7)',
                                 },
+                                '& .MuiOutlinedInput-root': {
+                                  color: '#ffffff',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#6FAF8F',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#6FAF8F',
+                                  },
+                                },
                               }}
                             />
                             <IconButton
@@ -548,13 +581,17 @@ const QuestionBuilder = () => {
                               sx={{
                                 ...(currentQuestion.correctAnswer === option && {
                                   background: '#66BB6A',
+                                  color: '#ffffff',
                                   '&:hover': {
                                     background: '#57A75A',
                                   },
                                 }),
                                 ...(currentQuestion.correctAnswer !== option && {
-                                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                                  color: 'rgba(255, 255, 255, 0.7)',
+                                  borderColor: '#000000',
+                                  color: '#000000',
+                                  '&:hover': {
+                                    background: 'rgba(0, 0, 0, 0.1)',
+                                  },
                                 }),
                               }}
                             >
@@ -574,8 +611,8 @@ const QuestionBuilder = () => {
                       disabled={currentQuestion.options.length >= 6}
                       sx={{
                         mt: 2,
-                        color: '#FF3E8A',
-                        borderColor: '#FF3E8A',
+                        color: '#6FAF8F',
+                        borderColor: '#6FAF8F',
                       }}
                     >
                       Add Option
@@ -605,8 +642,16 @@ const QuestionBuilder = () => {
                           color: 'rgba(255, 255, 255, 0.7)',
                         },
                         '& .MuiOutlinedInput-root': {
+                          color: '#ffffff',
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#6FAF8F',
+                          },
                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#FF3E8A',
+                            borderColor: '#6FAF8F',
                           },
                         },
                       }}
@@ -632,6 +677,19 @@ const QuestionBuilder = () => {
                       '& .MuiInputLabel-root': {
                         color: 'rgba(255, 255, 255, 0.7)',
                       },
+                      '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
+                      },
                     }}
                   />
                 </Grid>
@@ -652,10 +710,23 @@ const QuestionBuilder = () => {
                       '& .MuiInputLabel-root': {
                         color: 'rgba(255, 255, 255, 0.7)',
                       },
+                      '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
+                      },
                     }}
                   >
                     {DIFFICULTY_LEVELS.map((level) => (
-                      <MenuItem key={level} value={level}>
+                      <MenuItem key={level} value={level} sx={{ color: '#ffffff' }}>
                         {level}
                       </MenuItem>
                     ))}
@@ -683,8 +754,16 @@ const QuestionBuilder = () => {
                           color: 'rgba(255, 255, 255, 0.7)',
                         },
                         '& .MuiOutlinedInput-root': {
+                          color: '#ffffff',
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#6FAF8F',
+                          },
                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#FF3E8A',
+                            borderColor: '#6FAF8F',
                           },
                         },
                       }}
@@ -709,8 +788,11 @@ const QuestionBuilder = () => {
                         setEditingIndex(null);
                       }}
                       sx={{
-                        color: '#ffffff',
-                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        color: '#000000',
+                        borderColor: '#000000',
+                        '&:hover': {
+                          background: 'rgba(0, 0, 0, 0.1)',
+                        },
                       }}
                     >
                       Cancel
@@ -720,7 +802,7 @@ const QuestionBuilder = () => {
                       startIcon={<Save />}
                       onClick={handleSaveQuestion}
                       sx={{
-                        background: '#FF3E8A',
+                        background: '#6FAF8F',
                         '&:hover': {
                           background: '#FF5DA3',
                         },
@@ -739,9 +821,9 @@ const QuestionBuilder = () => {
         {questions.length > 0 && (
           <Card
             sx={{
-              background: 'rgba(17, 17, 17, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              mb: 4,
+              background: '#C8E6C9',
+              border: '1px solid rgba(111, 175, 143, 0.3)',
               borderRadius: 3,
             }}
           >
@@ -758,13 +840,14 @@ const QuestionBuilder = () => {
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1B5E20',
                   }}
                 >
                   Questions ({questions.length})
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <input
+                    ref={fileInputRef}
                     accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     style={{ display: 'none' }}
                     id="raised-button-file"
@@ -822,20 +905,18 @@ const QuestionBuilder = () => {
                       event.target.value = '';
                     }}
                   />
-                  <label htmlFor="raised-button-file">
-                    <Button
-                      variant="outlined"
-                      component="span"
-                      startIcon={<Description />}
-                      disabled={examInfo.hasStarted}
-                      sx={{
-                        color: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
-                        borderColor: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
-                      }}
-                    >
-                      {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
-                    </Button>
-                  </label>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Description />}
+                    onClick={handleUploadClick}
+                    disabled={examInfo.hasStarted}
+                    sx={{
+                      color: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                      borderColor: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                    }}
+                  >
+                    {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
+                  </Button>
                   <Button
                     variant="contained"
                     startIcon={<Save />}
@@ -857,8 +938,10 @@ const QuestionBuilder = () => {
                 <Accordion
                   key={question.id}
                   sx={{
-                    background: 'rgba(255, 255, 255, 0.02)',
+                    background: '#C8E6C9',
+                    borderRadius: 2,
                     mb: 1,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                     '&:before': {
                       display: 'none',
                     },
@@ -868,29 +951,27 @@ const QuestionBuilder = () => {
                   }}
                 >
                   <AccordionSummary
-                    expandIcon={<ExpandMore sx={{ color: '#FF3E8A' }} />}
+                    expandIcon={<ExpandMore sx={{ color: '#1B5E20', fontSize: '1.5rem' }} />}
                     sx={{
                       '& .MuiAccordionSummary-content': {
                         alignItems: 'center',
+                        flexWrap: 'wrap',
                       },
                     }}
                   >
-                    <DragIndicator
-                      sx={{ color: 'rgba(255, 255, 255, 0.3)', mr: 2 }}
-                    />
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 2,
-                        flexGrow: 1,
+                        gap: 1,
+                        flexWrap: 'wrap',
                       }}
                     >
                       <Chip
                         label={`Q${index + 1}`}
                         size="small"
                         sx={{
-                          background: '#FF3E8A',
+                          background: '#6FAF8F',
                           color: '#ffffff',
                           fontWeight: 600,
                         }}
@@ -901,7 +982,7 @@ const QuestionBuilder = () => {
                         size="small"
                         sx={{
                           background: 'rgba(33, 150, 243, 0.2)',
-                          color: '#2196F3',
+                          color: '#1565C0',
                         }}
                       />
                       <Chip
@@ -909,7 +990,7 @@ const QuestionBuilder = () => {
                         size="small"
                         sx={{
                           background: 'rgba(102, 187, 106, 0.2)',
-                          color: '#66BB6A',
+                          color: '#2E7D32',
                         }}
                       />
                       <Chip
@@ -917,26 +998,30 @@ const QuestionBuilder = () => {
                         size="small"
                         {...getDifficultyColor(question.difficulty)}
                       />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'rgba(255, 255, 255, 0.8)',
-                          flex: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {question.question}
-                      </Typography>
                     </Box>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#1B5E20',
+                        flex: 1,
+                        ml: { xs: 0, md: 2 },
+                        mt: { xs: 1, md: 0 },
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: '100px',
+                        display: { xs: 'none', md: 'block' },
+                      }}
+                    >
+                      {question.question}
+                    </Typography>
                   </AccordionSummary>
-                  <AccordionDetails>
+                  <AccordionDetails sx={{ bgcolor: '#C8E6C9' }}>
                     <Box sx={{ mb: 2 }}>
                       <Typography
                         variant="body1"
                         sx={{
-                          color: '#ffffff',
+                          color: '#1B5E20',
                           fontWeight: 500,
                           mb: 2,
                         }}
@@ -955,23 +1040,24 @@ const QuestionBuilder = () => {
                                       display: 'flex',
                                       alignItems: 'center',
                                       gap: 1,
-                                      p: 1,
+                                      p: 1.5,
                                       borderRadius: 1,
                                       background:
                                         option === question.correctAnswer
-                                          ? 'rgba(102, 187, 106, 0.1)'
-                                          : 'transparent',
+                                          ? 'rgba(102, 187, 106, 0.2)'
+                                          : 'rgba(0, 0, 0, 0.05)',
                                       border:
                                         option === question.correctAnswer
-                                          ? '1px solid #66BB6A'
-                                          : '1px solid rgba(255, 255, 255, 0.1)',
+                                          ? '1px solid #4CAF50'
+                                          : '1px solid rgba(0, 0, 0, 0.1)',
                                     }}
                                   >
                                     <Typography
                                       variant="body2"
                                       sx={{
-                                        color: 'rgba(255, 255, 255, 0.5)',
-                                        minWidth: 20,
+                                        color: '#1B5E20',
+                                        minWidth: 24,
+                                        fontWeight: 600,
                                       }}
                                     >
                                       {String.fromCharCode(65 + optIndex)}.
@@ -981,19 +1067,20 @@ const QuestionBuilder = () => {
                                       sx={{
                                         color:
                                           option === question.correctAnswer
-                                            ? '#66BB6A'
-                                            : 'rgba(255, 255, 255, 0.7)',
+                                            ? '#2E7D32'
+                                            : '#1B5E20',
                                         fontWeight:
                                           option === question.correctAnswer
                                             ? 600
                                             : 400,
+                                        flex: 1,
                                       }}
                                     >
                                       {option}
                                     </Typography>
                                     {option === question.correctAnswer && (
                                       <CheckCircle
-                                        sx={{ color: '#66BB6A', ml: 'auto', fontSize: 16 }}
+                                        sx={{ color: '#4CAF50', ml: 'auto', fontSize: 18 }}
                                       />
                                     )}
                                   </Box>
@@ -1007,15 +1094,15 @@ const QuestionBuilder = () => {
                         <Box
                           sx={{
                             p: 2,
-                            background: 'rgba(33, 150, 243, 0.05)',
-                            border: '1px solid rgba(33, 150, 243, 0.2)',
+                            background: 'rgba(33, 150, 243, 0.1)',
+                            border: '1px solid rgba(33, 150, 243, 0.3)',
                             borderRadius: 1,
                           }}
                         >
                           <Typography
                             variant="subtitle2"
                             sx={{
-                              color: '#2196F3',
+                              color: '#1565C0',
                               fontWeight: 600,
                               mb: 1,
                             }}
@@ -1024,7 +1111,7 @@ const QuestionBuilder = () => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                            sx={{ color: '#1B5E20' }}
                           >
                             {question.modelAnswer}
                           </Typography>
@@ -1036,14 +1123,14 @@ const QuestionBuilder = () => {
                           sx={{
                             mt: 2,
                             p: 2,
-                            background: 'rgba(255, 193, 7, 0.05)',
-                            border: '1px solid rgba(255, 193, 7, 0.2)',
+                            background: 'rgba(255, 193, 7, 0.1)',
+                            border: '1px solid rgba(255, 193, 7, 0.3)',
                             borderRadius: 1,
                           }}
                         >
                           <Typography
-                            variant="caption"
-                            sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
+                            variant="body2"
+                            sx={{ color: '#1B5E20' }}
                           >
                             <strong>Explanation:</strong> {question.explanation}
                           </Typography>
@@ -1051,10 +1138,11 @@ const QuestionBuilder = () => {
                       )}
                     </Box>
 
-                    <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                    <Divider sx={{ mb: 2, borderColor: 'rgba(0, 0, 0, 0.15)' }} />
 
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       <Button
+                        variant="outlined"
                         size="small"
                         startIcon={<Edit />}
                         onClick={() => handleEditQuestion(index)}
@@ -1067,6 +1155,7 @@ const QuestionBuilder = () => {
                         Edit
                       </Button>
                       <Button
+                        variant="outlined"
                         size="small"
                         startIcon={<Delete />}
                         onClick={() => handleDeleteClick(index)}
@@ -1090,40 +1179,54 @@ const QuestionBuilder = () => {
         {questions.length === 0 && !currentQuestion && (
           <Card
             sx={{
-              background: 'rgba(17, 17, 17, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              mb: 4,
+              background: '#C8E6C9',
+              border: '1px solid rgba(111, 175, 143, 0.3)',
               borderRadius: 3,
             }}
           >
             <CardContent sx={{ p: 6, textAlign: 'center' }}>
-              <Quiz sx={{ fontSize: 60, color: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
+              <Quiz sx={{ fontSize: 60, color: 'rgba(0, 0, 0, 0.3)', mb: 2 }} />
               <Typography
                 variant="h6"
-                sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}
+                sx={{ color: '#000000', mb: 2 }}
               >
                 No Questions Yet
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 3 }}
+                sx={{ color: 'rgba(0, 0, 0, 0.6)', mb: 3 }}
               >
                 Start building your exam by adding questions
               </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddQuestion}
-                disabled={examInfo.hasStarted}
-                sx={{
-                  background: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
-                  '&:hover': {
-                    background: examInfo.hasStarted ? '#9e9e9e' : '#FF5DA3',
-                  },
-                }}
-              >
-                {examInfo.hasStarted ? 'Cannot Add - Exam Started' : 'Add First Question'}
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddQuestion}
+                  disabled={examInfo.hasStarted}
+                  sx={{
+                    background: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                    '&:hover': {
+                      background: examInfo.hasStarted ? '#9e9e9e' : '#FF5DA3',
+                    },
+                  }}
+                >
+                  {examInfo.hasStarted ? 'Cannot Add - Exam Started' : 'Add First Question'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Description />}
+                  onClick={handleUploadClick}
+                  disabled={examInfo.hasStarted}
+                  sx={{
+                    color: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                    borderColor: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                  }}
+                >
+                  {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         )}
@@ -1138,8 +1241,8 @@ const QuestionBuilder = () => {
               disabled={examInfo.hasStarted}
               size="large"
               sx={{
-                color: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
-                borderColor: examInfo.hasStarted ? '#9e9e9e' : '#FF3E8A',
+                color: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
+                borderColor: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
                 fontSize: '1rem',
                 py: 1.5,
                 px: 4,
@@ -1175,6 +1278,71 @@ const QuestionBuilder = () => {
               autoFocus
             >
               Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Upload Format Dialog */}
+        <Dialog 
+          open={uploadFormatDialog} 
+          onClose={() => setUploadFormatDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 600, color: '#6FAF8F' }}>
+            Question Upload Format
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2, color: 'rgba(0,0,0,0.7)' }}>
+              Please format your document as follows:
+            </Typography>
+            <Box 
+              component="pre" 
+              sx={{ 
+                bgcolor: '#f5f5f5', 
+                p: 2, 
+                borderRadius: 1,
+                fontSize: '0.75rem',
+                overflow: 'auto',
+                color: '#333'
+              }}
+            >
+{`1. What is 2+2?
+a) 3
+b) 4
+c) 5
+d) 6
+Answer: b
+Marks: 2
+Explanation: Basic addition
+
+2. Which is a fruit?
+a) Carrot
+b) Apple
+c) Potato
+d) Celery
+Answer: b
+Marks: 1`}
+            </Box>
+            <Typography variant="body2" sx={{ mt: 2, color: 'rgba(0,0,0,0.7)' }}>
+              <strong>Rules:</strong>
+            </Typography>
+            <ul style={{ margin: '8px 0', paddingLeft: '20px', color: 'rgba(0,0,0,0.7)', fontSize: '0.875rem' }}>
+              <li>Each question starts with a number followed by a dot (1., 2., etc.)</li>
+              <li>Options use letters followed by a dot or parenthesis (a. or a))</li>
+              <li>Specify the correct answer with "Answer: " followed by the option letter</li>
+              <li>Add "Marks: " to specify points (default is 1 if not specified)</li>
+              <li>Add "Explanation: " for optional explanation</li>
+              <li>For multiple correct answers, use comma-separated (e.g., Answer: a,b,c)</li>
+              <li>Maximum 200 questions per upload</li>
+            </ul>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setUploadFormatDialog(false)} variant="outlined" sx={{ borderColor: '#666', color: '#333' }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUploadConfirm} variant="contained" sx={{ background: '#6FAF8F', '&:hover': { background: '#5a9a7a' } }}>
+              OK - Upload File
             </Button>
           </DialogActions>
         </Dialog>

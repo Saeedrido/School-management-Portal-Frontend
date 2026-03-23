@@ -92,6 +92,7 @@ export const mapStudentFormToRegisterStudentDto = (formData) => {
   return {
     firstName: formData.firstName,
     lastName: formData.lastName,
+    email: formData.email || null,  // For sending login credentials
     gender: genderEnum,
     dateOfBirth: formData.dateOfBirth,
     phoneNumber: formData.phoneNumber || '',

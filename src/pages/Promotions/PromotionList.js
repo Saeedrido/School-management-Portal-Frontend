@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -24,7 +25,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TableSortLabel,
 } from '@mui/material';
 import {
   School,
@@ -40,6 +40,7 @@ import { PageHeader } from '../../components/ui';
 
 const PromotionsList = () => {
   const { hasRole } = useAuth();
+  const navigate = useNavigate();
   
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
@@ -56,11 +57,6 @@ const PromotionsList = () => {
   const [overrideStatus, setOverrideStatus] = useState('');
   const [overrideReason, setOverrideReason] = useState('');
   const [savingOverride, setSavingOverride] = useState(false);
-
-  // Cumulative results dialog
-  const [cumulativeOpen, setCumulativeOpen] = useState(false);
-  const [cumulativeResults, setCumulativeResults] = useState(null);
-  const [loadingCumulative, setLoadingCumulative] = useState(false);
 
   useEffect(() => {
     fetchAcademicYears();
@@ -290,25 +286,8 @@ const PromotionsList = () => {
     }
   };
 
-  const handleViewResults = async (student) => {
-    setSelectedStudent(student);
-    setCumulativeOpen(true);
-    setLoadingCumulative(true);
-    setCumulativeResults(null);
-    
-    try {
-      const response = await resultsAPI.getCumulative(student.studentProfileId, selectedAcademicYear);
-      if (response.data?.success) {
-        setCumulativeResults(response.data.data);
-      } else {
-        setError(response.data?.message || 'Failed to load cumulative results');
-      }
-    } catch (err) {
-      setError('Error loading cumulative results');
-      console.error(err);
-    } finally {
-      setLoadingCumulative(false);
-    }
+  const handleViewResults = (student) => {
+    navigate(`/admin-dashboard/cumulative-result/${student.studentProfileId}?academicYearId=${selectedAcademicYear}`);
   };
 
   const getStatusColor = (status) => {
@@ -617,148 +596,6 @@ const PromotionsList = () => {
           >
             {savingOverride ? 'Saving...' : 'Save'}
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Cumulative Results Dialog */}
-      <Dialog 
-        open={cumulativeOpen} 
-        onClose={() => setCumulativeOpen(false)} 
-        maxWidth="lg" 
-        fullWidth
-        maxHeight="90vh"
-      >
-        <DialogTitle sx={{ bgcolor: '#6FAF8F', color: 'white' }}>
-          Cumulative Results - {selectedStudent?.studentName}
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          {loadingCumulative ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : cumulativeResults ? (
-            <Box sx={{ p: 3 }}>
-              {/* Overall Summary */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 2, bgcolor: '#E3F2FD' }}>
-                    <CardContent sx={{ p: 2, '&:last': { pb: 2 } }}>
-                      <Typography variant="body2" color="#1565C0" fontWeight={600}>First Term</Typography>
-                      <Typography variant="h5" fontWeight={700}>
-                        {cumulativeResults.firstTermTotalScore ?? '-'} / {cumulativeResults.firstTermMaximumScore ?? '-'}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {cumulativeResults.firstTermOverallPercentage?.toFixed(1) ?? '-'}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 2, bgcolor: '#FFF3E0' }}>
-                    <CardContent sx={{ p: 2, '&:last': { pb: 2 } }}>
-                      <Typography variant="body2" color="#E65100" fontWeight={600}>Second Term</Typography>
-                      <Typography variant="h5" fontWeight={700}>
-                        {cumulativeResults.secondTermTotalScore ?? '-'} / {cumulativeResults.secondTermMaximumScore ?? '-'}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {cumulativeResults.secondTermOverallPercentage?.toFixed(1) ?? '-'}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{ borderRadius: 2, bgcolor: '#E8F5E9' }}>
-                    <CardContent sx={{ p: 2, '&:last': { pb: 2 } }}>
-                      <Typography variant="body2" color="#2E7D32" fontWeight={600}>Third Term</Typography>
-                      <Typography variant="h5" fontWeight={700}>
-                        {cumulativeResults.thirdTermTotalScore ?? '-'} / {cumulativeResults.thirdTermMaximumScore ?? '-'}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {cumulativeResults.thirdTermOverallPercentage?.toFixed(1) ?? '-'}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Cumulative Overall */}
-              <Card sx={{ borderRadius: 2, mb: 3, border: '2px solid #6FAF8F' }}>
-                <CardContent sx={{ p: 2, '&:last': { pb: 2 } }}>
-                  <Typography variant="h6" color="#6FAF8F" fontWeight={700} textAlign="center">
-                    Cumulative Average: {cumulativeResults.cumulativeAverageScore?.toFixed(1) ?? '-'} / {cumulativeResults.cumulativeMaximumScore ?? '-'} ({cumulativeResults.cumulativeAveragePercentage?.toFixed(1) ?? '-'}%)
-                  </Typography>
-                </CardContent>
-              </Card>
-
-              {/* Subject Results Table */}
-              <Typography variant="h6" sx={{ mb: 2 }}>Subject Results</Typography>
-              <TableContainer sx={{ maxHeight: '40vh' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow sx={{ background: '#6FAF8F' }}>
-                      <TableCell sx={{ color: 'white', fontWeight: 700 }}>Subject</TableCell>
-                      <TableCell align="center" sx={{ color: 'white', fontWeight: 700 }}>1st Term</TableCell>
-                      <TableCell align="center" sx={{ color: 'white', fontWeight: 700 }}>2nd Term</TableCell>
-                      <TableCell align="center" sx={{ color: 'white', fontWeight: 700 }}>3rd Term</TableCell>
-                      <TableCell align="center" sx={{ color: 'white', fontWeight: 700 }}>Cumulative</TableCell>
-                      <TableCell align="center" sx={{ color: 'white', fontWeight: 700 }}>Grade</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {cumulativeResults.subjectResults?.map((subject, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell sx={{ fontWeight: 600 }}>{subject.subjectName}</TableCell>
-                        <TableCell align="center">
-                          {subject.firstTermScore !== null ? (
-                            <Box>
-                              <Typography variant="body2">{subject.firstTermScore}/{subject.firstTermMaximumScore}</Typography>
-                              <Typography variant="caption" color="textSecondary">{subject.firstTermPercentage?.toFixed(1)}%</Typography>
-                            </Box>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell align="center">
-                          {subject.secondTermScore !== null ? (
-                            <Box>
-                              <Typography variant="body2">{subject.secondTermScore}/{subject.secondTermMaximumScore}</Typography>
-                              <Typography variant="caption" color="textSecondary">{subject.secondTermPercentage?.toFixed(1)}%</Typography>
-                            </Box>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell align="center">
-                          {subject.thirdTermScore !== null ? (
-                            <Box>
-                              <Typography variant="body2">{subject.thirdTermScore}/{subject.thirdTermMaximumScore}</Typography>
-                              <Typography variant="caption" color="textSecondary">{subject.thirdTermPercentage?.toFixed(1)}%</Typography>
-                            </Box>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box>
-                            <Typography variant="body2" fontWeight={700}>{subject.cumulativeAverageScore}/{subject.cumulativeMaximumScore}</Typography>
-                            <Typography variant="caption" color="textSecondary">{subject.cumulativePercentage?.toFixed(1)}%</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip 
-                            label={subject.cumulativeGradeLetter || '-'} 
-                            size="small" 
-                            color={subject.cumulativeGradeLetter === 'A' ? 'success' : subject.cumulativeGradeLetter === 'B' ? 'info' : subject.cumulativeGradeLetter === 'F' ? 'error' : 'default'}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color="textSecondary">No cumulative results available</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCumulativeOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

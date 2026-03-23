@@ -44,7 +44,7 @@ import {
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
 
-const drawerWidth = 280;
+const drawerWidth = 260;
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -130,7 +130,7 @@ const DashboardLayout = () => {
     >
       <Box
         sx={{
-          p: 3,
+          p: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
@@ -220,9 +220,9 @@ const DashboardLayout = () => {
                   }}
                   selected={isActive}
                   sx={{
-                    borderRadius: 2.5,
-                    py: 1.25,
-                    px: collapsed ? 1.5 : 2,
+                    borderRadius: 2,
+                    py: 1,
+                    px: collapsed ? 1.5 : 1.5,
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     transition: 'all 0.2s ease',
                     '&.Mui-selected': {
@@ -247,8 +247,9 @@ const DashboardLayout = () => {
                   <ListItemIcon
                     sx={{
                       color: '#64748B',
-                      minWidth: collapsed ? 0 : 40,
+                      minWidth: collapsed ? 0 : 36,
                       justifyContent: 'center',
+                      fontSize: '1.25rem',
                     }}
                   >
                     {item.icon}
@@ -289,14 +290,14 @@ const DashboardLayout = () => {
             <Avatar
               src={user?.profilePicture}
               sx={{
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 border: '2px solid #6FAF8F',
                 bgcolor: '#EAF3EE',
               }}
             >
               {!user?.profilePicture && (
-                <Box sx={{ fontSize: 18, color: '#4E8C70', fontWeight: 600 }}>
+                <Box sx={{ fontSize: 16, color: '#4E8C70', fontWeight: 600 }}>
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </Box>
               )}
@@ -378,9 +379,9 @@ const DashboardLayout = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            px: { xs: 2, sm: 3 },
-            py: 1.5,
-            minHeight: { xs: 64 },
+            px: { xs: 1.5, sm: 2 },
+            py: 1,
+            minHeight: { xs: 56 },
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -415,7 +416,7 @@ const DashboardLayout = () => {
               sx={{
                 color: '#1F2937',
                 fontWeight: 700,
-                fontSize: { xs: '1rem', sm: '1.2rem' },
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 display: { xs: 'none', sm: 'block' },
               }}
             >
@@ -452,11 +453,11 @@ const DashboardLayout = () => {
               src={user?.profilePicture}
               onClick={handleMenuOpen}
               sx={{
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 border: '2px solid #6FAF8F',
                 bgcolor: '#EAF3EE',
-                ml: 1,
+                ml: 0.75,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {
@@ -466,7 +467,7 @@ const DashboardLayout = () => {
               }}
             >
               {!user?.profilePicture && (
-                <Box sx={{ fontSize: 16, color: '#4E8C70', fontWeight: 600 }}>
+                <Box sx={{ fontSize: 14, color: '#4E8C70', fontWeight: 600 }}>
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </Box>
               )}
@@ -575,7 +576,7 @@ const DashboardLayout = () => {
             '&::-webkit-scrollbar-thumb:hover': { background: '#94A3B8' },
           }}
         >
-          <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
             <Outlet />
           </Box>
         </Box>

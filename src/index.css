@@ -5,20 +5,16 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F5F7F6;
+  background-color: #E8F5E9;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-/* Remove dark mode styles */
 * {
   box-sizing: border-box;
 }
 
 html, body, #root {
   min-height: 100vh;
-  background-color: #F5F7F6;
+  background-color: #E8F5E9;
 }

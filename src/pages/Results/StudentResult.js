@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -27,9 +27,14 @@ import {
   CalendarMonth,
   Print,
   EmojiEvents,
+  Image,
+  PictureAsPdf,
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ResultDownloadTemplate from '../../components/ui/ResultDownloadTemplate';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const StudentResult = () => {
   const navigate = useNavigate();
@@ -54,6 +59,80 @@ const StudentResult = () => {
   const [student, setStudent] = useState(null);
   const [term, setTerm] = useState(null);
   const [academicYear, setAcademicYear] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const downloadTemplateRef = useRef(null);
+
+  const handleDownloadImage = async () => {
+    if (!downloadTemplateRef.current || downloading) {
+      console.error('Download error: Ref is null or downloading');
+      return;
+    }
+    
+    setDownloading(true);
+    try {
+      const element = downloadTemplateRef.current;
+      console.log('Capturing element:', element);
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: true,
+      });
+      console.log('Canvas created:', canvas);
+      
+      const link = document.createElement('a');
+      link.download = `Result_${student?.firstName || 'Student'}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      console.log('Download triggered');
+      link.click();
+    } catch (err) {
+      console.error('Error downloading image:', err);
+      setError('Failed to download image. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!downloadTemplateRef.current || downloading) {
+      console.error('Download error: Ref is null or downloading');
+      return;
+    }
+    
+    setDownloading(true);
+    try {
+      const element = downloadTemplateRef.current;
+      console.log('Capturing element for PDF:', element);
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: true,
+      });
+      console.log('Canvas created for PDF:', canvas);
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      console.log('Adding image to PDF, dimensions:', pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      console.log('PDF created, saving...');
+      pdf.save(`Result_${student?.firstName || 'Student'}_${Date.now()}.pdf`);
+      console.log('PDF download triggered');
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      setError('Failed to download PDF. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   useEffect(() => {
     if (studentId && termIdFromQuery) {
@@ -221,6 +300,34 @@ const StudentResult = () => {
               Student Result
             </Typography>
           </Box>
+          <Button
+            variant="outlined"
+            startIcon={downloading ? <CircularProgress size={18} /> : <Image />}
+            onClick={handleDownloadImage}
+            disabled={downloading || !result}
+            sx={{
+              color: '#1976D2',
+              borderColor: '#1976D2',
+              mr: 1,
+              '&:hover': { borderColor: '#1565C0', bgcolor: '#E3F2FD' },
+            }}
+          >
+            Image
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={downloading ? <CircularProgress size={18} /> : <PictureAsPdf />}
+            onClick={handleDownloadPdf}
+            disabled={downloading || !result}
+            sx={{
+              color: '#D32F2F',
+              borderColor: '#D32F2F',
+              mr: 1,
+              '&:hover': { borderColor: '#B71C1C', bgcolor: '#FFEBEE' },
+            }}
+          >
+            PDF
+          </Button>
           <Button
             variant="contained"
             startIcon={<Print />}
@@ -534,6 +641,19 @@ const StudentResult = () => {
           </Paper>
         )}
       </Container>
+
+      {/* Hidden Result Download Template */}
+      <Box sx={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <ResultDownloadTemplate
+          ref={downloadTemplateRef}
+          result={result}
+          student={student}
+          term={term}
+          academicYear={academicYear}
+          subjectResults={subjectResults}
+          totals={{ totalObtained, totalMaximum, overallPercentage }}
+        />
+      </Box>
 
       {/* Print Styles */}
       <style>{`

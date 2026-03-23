@@ -175,6 +175,7 @@ const AddStudentParent = () => {
         student: {
           firstName: studentData.firstName,
           lastName: studentData.lastName,
+          email: studentData.email || null,  // For sending login credentials
           gender: studentData.gender,
           phoneNumber: studentData.phoneNumber,
           dateOfBirth: studentData.dateOfBirth,

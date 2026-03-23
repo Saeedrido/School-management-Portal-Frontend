@@ -23,6 +23,7 @@ import {
   MenuItem,
   CircularProgress,
   Avatar,
+  Alert,
 } from '@mui/material';
 import {
   Person,
@@ -33,9 +34,11 @@ import {
   School,
   AssignmentTurnedIn,
   MoreVert,
+  CloudUpload,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
+import api from '../../services/api';
 import { enumToGender } from '../../utils/dataMapping';
 import { PageHeader, StatusBadge } from '../../components/ui';
 
@@ -54,6 +57,54 @@ const StudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [academicYearId, setAcademicYearId] = useState('');
+
+  const handleBulkUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!selectedClass) {
+      setError('Please select a class first before uploading students');
+      event.target.value = '';
+      return;
+    }
+
+    if (!academicYearId) {
+      setError('No active academic year found. Please set an academic year first.');
+      event.target.value = '';
+      return;
+    }
+
+    setUploadLoading(true);
+    setError(null);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append('File', file);
+    formData.append('academicYearId', academicYearId);
+
+    try {
+      const response = await adminAPI.classes.bulkUploadStudents(selectedClass, formData);
+
+      if (response.data?.success) {
+        const result = response.data.data;
+        setUploadResult(result);
+        if (result.successRecords?.length > 0) {
+          fetchStudents();
+        }
+      } else {
+        setError(response.data?.message || 'Failed to upload students');
+      }
+    } catch (err) {
+      console.error('Error uploading students:', err);
+      setError(err.response?.data?.message || 'An error occurred while uploading students');
+    } finally {
+      setUploadLoading(false);
+      event.target.value = '';
+    }
+  };
 
   useEffect(() => {
     const fetchAdminClasses = async () => {
@@ -69,7 +120,22 @@ const StudentList = () => {
       }
     };
 
+    const fetchActiveAcademicYear = async () => {
+      try {
+        const response = await api.get('/api/academicyears/active');
+        console.log('Academic year response:', response);
+        if (response.data?.success && response.data?.data) {
+          setAcademicYearId(response.data.data.id);
+        } else {
+          console.log('Academic year error:', response.data);
+        }
+      } catch (err) {
+        console.error('Error fetching academic year:', err);
+      }
+    };
+
     fetchAdminClasses();
+    fetchActiveAcademicYear();
   }, [user?.role]);
 
   useEffect(() => {
@@ -120,41 +186,41 @@ const StudentList = () => {
 
   const classes = getClasses();
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      if (!selectedClass) {
+  const fetchStudents = async () => {
+    if (!selectedClass) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+
+    if (user?.role === 'Teacher') {
+      const allowedIds = teacherClasses.map(c => c.id);
+      if (!allowedIds.includes(selectedClass)) {
         setStudents([]);
         setLoading(false);
         return;
       }
+    }
 
-      if (user?.role === 'Teacher') {
-        const allowedIds = teacherClasses.map(c => c.id);
-        if (!allowedIds.includes(selectedClass)) {
-          setStudents([]);
-          setLoading(false);
-          return;
-        }
+    try {
+      setLoading(true);
+      const api = user?.role === 'Teacher' ? teacherAPI.students : adminAPI.students;
+      const response = await api.getByClassPaged(selectedClass, 1, 100);
+      
+      if (response.data?.success && response.data?.data?.items) {
+        setStudents(response.data.data.items);
+      } else {
+        setStudents([]);
       }
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setError('Failed to load students');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        setLoading(true);
-        const api = user?.role === 'Teacher' ? teacherAPI.students : adminAPI.students;
-        const response = await api.getByClassPaged(selectedClass, 1, 100);
-        
-        if (response.data?.success && response.data?.data?.items) {
-          setStudents(response.data.data.items);
-        } else {
-          setStudents([]);
-        }
-      } catch (err) {
-        console.error('Error fetching students:', err);
-        setError('Failed to load students');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchStudents();
   }, [selectedClass, teacherClasses, user?.role]);
 
@@ -192,6 +258,23 @@ const StudentList = () => {
         actionText={user?.role === 'Admin' ? 'Add Student' : undefined}
         onAction={user?.role === 'Admin' ? () => navigate(`${basePath}/students/new`) : undefined}
       />
+
+      {error && (
+        <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {uploadResult && (
+        <Alert severity="success" onClose={() => setUploadResult(null)} sx={{ mb: 2, borderRadius: 2 }}>
+          Successfully uploaded {uploadResult.successRecords?.length || 0} students.
+          {uploadResult.failedRecords?.length > 0 && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Failed: {uploadResult.failedRecords.length} students
+            </Typography>
+          )}
+        </Alert>
+      )}
 
       <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
@@ -274,6 +357,33 @@ const StudentList = () => {
                 >
                   Add + Parent
                 </Button>
+                <input
+                  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  style={{ display: 'none' }}
+                  id="bulk-student-upload"
+                  type="file"
+                  onChange={handleBulkUpload}
+                />
+                <label htmlFor="bulk-student-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<CloudUpload />}
+                    disabled={uploadLoading}
+                    sx={{
+                      borderColor: '#6FAF8F',
+                      color: '#6FAF8F',
+                      borderRadius: 2.5,
+                      px: 2.5,
+                      '&:hover': {
+                        borderColor: '#4E8C70',
+                        background: 'rgba(111, 175, 143, 0.08)',
+                      },
+                    }}
+                  >
+                    {uploadLoading ? 'Uploading...' : 'Bulk Upload'}
+                  </Button>
+                </label>
               </Box>
             )}
           </Box>

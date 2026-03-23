@@ -26,6 +26,8 @@ import {
   CalendarToday,
   School as SchoolIcon,
   SupervisedUserCircle,
+  Comment,
+  RateReview,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
@@ -64,6 +66,10 @@ const AdminDashboard = () => {
           ? usersResponse.data.data.items.filter(u => u.roles?.some(r => r.name === 'Teacher')).length
           : 0;
 
+        const parentsCount = usersResponse.data?.success && usersResponse.data?.data?.items
+          ? usersResponse.data.data.items.filter(u => u.roles?.some(r => r.name === 'Parent')).length
+          : 0;
+
         let activeExamsCount = 0;
         const classesData = classesResponse.data?.data || [];
         
@@ -84,7 +90,7 @@ const AdminDashboard = () => {
           totalTeachers: teachersCount,
           totalClasses: classesCount,
           totalSubjects: subjectsCount,
-          totalParents: 0,
+          totalParents: parentsCount,
           activeExams: activeExamsCount,
         });
       } catch (err) {
@@ -163,6 +169,8 @@ const AdminDashboard = () => {
     { label: 'Add Student', icon: <People />, path: '/admin-dashboard/students/new', color: greenPrimary },
     { label: 'Create Exam', icon: <Assignment />, path: '/admin-dashboard/exams/new', color: '#F59E0B' },
     { label: 'Add Class', icon: <SchoolIcon />, path: '/admin-dashboard/classes/new', color: '#06B6D4' },
+    { label: 'Teacher Remarks', icon: <RateReview />, path: '/admin-dashboard/teacher-remarks', color: '#10B981' },
+    { label: 'Headmaster Comments', icon: <Comment />, path: '/admin-dashboard/headmaster-comments', color: '#F97316' },
   ];
 
   if (loading) {
@@ -207,25 +215,25 @@ const AdminDashboard = () => {
       )}
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
         {dashboardCards.map((card, index) => (
           <Grid item xs={12} sm={6} lg={4} key={index}>
             <Card
               onClick={() => navigate(card.route)}
               sx={{
                 background: '#FFFFFF',
-                borderRadius: 3,
+                borderRadius: 2,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 border: '1px solid rgba(111, 175, 143, 0.08)',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 32px rgba(111, 175, 143, 0.15)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 20px rgba(111, 175, 143, 0.12)',
                   border: `1px solid ${card.color}30`,
                 },
               }}
             >
-              <CardContent sx={{ p: 3 }}>
+              <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography
@@ -246,7 +254,7 @@ const AdminDashboard = () => {
                       sx={{
                         fontWeight: 700,
                         color: '#1E293B',
-                        fontSize: '2rem',
+                        fontSize: '1.75rem',
                         lineHeight: 1.2,
                         mb: 0.5,
                       }}
@@ -255,16 +263,16 @@ const AdminDashboard = () => {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: '#64748B', fontSize: '0.8rem' }}
+                      sx={{ color: '#64748B', fontSize: '0.75rem' }}
                     >
                       {card.description}
                     </Typography>
                   </Box>
                   <Box
                     sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 3,
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
                       background: `linear-gradient(135deg, ${card.color}15 0%, ${card.color}08 100%)`,
                       display: 'flex',
                       alignItems: 'center',
@@ -327,15 +335,15 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.08)', height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700, fontSize: '1.1rem', mb: 3 }}>
+        <Grid item xs={12} lg={3.5}>
+          <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.08)' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700, fontSize: '1rem', mb: 1 }}>
                 School Overview
               </Typography>
               
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
                     Students
                   </Typography>
@@ -347,19 +355,19 @@ const AdminDashboard = () => {
                   variant="determinate"
                   value={stats.totalStudents > 0 ? 85 : 0}
                   sx={{
-                    height: 8,
-                    borderRadius: 4,
+                    height: 5,
+                    borderRadius: 2.5,
                     bgcolor: 'rgba(111, 175, 143, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      borderRadius: 4,
+                      borderRadius: 2.5,
                       background: 'linear-gradient(90deg, #6FAF8F 0%, #4E8C70 100%)',
                     },
                   }}
                 />
               </Box>
 
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
                     Teachers
                   </Typography>
@@ -371,19 +379,19 @@ const AdminDashboard = () => {
                   variant="determinate"
                   value={stats.totalTeachers > 0 ? 60 : 0}
                   sx={{
-                    height: 8,
-                    borderRadius: 4,
+                    height: 5,
+                    borderRadius: 2.5,
                     bgcolor: 'rgba(139, 92, 246, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      borderRadius: 4,
+                      borderRadius: 2.5,
                       background: 'linear-gradient(90deg, #8B5CF6 0%, #7C3AED 100%)',
                     },
                   }}
                 />
               </Box>
 
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
                     Classes
                   </Typography>
@@ -395,11 +403,11 @@ const AdminDashboard = () => {
                   variant="determinate"
                   value={stats.totalClasses > 0 ? 45 : 0}
                   sx={{
-                    height: 8,
-                    borderRadius: 4,
+                    height: 5,
+                    borderRadius: 2.5,
                     bgcolor: 'rgba(245, 158, 11, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      borderRadius: 4,
+                      borderRadius: 2.5,
                       background: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
                     },
                   }}
@@ -407,7 +415,7 @@ const AdminDashboard = () => {
               </Box>
 
               <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
                     Active Exams
                   </Typography>
@@ -419,11 +427,11 @@ const AdminDashboard = () => {
                   variant="determinate"
                   value={stats.activeExams > 0 ? 30 : 0}
                   sx={{
-                    height: 8,
-                    borderRadius: 4,
+                    height: 5,
+                    borderRadius: 2.5,
                     bgcolor: 'rgba(6, 182, 212, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      borderRadius: 4,
+                      borderRadius: 2.5,
                       background: 'linear-gradient(90deg, #06B6D4 0%, #0891B2 100%)',
                     },
                   }}

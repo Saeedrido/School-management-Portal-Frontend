@@ -20,6 +20,8 @@ import {
   CheckCircle,
   Warning,
   Quiz,
+  ArrowBack,
+  ArrowForward,
 } from '@mui/icons-material';
 import api, { attemptsAPI, sharedAPI, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -43,6 +45,10 @@ const TakeExam = () => {
   const [attemptId, setAttemptId] = useState(null);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const questionsPerPage = 2;
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -241,6 +247,32 @@ const TakeExam = () => {
       ...prev,
       [questionId]: [optionId]
     }));
+  };
+
+  // Pagination functions
+  const totalPages = Math.ceil(questions.length / questionsPerPage);
+  const currentQuestions = questions.slice(
+    currentPage * questionsPerPage,
+    (currentPage + 1) * questionsPerPage
+  );
+  const currentPageNumber = currentPage + 1;
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleGoToPage = (page) => {
+    if (page >= 0 && page < totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   const handleAutoSubmit = useCallback(async () => {
@@ -464,11 +496,11 @@ const TakeExam = () => {
       )}
 
       <Box>
-        {questions.map((question, index) => (
+        {currentQuestions.map((question, index) => (
           <Paper key={question.id} sx={{ p: 3, mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1F2937' }}>
-                Question {index + 1} of {questions.length}
+                Question {(currentPage * questionsPerPage) + index + 1} of {questions.length}
               </Typography>
               <Chip 
                 label={`${question.marks} marks`} 
@@ -509,7 +541,16 @@ const TakeExam = () => {
                       <FormControlLabel
                         value={option.id}
                         control={<Radio sx={{ color: '#5FAF8F', '&.Mui-checked': { color: '#5FAF8F' } }} />}
-                        label={<Typography sx={{ color: answers[question.id]?.includes(option.id) ? '#15803D' : '#1F2937', fontWeight: answers[question.id]?.includes(option.id) ? 500 : 400 }}>{`${option.key}) ${option.value}`}</Typography>}
+                        label={
+                          <Typography 
+                            sx={{ 
+                              color: answers[question.id]?.includes(option.id) ? '#15803D' : '#1F2937', 
+                              fontWeight: answers[question.id]?.includes(option.id) ? 500 : 400 
+                            }}
+                          >
+                            {option.key}) {option.value}
+                          </Typography>
+                        }
                         sx={{ width: '100%', m: 0 }}
                       />
                     </Paper>
@@ -537,8 +578,67 @@ const TakeExam = () => {
                 sx={{ mt: 2, bgcolor: '#EAF5F1', color: '#2E8B57' }} 
               />
             )}
+
+            {(answers[question.id] && (answers[question.id].length > 0 || answers[question.id])) && (
+              <Chip 
+                icon={<CheckCircle />} 
+                label="Answered" 
+                size="small" 
+                sx={{ mt: 2, bgcolor: '#EAF5F1', color: '#2E8B57' }} 
+              />
+            )}
           </Paper>
         ))}
+
+        {/* Pagination Controls - only show if more than 1 page */}
+        {totalPages > 1 && (
+          <Box sx={{ mt: 3, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                onClick={handlePrevPage}
+                disabled={currentPage === 0}
+                startIcon={<ArrowBack />}
+                sx={{ borderColor: '#5FAF8F', color: '#5FAF8F' }}
+              >
+                Previous
+              </Button>
+              
+              {Array.from({ length: totalPages }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={currentPage === i ? 'contained' : 'outlined'}
+                  onClick={() => handleGoToPage(i)}
+                  sx={{ 
+                    minWidth: 40,
+                    borderColor: '#5FAF8F',
+                    color: currentPage === i ? '#fff' : '#5FAF8F',
+                    bgcolor: currentPage === i ? '#5FAF8F' : 'transparent',
+                    '&:hover': {
+                      bgcolor: currentPage === i ? '#2E8B57' : 'rgba(95, 175, 143, 0.1)',
+                    }
+                  }}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+              
+              <Button
+                variant="outlined"
+                onClick={handleNextPage}
+                disabled={currentPage >= totalPages - 1}
+                endIcon={<ArrowForward />}
+                sx={{ borderColor: '#5FAF8F', color: '#5FAF8F' }}
+              >
+                Next
+              </Button>
+            </Box>
+            
+            <Typography variant="body2" sx={{ textAlign: 'center', mt: 1, color: '#666' }}>
+              Page {currentPageNumber} of {totalPages} ({questionsPerPage} questions per page)
+            </Typography>
+          </Box>
+        )}
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
           <Button

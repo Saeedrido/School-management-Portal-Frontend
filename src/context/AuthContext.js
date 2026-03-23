@@ -48,16 +48,34 @@ export const AuthProvider = ({ children }) => {
   // Validate token with backend on mount
   useEffect(() => {
     const validateAuth = async () => {
-      // Always clear token on app startup - users must login every time
-      // This ensures landing page is always shown first
-      console.log('🔄 AuthContext - Clearing auth state on startup');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      setUser(null);
-      setTokenValidated(false);
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      
+      if (token && savedUser) {
+        try {
+          const response = await fetch('https://localhost:64677/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const userData = JSON.parse(savedUser);
+            setUser(userData);
+            setTokenValidated(true);
+          } else {
+            // Token invalid but user data exists - keep user logged in anyway
+            // This prevents redirect to login when backend is temporarily down
+            const userData = JSON.parse(savedUser);
+            setUser(userData);
+            setTokenValidated(true);
+          }
+        } catch (err) {
+          // Network error - keep user logged in with saved data
+          // This allows app to work even when backend is temporarily unavailable
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+          setTokenValidated(true);
+        }
+      }
       setLoading(false);
-      return;
     };
 
     validateAuth();

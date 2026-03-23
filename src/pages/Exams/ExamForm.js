@@ -532,11 +532,25 @@ const ExamForm = () => {
           }
         }, 1500);
       } else {
-        setError(response.data?.message || 'Failed to save exam');
+        // Show validation errors if present
+        const errorMessage = response.data?.message || 'Failed to save exam';
+        const validationErrors = response.data?.errors;
+        
+        if (validationErrors && Array.isArray(validationErrors) && validationErrors.length > 0) {
+          setError(validationErrors.join(', '));
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
       console.error('Error saving exam:', err);
-      setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+      // Handle both message and errors array from backend
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        setError(errorData.errors.join(', '));
+      } else {
+        setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -584,11 +598,25 @@ const ExamForm = () => {
           navigate(`${basePath}/exams/${examId}/questions`);
         }, 1000);
       } else {
-        setError(response.data?.message || 'Failed to save exam');
+        // Show validation errors if present
+        const errorMessage = response.data?.message || 'Failed to save exam';
+        const validationErrors = response.data?.errors;
+        
+        if (validationErrors && Array.isArray(validationErrors) && validationErrors.length > 0) {
+          setError(validationErrors.join(', '));
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
       console.error('Error saving exam:', err);
-      setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+      // Handle both message and errors array from backend
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        setError(errorData.errors.join(', '));
+      } else {
+        setError(err.response?.data?.message || 'Failed to save exam. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -599,7 +627,7 @@ const ExamForm = () => {
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)',
+          bgcolor: '#F8FAF9',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -607,7 +635,7 @@ const ExamForm = () => {
           gap: 2,
         }}
       >
-        <CircularProgress sx={{ color: '#FF3E8A' }} />
+        <CircularProgress sx={{ color: '#6FAF8F' }} />
         <Typography sx={{ color: 'text.secondary' }}>
           Loading exam data...
         </Typography>
@@ -645,9 +673,8 @@ const ExamForm = () => {
         {/* Form */}
         <Card
           sx={{
-            background: 'rgba(17, 17, 17, 0.8)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 62, 138, 0.3)',
+            background: '#ffffff',
+            border: '1px solid rgba(111, 175, 143, 0.2)',
             borderRadius: 3,
           }}
         >
@@ -658,18 +685,18 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(255, 62, 138, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Quiz sx={{ color: '#FF3E8A', fontSize: 28 }} />
+                <Quiz sx={{ color: '#6FAF8F', fontSize: 28 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Basic Information
@@ -896,9 +923,9 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(33, 150, 243, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
@@ -907,7 +934,7 @@ const ExamForm = () => {
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Exam Configuration
@@ -990,18 +1017,18 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(102, 187, 106, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Schedule sx={{ color: '#66BB6A', fontSize: 28 }} />
+                <Schedule sx={{ color: '#6FAF8F', fontSize: 28 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Schedule
@@ -1059,18 +1086,18 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(255, 167, 38, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Quiz sx={{ color: '#FFA726', fontSize: 28 }} />
+                <Quiz sx={{ color: '#6FAF8F', fontSize: 28 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Grading
@@ -1148,18 +1175,18 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(158, 158, 158, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Quiz sx={{ color: '#9E9E9E', fontSize: 28 }} />
+                <Quiz sx={{ color: '#6FAF8F', fontSize: 28 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Instructions (Optional)
@@ -1183,18 +1210,18 @@ const ExamForm = () => {
               sx={{
                 mb: 3,
                 p: 3,
-                background: 'rgba(17, 17, 17, 0.6)',
+                background: 'rgba(111, 175, 143, 0.05)',
                 borderRadius: 3,
-                border: '1px solid rgba(156, 39, 176, 0.2)',
+                border: '1px solid rgba(111, 175, 143, 0.2)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Quiz sx={{ color: '#9C27B0', fontSize: 28 }} />
+                <Quiz sx={{ color: '#6FAF8F', fontSize: 28 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: '#1a1a1a',
                   }}
                 >
                   Retake Settings
@@ -1271,9 +1298,9 @@ const ExamForm = () => {
                 onClick={handleSubmit}
                 disabled={loading}
                 sx={{
-                  background: '#2196F3',
+                  background: '#6FAF8F',
                   '&:hover': {
-                    background: '#1976D2',
+                    background: '#5FA08A',
                   },
                   px: 3,
                   py: 1.5,
@@ -1287,9 +1314,9 @@ const ExamForm = () => {
                 onClick={handleSaveAndAddQuestions}
                 disabled={loading}
                 sx={{
-                  background: 'linear-gradient(135deg, #FF3E8A 0%, #FF5DA3 100%)',
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #5FA08A 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #FF5DA3 0%, #FF7CB8 100%)',
+                    background: 'linear-gradient(135deg, #5FA08A 0%, #4E8C70 100%)',
                   },
                   px: 3,
                   py: 1.5,
@@ -1312,8 +1339,16 @@ const textFieldStyles = {
     color: 'rgba(255, 255, 255, 0.7)',
   },
   '& .MuiOutlinedInput-root': {
+    color: '#ffffff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#6FAF8F',
+    },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#FF3E8A',
+      borderColor: '#6FAF8F',
     },
     '&.Mui-error .MuiOutlinedInput-notchedOutline': {
       borderColor: '#ff6b6b',
@@ -1326,14 +1361,15 @@ const textFieldStyles = {
 
 const selectStyles = {
   color: '#ffffff',
+  backgroundColor: 'rgba(0, 0, 0, 0.3)',
   '& .MuiOutlinedInput-notchedOutline': {
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#FF3E8A',
+    borderColor: '#6FAF8F',
   },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#FF3E8A',
+    borderColor: '#6FAF8F',
   },
   '& .MuiInputLabel-root': {
     color: 'rgba(255, 255, 255, 0.7)',

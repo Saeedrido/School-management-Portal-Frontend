@@ -9,19 +9,32 @@ import {
   Button,
   Avatar,
   CircularProgress,
-  useTheme,
+  Chip,
+  LinearProgress,
+  Divider,
+  InputBase,
 } from '@mui/material';
 import {
   Person,
   School,
   TrendingUp,
   People,
+  CalendarMonth,
+  Assignment,
+  Message,
+  Notifications,
+  EmojiEvents,
+  MenuBook,
+  Search,
+  ArrowForward,
+  Star,
+  AccessTime,
+  CheckCircle,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const ParentDashboard = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [children, setChildren] = useState([]);
@@ -46,283 +59,383 @@ const ParentDashboard = () => {
   };
 
   const getAvatarColor = (name) => {
-    const colors = ['#2196F3', '#66BB6A', '#EF5350', '#FFA726', '#AB47BC'];
+    const colors = ['#6FAF8F', '#4E8C70', '#8BC34A', '#009688', '#FF9800', '#9C27B0'];
     const index = name?.charCodeAt(0) % colors.length || 0;
     return colors[index];
   };
 
-  const statsCards = [
-    {
-      title: 'My Children',
-      value: children.length,
-      icon: <People sx={{ fontSize: 40, color: '#FF3E8A' }} />,
-      bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    },
-    {
-      title: 'View Results',
-      value: 'Results',
-      icon: <TrendingUp sx={{ fontSize: 40, color: '#FF3E8A' }} />,
-      bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    },
+  const stats = [
+    { icon: <People />, label: 'Total Children', value: children.length, color: '#6FAF8F', bg: '#E8F5E9' },
+    { icon: <TrendingUp />, label: 'Avg. Performance', value: '85%', color: '#2196F3', bg: '#E3F2FD' },
+    { icon: <MenuBook />, label: 'Upcoming Exams', value: '2', color: '#FF9800', bg: '#FFF3E0' },
+    { icon: <Notifications />, label: 'Notifications', value: '3', color: '#9C27B0', bg: '#F3E5F5' },
+  ];
+
+  const activities = [
+    { title: 'Mathematics Result Released', desc: 'John\'s Term 2 math result is now available', time: '2 hours ago', icon: <CheckCircle />, color: '#4CAF50' },
+    { title: 'Attendance Update', desc: 'Jane marked present for today', time: '5 hours ago', icon: <School />, color: '#2196F3' },
+    { title: 'New Achievement', desc: 'John received "Star Student" award', time: '1 day ago', icon: <EmojiEvents />, color: '#FF9800' },
   ];
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress />
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        bgcolor: '#FAFBFC'
+      }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress sx={{ color: '#6FAF8F', mb: 2 }} />
+          <Typography variant="body2" sx={{ color: '#64748B' }}>Loading your dashboard...</Typography>
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)'
-          : 'background.default',
-      }}
-    >
-      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
-        {/* Welcome Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-            }}
-          >
-            Welcome back, {user?.name || 'Parent'}!
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: '#FAFBFC',
+    }}>
+      {/* Top Navigation Bar */}
+      <Box sx={{ 
+        bgcolor: '#fff',
+        borderBottom: '1px solid #E5E7EB',
+        px: { xs: 2, sm: 4 },
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ 
+            width: 40, 
+            height: 40, 
+            borderRadius: 2,
+            bgcolor: '#6FAF8F',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <School sx={{ color: '#fff', fontSize: 24 }} />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#1F2937' }}>
+            300 Arundel Learning
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1 }}>
-            Here's an overview of your children's academic performance.
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ 
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: '#F3F4F6',
+            borderRadius: 2,
+            px: 2,
+            py: 1,
+          }}>
+            <Search sx={{ color: '#9CA3AF', mr: 1 }} />
+            <InputBase placeholder="Search..." sx={{ fontSize: '0.875rem' }} />
+          </Box>
+          <Avatar sx={{ bgcolor: '#6FAF8F', width: 40, height: 40 }}>
+            {user?.name?.charAt(0) || 'P'}
+          </Avatar>
+        </Box>
+      </Box>
+
+      <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 4 }, py: 4 }}>
+        
+        {/* Welcome Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827', mb: 0.75, fontSize: { xs: '1.5rem', sm: '1.75rem' } }}>
+            Welcome back, {user?.name?.split(' ')[0] || 'Parent'} 👋
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#6B7280', fontSize: '0.9rem' }}>
+            Here's what's happening with your children's education today.
           </Typography>
         </Box>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {statsCards.map((stat, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card
-                sx={{
-                  background: stat.bg,
-                  borderRadius: 3,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-                  transition: 'transform 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1 }}>
-                        {stat.title}
-                      </Typography>
-                      <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 700 }}>
-                        {stat.value}
-                      </Typography>
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          {stats.map((stat, i) => (
+            <Grid size={{ xs: 6, md: 3 }} key={i}>
+              <Card sx={{ 
+                borderRadius: 2.5, 
+                border: '1px solid #E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 20px rgba(111, 175, 143, 0.12)',
+                  borderColor: '#6FAF8F',
+                }
+              }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Box sx={{ 
+                      p: 1.5, 
+                      borderRadius: 2.5, 
+                      bgcolor: stat.bg,
+                    }}>
+                      {React.cloneElement(stat.icon, { sx: { color: stat.color, fontSize: 24 } })}
                     </Box>
-                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
-                      {stat.icon}
-                    </Box>
+                    <ArrowForward sx={{ color: '#D1D5DB', fontSize: 20 }} />
                   </Box>
+                  <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827', fontSize: '2rem', lineHeight: 1, mb: 0.5 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 500 }}>
+                    {stat.label}
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
 
-        {/* My Children Section */}
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 600,
-            color: 'text.primary',
-            mb: 3,
-          }}
-        >
-          My Children
-        </Typography>
-
-        {children.length === 0 ? (
-          <Card sx={{ background: 'rgba(17, 17, 17, 0.8)', borderRadius: 3 }}>
-            <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <Person sx={{ fontSize: 60, color: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
-              <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.5)', mb: 2 }}>
-                No Children Found
+        {/* Main Content Grid */}
+        <Grid container spacing={4}>
+          {/* Children Section */}
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827' }}>
+                Your Children
               </Typography>
-              <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-                You don't have any children linked to your account yet.
-              </Typography>
-            </CardContent>
-          </Card>
-        ) : (
-          <Grid container spacing={3}>
-            {children.map((child) => (
-              <Grid item xs={12} sm={6} md={4} key={child.studentProfileId}>
-                <Card
-                  sx={{
-                    background: 'rgba(17, 17, 17, 0.8)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 3,
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      borderColor: '#FF3E8A',
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                      <Avatar
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          bgcolor: getAvatarColor(child.fullName),
-                          fontSize: '1.5rem',
-                        }}
-                      >
-                        {child.fullName?.charAt(0) || 'S'}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
-                          {child.fullName || 'Unknown'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          {child.studentNumber || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Box>
+              <Button 
+                endIcon={<ArrowForward />}
+                onClick={() => navigate('/parent-dashboard/children')}
+                sx={{ color: '#6FAF8F', fontWeight: 600 }}
+              >
+                View All
+              </Button>
+            </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <Box
-                        sx={{
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          bgcolor: child.relationship === 'Father' ? '#E3F2FD' : 
-                                   child.relationship === 'Mother' ? '#FFF3E0' : '#E8F5E9',
-                        }}
-                      >
-                        <Typography variant="caption" sx={{ 
-                          color: child.relationship === 'Father' ? '#1976D2' : 
-                                child.relationship === 'Mother' ? '#F57C00' : '#388E3C',
-                          fontWeight: 500,
-                        }}>
-                          {child.relationship || 'Parent'}
-                        </Typography>
-                      </Box>
-                      {child.isPrimaryContact && (
-                        <Box
+            {children.length === 0 ? (
+              <Card sx={{ 
+                borderRadius: 3, 
+                border: '1px solid #E5E7EB',
+                p: 6,
+                textAlign: 'center',
+                bgcolor: '#fff',
+              }}>
+                <Avatar sx={{ 
+                  width: 80, 
+                  height: 80, 
+                  bgcolor: '#E8F5E9',
+                  mx: 'auto',
+                  mb: 2
+                }}>
+                  <Person sx={{ fontSize: 40, color: '#6FAF8F' }} />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>
+                  No Children Yet
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+                  Children linked to your account will appear here
+                </Typography>
+              </Card>
+            ) : (
+              <Grid container spacing={3}>
+                {children.slice(0, 4).map((child, i) => (
+                  <Grid size={{ xs: 12, sm: 6 }} key={i}>
+                    <Card sx={{ 
+                      borderRadius: 3, 
+                      border: '1px solid #E5E7EB',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 16px 32px rgba(111, 175, 143, 0.12)',
+                        borderColor: '#6FAF8F',
+                        '& .view-btn': { bgcolor: '#5a9a7a' }
+                      }
+                    }}>
+                      <Box sx={{ 
+                        height: 4, 
+                        background: `linear-gradient(90deg, ${getAvatarColor(child.fullName)} 0%, ${getAvatarColor(child.fullName)}cc 100%)` 
+                      }} />
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2.5 }}>
+                          <Avatar
+                            sx={{
+                              width: 52,
+                              height: 52,
+                              bgcolor: getAvatarColor(child.fullName),
+                              fontWeight: 700,
+                              fontSize: '1.25rem',
+                              boxShadow: `0 4px 12px ${getAvatarColor(child.fullName)}30`
+                            }}
+                          >
+                            {child.fullName?.charAt(0) || 'S'}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
+                              {child.fullName || 'Unknown'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#6B7280', mt: 0.5 }}>
+                              {child.studentNumber || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 500 }}>Performance</Typography>
+                            <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 600 }}>85%</Typography>
+                          </Box>
+                          <LinearProgress 
+                            variant="determinate" 
+                            value={85} 
+                            sx={{ 
+                              height: 6, 
+                              borderRadius: 3,
+                              bgcolor: '#E8F5E9',
+                              '& .MuiLinearProgress-bar': { 
+                                borderRadius: 3,
+                                bgcolor: '#6FAF8F'
+                              }
+                            }} 
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2.5 }}>
+                          <Chip 
+                            label={child.relationship || 'Parent'}
+                            size="small"
+                            sx={{ 
+                              bgcolor: '#E8F5E9', 
+                              color: '#059669',
+                              fontWeight: 600,
+                              fontSize: '0.7rem'
+                            }}
+                          />
+                        </Box>
+
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          className="view-btn"
+                          startIcon={<TrendingUp />}
+                          onClick={() => navigate(`/parent-dashboard/results/${child.studentProfileId}`)}
                           sx={{
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: 1,
-                            bgcolor: 'rgba(255, 62, 138, 0.1)',
+                            bgcolor: '#6FAF8F',
+                            borderRadius: 2,
+                            py: 1.25,
+                            fontWeight: 600,
+                            transition: 'all 0.2s',
                           }}
                         >
-                          <Typography variant="caption" sx={{ color: '#FF3E8A', fontWeight: 500 }}>
-                            Primary Contact
+                          View Results
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Grid>
+
+          {/* Recent Activity */}
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827', mb: 3 }}>
+              Recent Activity
+            </Typography>
+            
+            <Card sx={{ 
+              borderRadius: 3, 
+              border: '1px solid #E5E7EB',
+              bgcolor: '#fff',
+            }}>
+              <CardContent sx={{ p: 0 }}>
+                {activities.map((activity, i) => (
+                  <Box key={i}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 2, 
+                      p: 2.5,
+                      transition: 'all 0.2s',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: '#F9FAFB' }
+                    }}>
+                      <Box sx={{ 
+                        p: 1, 
+                        borderRadius: 1.5, 
+                        bgcolor: `${activity.color}15`,
+                        height: 'fit-content'
+                      }}>
+                        {React.cloneElement(activity.icon, { sx: { color: activity.color, fontSize: 20 } })}
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#111827', mb: 0.5 }}>
+                          {activity.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                          {activity.desc}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                          <AccessTime sx={{ fontSize: 12, color: '#9CA3AF' }} />
+                          <Typography variant="caption" sx={{ color: '#9CA3AF' }}>
+                            {activity.time}
                           </Typography>
                         </Box>
-                      )}
+                      </Box>
                     </Box>
+                    {i < activities.length - 1 && <Divider />}
+                  </Box>
+                ))}
+              </CardContent>
+            </Card>
 
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      startIcon={<TrendingUp />}
-                      onClick={() => navigate(`/parent-dashboard/results/${child.studentProfileId}`)}
-                      sx={{
-                        bgcolor: '#FF3E8A',
-                        '&:hover': { bgcolor: '#FF5DA3' },
-                        borderRadius: 2,
-                      }}
-                    >
-                      View Results
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        {/* Quick Actions */}
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 600,
-            color: 'text.primary',
-            mb: 3,
-            mt: 4,
-          }}
-        >
-          Quick Actions
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<People />}
-              onClick={() => navigate('/parent-dashboard/children')}
-              sx={{
-                py: 2,
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: 'text.primary',
-                '&:hover': {
-                  borderColor: '#FF3E8A',
-                  bgcolor: 'rgba(255, 62, 138, 0.1)',
-                },
-              }}
-            >
-              View All Children
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<TrendingUp />}
-              onClick={() => navigate('/parent-dashboard/results')}
-              sx={{
-                py: 2,
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: 'text.primary',
-                '&:hover': {
-                  borderColor: '#FF3E8A',
-                  bgcolor: 'rgba(255, 62, 138, 0.1)',
-                },
-              }}
-            >
-              View Results
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<School />}
-              onClick={() => navigate('/parent-dashboard/settings')}
-              sx={{
-                py: 2,
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: 'text.primary',
-                '&:hover': {
-                  borderColor: '#FF3E8A',
-                  bgcolor: 'rgba(255, 62, 138, 0.1)',
-                },
-              }}
-            >
-              Settings
-            </Button>
+            {/* Quick Actions */}
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827', mb: 3, mt: 4 }}>
+              Quick Actions
+            </Typography>
+            
+            <Grid container spacing={2}>
+              {[
+                { icon: <People />, label: 'All Children', color: '#6FAF8F' },
+                { icon: <Assignment />, label: 'Results', color: '#3B82F6' },
+                { icon: <Message />, label: 'Messages', color: '#8B5CF6' },
+                { icon: <Notifications />, label: 'Alerts', color: '#F59E0B' },
+              ].map((action, i) => (
+                <Grid size={{ xs: 6 }} key={i}>
+                  <Card 
+                    onClick={() => navigate(action.path || '/parent-dashboard')}
+                    sx={{ 
+                      borderRadius: 2.5, 
+                      border: '1px solid #E5E7EB',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: action.color,
+                        bgcolor: `${action.color}05`,
+                        transform: 'scale(1.02)',
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ textAlign: 'center', py: 2.5, px: 2 }}>
+                      <Box sx={{ 
+                        p: 1.5, 
+                        borderRadius: 2, 
+                        bgcolor: `${action.color}15`,
+                        display: 'inline-flex',
+                        mb: 1.5
+                      }}>
+                        {React.cloneElement(action.icon, { sx: { color: action.color, fontSize: 24 } })}
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+                        {action.label}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           </Grid>
         </Grid>
       </Box>

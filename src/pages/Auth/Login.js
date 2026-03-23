@@ -14,6 +14,10 @@ import {
   CardContent,
   Checkbox,
   FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Email,
@@ -21,9 +25,12 @@ import {
   Visibility,
   VisibilityOff,
   ArrowForward,
+  Close,
+  CheckCircle,
 } from '@mui/icons-material';
 import schoolLogo from '../../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -36,6 +43,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
+  // Forgot Password Modal State
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -84,6 +98,32 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotSuccess(false);
+
+    try {
+      const response = await authAPI.forgotPassword({ email: forgotEmail });
+      if (response.data?.success) {
+        setForgotSuccess(true);
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to send reset link';
+      setForgotError(message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleCloseForgotPassword = () => {
+    setForgotPasswordOpen(false);
+    setForgotEmail('');
+    setForgotSuccess(false);
+    setForgotError('');
+  };
+
   return (
     <Box
       sx={{
@@ -123,16 +163,16 @@ const Login = () => {
 
       <Card
         sx={{
-          maxWidth: 440,
+          maxWidth: 400,
           width: '100%',
-          borderRadius: 4,
+          borderRadius: 3,
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
           backgroundColor: '#FFFFFF',
           position: 'relative',
           overflow: 'visible',
         }}
       >
-        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
           {/* Logo inside the card */}
           <Box sx={{ textAlign: 'center' }}>
             <Box
@@ -140,14 +180,14 @@ const Login = () => {
               src={schoolLogo}
               alt="School Logo"
               sx={{
-                width: 200,
-                height: 200,
+                width: 140,
+                height: 140,
                 objectFit: 'contain',
               }}
             />
           </Box>
           {/* Welcome Text */}
-          <Box sx={{ textAlign: 'center', mt: -5 }}>
+          <Box sx={{ textAlign: 'center', mt: -3 }}>
             <Typography
               variant="h5"
               sx={{
@@ -178,10 +218,10 @@ const Login = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Box sx={{ mb: 2.5 }}>
+            <Box sx={{ mb: 2 }}>
               <Typography
                 variant="body2"
-                sx={{ color: '#374151', mb: 1, fontWeight: 600, fontSize: '0.85rem' }}
+                sx={{ color: '#374151', mb: 0.75, fontWeight: 600, fontSize: '0.8rem' }}
               >
                 Email Address
               </Typography>
@@ -192,17 +232,18 @@ const Login = () => {
                 value={formData.identifier}
                 onChange={handleChange}
                 disabled={loading}
+                size="small"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Email sx={{ color: '#6FAF8F', fontSize: 20 }} />
+                      <Email sx={{ color: '#6FAF8F', fontSize: 18 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  mb: 2,
+                  mb: 1.5,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2.5,
+                    borderRadius: 2,
                     backgroundColor: '#F8FAF9',
                     '&:hover': {
                       backgroundColor: '#F1F5F4',
@@ -219,11 +260,11 @@ const Login = () => {
               />
             </Box>
 
-            <Box sx={{ mb: 2.5 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
                 <Typography
                   variant="body2"
-                  sx={{ color: '#374151', fontWeight: 600, fontSize: '0.85rem' }}
+                  sx={{ color: '#374151', fontWeight: 600, fontSize: '0.8rem' }}
                 >
                   Password
                 </Typography>
@@ -236,6 +277,7 @@ const Login = () => {
                     cursor: 'pointer',
                     '&:hover': { textDecoration: 'underline' },
                   }}
+                  onClick={() => setForgotPasswordOpen(true)}
                 >
                   Forgot password?
                 </Typography>
@@ -309,11 +351,11 @@ const Login = () => {
               type="submit"
               fullWidth
               variant="contained"
-              size="large"
+              size="medium"
               disabled={loading}
               sx={{
-                py: 1.8,
-                mb: 3,
+                py: 1.25,
+                mb: 2.5,
                 background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
                 borderRadius: '50px',
                 fontWeight: 700,
@@ -394,6 +436,134 @@ const Login = () => {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Forgot Password Modal */}
+      <Dialog
+        open={forgotPasswordOpen}
+        onClose={handleCloseForgotPassword}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: '10px',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          pb: 1,
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#1F2937' }}>
+            Reset Password
+          </Typography>
+          <IconButton onClick={handleCloseForgotPassword} size="small">
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {forgotSuccess ? (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <CheckCircle sx={{ fontSize: 60, color: '#6FAF8F', mb: 2 }} />
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1F2937', mb: 1 }}>
+                Reset Link Sent
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
+                If the email <strong>{forgotEmail}</strong> is registered, you will receive a password reset link shortly.
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#9CA3AF' }}>
+                Please check your inbox and spam folder. The link expires in 30 minutes.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>
+                Enter your email address and we'll send you a link to reset your password.
+              </Typography>
+              {forgotError && (
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+                  {forgotError}
+                </Alert>
+              )}
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                disabled={forgotLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email sx={{ color: '#6FAF8F' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&.Mui-focused': {
+                      boxShadow: '0 0 0 3px rgba(111, 175, 143, 0.15)',
+                    },
+                  },
+                }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          {!forgotSuccess && (
+            <>
+              <Button 
+                onClick={handleCloseForgotPassword}
+                sx={{ color: '#64748B' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading || !forgotEmail}
+                sx={{
+                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                  borderRadius: '50px',
+                  px: 4,
+                  fontWeight: 600,
+                  boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                  },
+                  '&:disabled': {
+                    background: '#CBD5E1',
+                  }
+                }}
+              >
+                {forgotLoading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Send Reset Link'}
+              </Button>
+            </>
+          )}
+          {forgotSuccess && (
+            <Button
+              variant="contained"
+              onClick={handleCloseForgotPassword}
+              sx={{
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                borderRadius: '50px',
+                px: 4,
+                fontWeight: 600,
+                boxShadow: '0 4px 14px rgba(111, 175, 143, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5FA08A 0%, #3D7B5F 100%)',
+                },
+              }}
+            >
+              Done
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

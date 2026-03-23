@@ -179,6 +179,9 @@ export const adminAPI = {
     create: (data) => api.post('/api/classes', data),
     update: (id, data) => api.put(`/api/classes/${id}`, data),
     delete: (id) => api.delete(`/api/classes/${id}`),
+    bulkUploadStudents: (classId, formData) => api.post(`/api/classes/${classId}/students/bulk-upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   },
   subjects: {
     getAll: () => api.get('/api/subjects'),
@@ -355,6 +358,36 @@ export const parentAPI = {
   childPromotion: {
     getStatus: (studentId, academicYearId) => api.get(`/api/students/${studentId}/my-promotion-status?academicYearId=${academicYearId}`),
   },
+};
+
+// ============================================
+// COMMENTS API (Admin - for managing teacher remarks and headmaster comments)
+// ============================================
+export const commentsAPI = {
+  // Teacher Remarks
+  getTeacherRemarks: () => api.get('/api/comments/teacher-remarks'),
+  getTeacherRemarksBySchoolLevel: (schoolLevel) => api.get(`/api/comments/teacher-remarks/school-level/${schoolLevel}`),
+  getTeacherRemark: (id) => api.get(`/api/comments/teacher-remarks/${id}`),
+  createTeacherRemark: (data) => api.post('/api/comments/teacher-remarks', data),
+  updateTeacherRemark: (id, data) => api.put(`/api/comments/teacher-remarks/${id}`, data),
+  deleteTeacherRemark: (id) => api.delete(`/api/comments/teacher-remarks/${id}`),
+  reactivateTeacherRemark: (id) => api.put(`/api/comments/teacher-remarks/${id}/reactivate`),
+  seedTeacherRemarks: () => api.post('/api/comments/teacher-remarks/seed-defaults'),
+  batchUpdateTeacherRemarks: (data) => api.put('/api/comments/teacher-remarks/batch', data),
+  
+  // Headmaster Comments
+  getHeadmasterComments: () => api.get('/api/comments/headmaster-comments'),
+  getHeadmasterCommentsBySchoolLevel: (schoolLevel) => api.get(`/api/comments/headmaster-comments/school-level/${schoolLevel}`),
+  getHeadmasterComment: (id) => api.get(`/api/comments/headmaster-comments/${id}`),
+  createHeadmasterComment: (data) => api.post('/api/comments/headmaster-comments', data),
+  updateHeadmasterComment: (id, data) => api.put(`/api/comments/headmaster-comments/${id}`, data),
+  deleteHeadmasterComment: (id) => api.delete(`/api/comments/headmaster-comments/${id}`),
+  reactivateHeadmasterComment: (id) => api.put(`/api/comments/headmaster-comments/${id}/reactivate`),
+  seedHeadmasterComments: () => api.post('/api/comments/headmaster-comments/seed-defaults'),
+  batchUpdateHeadmasterComments: (data) => api.put('/api/comments/headmaster-comments/batch', data),
+  
+  // Utility
+  recalculateComments: () => api.post('/api/comments/recalculate-comments'),
 };
 
 // ============================================

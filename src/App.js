@@ -8,6 +8,7 @@ import DashboardLayout from './components/DashboardLayout';
 import Login from './pages/Auth/Login';
 import StudentLogin from './pages/Auth/StudentLogin';
 import Register from './pages/Auth/Register';
+import ResetPassword from './pages/Auth/ResetPassword';
 import StudentDashboard from './pages/Students/StudentDashboard';
 import IdCard from './pages/IdCard';
 import StudentList from './pages/Students/StudentList';
@@ -25,6 +26,7 @@ import TermList from './pages/Terms/TermList';
 import TermForm from './pages/Terms/TermForm';
 import PromotionList from './pages/Promotions/PromotionList';
 import PromotionCriteria from './pages/Promotions/PromotionCriteria';
+import CumulativeResult from './pages/Promotions/CumulativeResult';
 import ReportCardList from './pages/ReportCards/ReportCardList';
 import ExamList from './pages/Exams/ExamList';
 import ExamForm from './pages/Exams/ExamForm';
@@ -44,11 +46,14 @@ import TeacherAssignments from './pages/Teachers/TeacherAssignments';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import ParentDashboard from './pages/Dashboard/ParentDashboard';
 import SystemStatus from './pages/Admin/SystemStatus';
+import TeacherRemarks from './pages/Admin/TeacherRemarks';
+import HeadmasterComments from './pages/Admin/HeadmasterComments';
 import Settings from './pages/Settings';
 import GradeManagement from './pages/Grades/GradeManagement';
 import StudentProfile from './pages/Students/StudentProfile';
 import LandingPage from './pages/landingPage';
 import PaymentPage from './pages/PaymentPage';
+import Gallery from './pages/Gallery';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -167,12 +172,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomeRoute />} />
+      <Route path="/gallery" element={<Gallery />} />
       <Route path="/payment" element={<PaymentPage />} />
 
       {/* Public Routes */}
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/student-login" element={<PublicRoute><StudentLogin /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
       {/* Admin Dashboard Routes */}
       <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout /></ProtectedRoute>}>
@@ -199,6 +206,7 @@ function AppRoutes() {
         <Route path="terms/new" element={<TermForm />} />
         <Route path="terms/:id/edit" element={<TermForm />} />
         <Route path="promotions" element={<PromotionList />} />
+        <Route path="cumulative-result/:studentId" element={<CumulativeResult />} />
         <Route path="promotion-criteria" element={<PromotionCriteria />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="exams" element={<ExamList />} />
@@ -215,6 +223,8 @@ function AppRoutes() {
         <Route path="grade-management" element={<GradeManagement />} />
         <Route path="student-profiles" element={<StudentProfile />} />
         <Route path="teacher-assignments" element={<TeacherAssignments />} />
+        <Route path="teacher-remarks" element={<TeacherRemarks />} />
+        <Route path="headmaster-comments" element={<HeadmasterComments />} />
       </Route>
 
       {/* Teacher Dashboard Routes */}

@@ -229,7 +229,7 @@ const ParentForm = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#FF3E8A',
+                      color: '#6FAF8F',
                       mb: 2,
                     }}
                   >
@@ -252,8 +252,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -275,8 +283,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -299,8 +315,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -322,8 +346,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -336,7 +368,7 @@ const ParentForm = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#FF3E8A',
+                      color: '#6FAF8F',
                       mb: 2,
                       mt: 1,
                     }}
@@ -364,8 +396,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -393,8 +433,16 @@ const ParentForm = () => {
                         fontWeight: 500,
                       },
                       '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6FAF8F',
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#FF3E8A',
+                          borderColor: '#6FAF8F',
                         },
                       },
                     }}
@@ -407,7 +455,7 @@ const ParentForm = () => {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: '#FF3E8A',
+                      color: '#6FAF8F',
                       mb: 2,
                       mt: 1,
                     }}
@@ -451,7 +499,7 @@ const ParentForm = () => {
                           onClick={() => toggleStudentSelection(student.id)}
                           sx={{
                             ...(isSelected && {
-                              background: '#FF3E8A',
+                              background: '#6FAF8F',
                               color: '#ffffff',
                               '&:hover': {
                                 background: '#FF5DA3',
@@ -461,8 +509,8 @@ const ParentForm = () => {
                               borderColor: 'rgba(255, 255, 255, 0.3)',
                               color: 'rgba(255, 255, 255, 0.7)',
                               '&:hover': {
-                                borderColor: '#FF3E8A',
-                                color: '#FF3E8A',
+                                borderColor: '#6FAF8F',
+                                color: '#6FAF8F',
                                 background: 'rgba(255, 62, 138, 0.05)',
                               },
                             }),
@@ -516,7 +564,7 @@ const ParentForm = () => {
                       startIcon={submitting ? <CircularProgress size={20} /> : <Save />}
                       onClick={handleSubmit}
                       sx={{
-                        background: '#FF3E8A',
+                        background: '#6FAF8F',
                         color: '#ffffff',
                         borderRadius: '50px',
                         fontWeight: 600,
@@ -551,7 +599,7 @@ const ParentForm = () => {
         >
           <CardContent>
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Person sx={{ fontSize: 32, color: '#FF3E8A' }} />
+              <Person sx={{ fontSize: 32, color: '#6FAF8F' }} />
               <Box>
                 <Typography
                   variant="h6"
@@ -573,7 +621,7 @@ const ParentForm = () => {
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Email sx={{ fontSize: 20, color: '#2196F3' }} />
+              <Email sx={{ fontSize: 20, color: '#6FAF8F' }} />
               <Box>
                 <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                   Contact support for help adding parents or managing student relationships.
@@ -582,7 +630,7 @@ const ParentForm = () => {
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <LocationOn sx={{ fontSize: 20, color: '#66BB6A' }} />
+              <LocationOn sx={{ fontSize: 20, color: '#6FAF8F' }} />
               <Box>
                 <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                   Parents can view their children's academic performance and reports.
