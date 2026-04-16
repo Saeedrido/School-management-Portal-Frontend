@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -39,8 +39,15 @@ const GradeTheory = () => {
   const navigate = useNavigate();
   const { examId, studentId } = useParams();
   const { user, hasRole } = useAuth();
+  const location = useLocation();
 
   const basePath = hasRole('Admin') ? '/admin-dashboard' : '/teacher-dashboard';
+
+  // Detect if this is test-score page or grade page
+  const isTestScorePage = location.pathname.includes('/test-score');
+  const pageTitle = isTestScorePage ? 'Grade Test' : 'Grade Theory';
+  const scoreLabel = isTestScorePage ? 'Test Score' : 'Theory Score';
+  const scoreField = isTestScorePage ? 'testScore' : 'theoryScore';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -210,20 +217,26 @@ const GradeTheory = () => {
     setError('');
     setSuccess('');
 
+    // Get the score based on page type
+    const scoreValue = isTestScorePage ? gradingForm.testScore : gradingForm.theoryScore;
+    const maxScore = isTestScorePage ? (exam?.testMark || 40) : (exam?.theoryMark || 100);
+    const scoreLabel = isTestScorePage ? 'Test score' : 'Theory score';
+    const scoreName = isTestScorePage ? 'Test' : 'Theory';
+
     // Validation
-    if (!gradingForm.theoryScore && gradingForm.theoryScore !== 0) {
-      setError('Theory score is required');
+    if (!scoreValue && scoreValue !== 0) {
+      setError(`${scoreLabel} is required`);
       return;
     }
 
-    const score = parseFloat(gradingForm.theoryScore);
+    const score = parseFloat(scoreValue);
     if (isNaN(score) || score < 0) {
       setError('Please enter a valid score');
       return;
     }
 
-    if (exam && exam.theoryMark && score > exam.theoryMark) {
-      setError(`Score cannot exceed theory marks (${exam.theoryMark})`);
+    if (exam && maxScore && score > maxScore) {
+      setError(`${scoreName} score cannot exceed ${maxScore} marks (set when creating the exam)`);
       return;
     }
 
@@ -232,13 +245,13 @@ const GradeTheory = () => {
     try {
       const response = await teacherAPI.examAttempts.gradeTheory({
         attemptId: selectedAttempt.id,
-        theoryScore: score || null,
-        testScore: gradingForm.testScore ? parseInt(gradingForm.testScore) : null,
+        theoryScore: isTestScorePage ? null : (score || null),
+        testScore: isTestScorePage ? (score ? parseFloat(score) : null) : (gradingForm.testScore ? parseInt(gradingForm.testScore) : null),
         teacherRemarks: gradingForm.teacherRemarks,
       });
 
       if (response.data?.success) {
-        setSuccess('Theory graded successfully! Result has been updated.');
+        setSuccess(`${scoreName} graded successfully! Result has been updated.`);
         // Refresh the attempts list based on current view
         if (studentId) {
           await fetchStudentAttempts();
@@ -251,11 +264,11 @@ const GradeTheory = () => {
           setSuccess('');
         }, 1500);
       } else {
-        setError(response.data?.message || 'Failed to grade theory');
+        setError(response.data?.message || `Failed to grade ${scoreName.toLowerCase()}`);
       }
     } catch (err) {
-      console.error('Error grading theory:', err);
-      setError(err.response?.data?.message || 'Failed to grade theory. Please try again.');
+      console.error(`Error grading ${scoreName.toLowerCase()}:`, err);
+      setError(err.response?.data?.message || `Failed to grade ${scoreName.toLowerCase()}. Please try again.`);
     } finally {
       setSaving(false);
     }
@@ -308,6 +321,7 @@ const GradeTheory = () => {
         examType: attempt.examType,
         objectiveMark: attempt.objectiveMark || exam?.objectiveMark,
         theoryMark: attempt.theoryMark || exam?.theoryMark,
+        testMark: attempt.testMark || exam?.testMark,
         totalMarks: attempt.totalMarks || exam?.totalMarks
       };
     }
@@ -318,50 +332,54 @@ const GradeTheory = () => {
         examType: attempt.examType,
         objectiveMark: attempt.objectiveMark,
         theoryMark: attempt.theoryMark,
+        testMark: attempt.testMark,
         totalMarks: attempt.totalMarks
       };
     }
-    return exam;
+    return exam || {};
   };
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #0a192f 0%, #0d1b2a 40%, #000000 100%)',
+        background: '#F8FAF9',
         p: 4,
       }}
     >
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
-          <IconButton onClick={() => navigate(getBackLink())} sx={{ color: '#ffffff' }}>
+          <IconButton onClick={() => navigate(getBackLink())} sx={{ color: '#1B5E20' }}>
             <ArrowBack />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ffffff' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1B5E20' }}>
               <AssignmentTurnedIn sx={{ mr: 1, verticalAlign: 'middle' }} />
-              {studentId ? 'Student Theory Grades' : 'Grade Theory'}
+              {studentId ? `Student ${pageTitle}` : pageTitle}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+            <Typography variant="body2" sx={{ color: '#666' }}>
               {getPageTitle()}
             </Typography>
           </Box>
         </Box>
 
         {/* Info Alert */}
-        {exam && exam.theoryMark > 0 && (
+        {exam && ((!isTestScorePage && exam.theoryMark > 0) || (isTestScorePage && exam.testMark > 0)) && (
           <Alert
             severity="info"
             sx={{
               mb: 3,
               borderRadius: 2,
-              backgroundColor: 'rgba(33, 150, 243, 0.15)',
-              color: '#64B5F6',
+              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+              color: '#1976D2',
               border: '1px solid rgba(33, 150, 243, 0.3)',
             }}
           >
-            This exam has a theory component worth <strong>{exam.theoryMark} marks</strong>. Objective scores are auto-graded.
+            {isTestScorePage 
+              ? `This exam has a test component worth <strong>${exam.testMark || 40} marks</strong>. Enter the test score below.`
+              : `This exam has a theory component worth <strong>${exam.theoryMark} marks</strong>. Objective scores are auto-graded.`
+            }
           </Alert>
         )}
 
@@ -383,20 +401,19 @@ const GradeTheory = () => {
         {attempts.length === 0 && !loading && (
           <Card
             sx={{
-              background: 'rgba(17, 17, 17, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: '#fff',
+              border: '1px solid rgba(111, 175, 143, 0.2)',
               borderRadius: 3,
               p: 6,
               textAlign: 'center',
             }}
           >
-            <CheckCircle sx={{ fontSize: 60, color: '#66BB6A', mb: 2 }} />
-            <Typography variant="h6" sx={{ color: '#ffffff', mb: 1 }}>
+            <CheckCircle sx={{ fontSize: 60, color: '#6FAF8F', mb: 2 }} />
+            <Typography variant="h6" sx={{ color: '#1B5E20', mb: 1 }}>
               All Caught Up!
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              No submissions waiting for theory grading.
+            <Typography variant="body2" sx={{ color: '#666' }}>
+              No submissions waiting for {isTestScorePage ? 'test' : 'theory'} grading.
             </Typography>
           </Card>
         )}
@@ -405,9 +422,8 @@ const GradeTheory = () => {
         {attempts.length > 0 && (
           <Card
             sx={{
-              background: 'rgba(17, 17, 17, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 62, 138, 0.3)',
+              background: '#fff',
+              border: '1px solid rgba(111, 175, 143, 0.2)',
               borderRadius: 3,
             }}
           >
@@ -417,18 +433,18 @@ const GradeTheory = () => {
                   <TableHead>
                     <TableRow>
                       {showStudentColumn && (
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Student</TableCell>
+                        <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Student</TableCell>
                       )}
                       {!studentId && (
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Exam</TableCell>
+                        <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Exam</TableCell>
                       )}
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Attempt</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Objective Score</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Theory Score</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Total Score</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Status</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Submitted</TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>Actions</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Attempt</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Objective Score</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>{isTestScorePage ? 'Test Score' : 'Theory Score'}</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Total Score</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Status</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Submitted</TableCell>
+                      <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -437,35 +453,37 @@ const GradeTheory = () => {
                       return (
                       <TableRow key={attempt.id} hover>
                         {showStudentColumn && (
-                          <TableCell sx={{ color: '#ffffff' }}>
+                          <TableCell sx={{ color: '#333' }}>
                             {attempt.studentName || `Student #${attempt.studentProfileId}`}
                           </TableCell>
                         )}
                         {!studentId && (
-                          <TableCell sx={{ color: '#ffffff' }}>
+                          <TableCell sx={{ color: '#333' }}>
                             {attemptExam?.title || 'Unknown Exam'}
                           </TableCell>
                         )}
-                        <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        <TableCell sx={{ color: '#666' }}>
                           Attempt #{attempt.attemptNumber}
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff' }}>
+                        <TableCell sx={{ color: '#333' }}>
                           {attempt.objectiveScore !== null ? `${attempt.objectiveScore}/${attemptExam?.objectiveMark || 0}` : '-'}
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff' }}>
-                          {attempt.theoryScore !== null ? `${attempt.theoryScore}/${attemptExam?.theoryMark || 0}` : 'Not graded'}
+                        <TableCell sx={{ color: '#333' }}>
+                          {isTestScorePage 
+                            ? (attempt.testScore !== null ? `${attempt.testScore}/${attemptExam?.testMark || 0}` : 'Not graded')
+                            : (attempt.theoryScore !== null ? `${attempt.theoryScore}/${attemptExam?.theoryMark || 0}` : 'Not graded')}
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>
+                        <TableCell sx={{ color: '#1B5E20', fontWeight: 600 }}>
                           {attempt.totalScore !== null ? `${attempt.totalScore}/${attemptExam?.totalMarks || 0}` : '-'}
                         </TableCell>
                         <TableCell>{getStatusChip(attempt.status)}</TableCell>
-                        <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        <TableCell sx={{ color: '#666' }}>
                           {attempt.completedAt ? new Date(attempt.completedAt).toLocaleDateString() : '-'}
                         </TableCell>
                         <TableCell>
                           <IconButton
                             onClick={() => handleOpenGrading(attempt)}
-                            sx={{ color: '#FF3E8A' }}
+                            sx={{ color: '#1B5E20' }}
                             title="Grade Theory"
                           >
                             <Visibility />
@@ -490,14 +508,14 @@ const GradeTheory = () => {
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: '#111111',
-            border: '1px solid rgba(255, 62, 138, 0.3)',
+            backgroundColor: '#fff',
+            border: '1px solid rgba(111, 175, 143, 0.3)',
             borderRadius: 3,
           },
         }}
       >
-        <DialogTitle sx={{ color: '#ffffff' }}>
-          Grade Theory - Attempt #{selectedAttempt?.attemptNumber}
+        <DialogTitle sx={{ color: '#1B5E20' }}>
+          {pageTitle} - Attempt #{selectedAttempt?.attemptNumber}
         </DialogTitle>
         <DialogContent>
           {error && (
@@ -509,11 +527,11 @@ const GradeTheory = () => {
           {selectedAttempt && (
             <Box sx={{ mt: 2 }}>
               {/* Student Info */}
-              <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 2 }}>
-                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', mb: 0.5 }}>
+              <Box sx={{ mb: 3, p: 2, backgroundColor: '#F8FAF9', borderRadius: 2, border: '1px solid rgba(111, 175, 143, 0.2)' }}>
+                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
                   Student
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                <Typography variant="body1" sx={{ color: '#1B5E20', fontWeight: 600 }}>
                   {studentId 
                     ? `${student?.firstName || student?.user?.firstName || ''} ${student?.lastName || student?.user?.lastName || ''}`
                     : selectedAttempt.studentName || `Student #${selectedAttempt.studentProfileId}`}
@@ -522,14 +540,14 @@ const GradeTheory = () => {
 
               {/* Exam Info (show when viewing from student) */}
               {studentId && exam && (
-                <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ color: '#64B5F6', mb: 0.5 }}>
+                <Box sx={{ mb: 3, p: 2, backgroundColor: '#E3F2FD', borderRadius: 2 }}>
+                  <Typography variant="body2" sx={{ color: '#1976D2', mb: 0.5 }}>
                     Exam
                   </Typography>
-                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                  <Typography variant="body1" sx={{ color: '#1B5E20', fontWeight: 600 }}>
                     {exam.title}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                  <Typography variant="caption" sx={{ color: '#666' }}>
                     Theory Marks: {exam.theoryMark} | Objective Marks: {exam.objectiveMark}
                   </Typography>
                 </Box>
@@ -537,35 +555,56 @@ const GradeTheory = () => {
 
               {/* Objective Score Display */}
               <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(102, 187, 106, 0.1)', borderRadius: 2 }}>
-                <Typography variant="body2" sx={{ color: '#66BB6A', mb: 0.5 }}>
+                <Typography variant="body2" sx={{ color: '#2E7D32', mb: 0.5 }}>
                   Objective Score (Auto-graded)
                 </Typography>
-                <Typography variant="h5" sx={{ color: '#66BB6A', fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ color: '#2E7D32', fontWeight: 700 }}>
                   {selectedAttempt.objectiveScore !== null
                     ? `${selectedAttempt.objectiveScore} / ${exam?.objectiveMark || 0}`
                     : 'Not graded'}
                 </Typography>
               </Box>
 
-              {/* Theory Score Input */}
-              <TextField
-                fullWidth
-                label="Theory Score"
-                type="number"
-                value={gradingForm.theoryScore}
-                onChange={(e) => setGradingForm({ ...gradingForm, theoryScore: e.target.value })}
-                inputProps={{
-                  min: 0,
-                  max: exam?.theoryMark || 100,
-                  step: 0.5,
-                }}
-                sx={{ mb: 3 }}
-                helperText={`Max: ${exam?.theoryMark || 100} marks`}
-                error={
-                  gradingForm.theoryScore !== '' &&
-                  parseFloat(gradingForm.theoryScore) > (exam?.theoryMark || 100)
-                }
-              />
+              {/* Score Input - Theory or Test based on page */}
+              {isTestScorePage ? (
+                <TextField
+                  fullWidth
+                  label="Test Score"
+                  type="number"
+                  value={gradingForm.testScore}
+                  onChange={(e) => setGradingForm({ ...gradingForm, testScore: e.target.value })}
+                  inputProps={{
+                    min: 0,
+                    max: exam?.testMark || 40,
+                    step: 0.5,
+                  }}
+                  sx={{ mb: 3 }}
+                  helperText={`Max: ${exam?.testMark || 40} marks`}
+                  error={
+                    gradingForm.testScore !== '' &&
+                    parseFloat(gradingForm.testScore) > (exam?.testMark || 40)
+                  }
+                />
+              ) : (
+                <TextField
+                  fullWidth
+                  label="Theory Score"
+                  type="number"
+                  value={gradingForm.theoryScore}
+                  onChange={(e) => setGradingForm({ ...gradingForm, theoryScore: e.target.value })}
+                  inputProps={{
+                    min: 0,
+                    max: exam?.theoryMark || 100,
+                    step: 0.5,
+                  }}
+                  sx={{ mb: 3 }}
+                  helperText={`Max: ${exam?.theoryMark || 100} marks`}
+                  error={
+                    gradingForm.theoryScore !== '' &&
+                    parseFloat(gradingForm.theoryScore) > (exam?.theoryMark || 100)
+                  }
+                />
+              )}
 
               {/* Remarks Input */}
               <TextField
@@ -582,7 +621,7 @@ const GradeTheory = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button onClick={handleCloseGrading} disabled={saving} sx={{ color: '#ffffff' }}>
+          <Button onClick={handleCloseGrading} disabled={saving} sx={{ color: '#666' }}>
             Cancel
           </Button>
           <Button
@@ -591,8 +630,8 @@ const GradeTheory = () => {
             variant="contained"
             startIcon={saving ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <Save />}
             sx={{
-              background: '#FF3E8A',
-              '&:hover': { background: '#FF5DA3' },
+              background: '#1B5E20',
+              '&:hover': { background: '#2E7D32' },
             }}
           >
             {saving ? 'Saving...' : 'Submit Grade'}

@@ -37,6 +37,7 @@ import {
   CheckCircle,
   Pending,
   Edit,
+  FactCheck,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI, studentAPI } from '../../services/api';
@@ -483,8 +484,12 @@ const ExamList = () => {
               ) : (
                 filteredExams.map((exam) => {
                   const status = getExamStatus(exam);
-                  const examType = enumToExamType(exam.examType);
-                  const typeColors = getExamTypeColor(examType);
+                  // Handle both string and number examType
+                  let examTypeStr = exam.examType;
+                  if (typeof exam.examType === 'number') {
+                    examTypeStr = enumToExamType(exam.examType);
+                  }
+                  const typeColors = getExamTypeColor(examTypeStr);
                   
                   return (
                     <TableRow
@@ -518,7 +523,7 @@ const ExamList = () => {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={examType}
+                          label={examTypeStr}
                           size="small"
                           sx={{
                             bgcolor: typeColors.bg,
@@ -564,15 +569,46 @@ const ExamList = () => {
                         )}
                         {hasRole(['Admin', 'Teacher']) && (
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                            {/* Grade - show for Admin OR Teacher (any exam they can see) */}
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`${basePath}/exams/${exam.id}/grade`)}
-                              sx={{ color: '#10B981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
-                              title="Grade"
-                            >
-                              <AssignmentTurnedIn fontSize="small" />
-                            </IconButton>
+                            {/* Grade - show for Admin OR Teacher - clickable only if exam has Theory component */}
+                            {(exam.examType === 2 || exam.examType === 4 || exam.examType === 'ObjectiveAndTheory' || exam.examType === 'ObjectiveTheoryAndTest') ? (
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`${basePath}/exams/${exam.id}/grade`)}
+                                sx={{ color: '#10B981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
+                                title="Grade Theory"
+                              >
+                                <AssignmentTurnedIn fontSize="small" />
+                              </IconButton>
+                            ) : (
+                              <IconButton
+                                size="small"
+                                disabled
+                                sx={{ color: '#ccc' }}
+                                title="No Theory component to grade"
+                              >
+                                <AssignmentTurnedIn fontSize="small" />
+                              </IconButton>
+                            )}
+                            {/* Test Score - clickable only if exam has test component */}
+                            {(exam.examType === 3 || exam.examType === 4 || exam.examType === 'ObjectiveAndTest' || exam.examType === 'ObjectiveTheoryAndTest') ? (
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`${basePath}/exams/${exam.id}/test-score`)}
+                                sx={{ color: '#8B5CF6', '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.1)' } }}
+                                title="Test Scores"
+                              >
+                                <FactCheck fontSize="small" />
+                              </IconButton>
+                            ) : (
+                              <IconButton
+                                size="small"
+                                disabled
+                                sx={{ color: '#ccc' }}
+                                title="No Test component in this exam"
+                              >
+                                <FactCheck fontSize="small" />
+                              </IconButton>
+                            )}
                             {/* Edit - show for Admin OR Teacher who owns the exam AND exam not started */}
                             {(hasRole('Admin') || (exam.isOwner && !exam.isActive && !exam.actualEndTime)) && (
                               <IconButton

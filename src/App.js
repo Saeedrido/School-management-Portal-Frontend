@@ -215,6 +215,7 @@ function AppRoutes() {
         <Route path="exams/:id/edit" element={<ExamForm />} />
         <Route path="exams/:examId/questions" element={<QuestionBuilder />} />
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
+        <Route path="exams/:examId/test-score" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="manual-score" element={<ManualScoreEntry />} />
@@ -239,6 +240,7 @@ function AppRoutes() {
         <Route path="exams/:id/edit" element={<ExamForm />} />
         <Route path="exams/:examId/questions" element={<QuestionBuilder />} />
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
+        <Route path="exams/:examId/test-score" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="manual-score" element={<ManualScoreEntry />} />

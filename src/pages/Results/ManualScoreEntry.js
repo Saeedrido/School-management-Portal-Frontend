@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 import { teacherAPI, adminAPI, academicYearsAPI, termsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { getExamTypeConfig, validateScore } from '../../utils/dataMapping';
+import { getExamTypeConfig, validateScore, examTypeToEnum } from '../../utils/dataMapping';
 
 const ManualScoreEntry = () => {
   const { user, hasRole } = useAuth();
@@ -63,6 +63,7 @@ const ManualScoreEntry = () => {
 
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [examType, setExamType] = useState('ObjectiveOnly');
   const [scoreForm, setScoreForm] = useState({
     objectiveScore: '',
     theoryScore: '',
@@ -222,6 +223,7 @@ const ManualScoreEntry = () => {
 
   const handleOpenScoreDialog = (student) => {
     setSelectedStudent(student);
+    setExamType('ObjectiveOnly');
     setScoreForm({
       objectiveScore: student.existingScore?.objectiveScore?.toString() || '',
       theoryScore: student.existingScore?.theoryScore?.toString() || '',
@@ -236,6 +238,7 @@ const ManualScoreEntry = () => {
   const handleCloseScoreDialog = () => {
     setScoreDialogOpen(false);
     setSelectedStudent(null);
+    setExamType('ObjectiveOnly');
     setScoreForm({
       objectiveScore: '',
       theoryScore: '',
@@ -253,9 +256,9 @@ const ManualScoreEntry = () => {
   };
 
   const validateAndSaveScore = async () => {
-    const examTypeValue = determineExamType();
+    // Use the selected examType instead of auto-determining
     const validation = validateScore(
-      examTypeValue,
+      examType,
       scoreForm.objectiveScore ? parseInt(scoreForm.objectiveScore) : null,
       scoreForm.theoryScore ? parseInt(scoreForm.theoryScore) : null,
       scoreForm.testScore ? parseInt(scoreForm.testScore) : null
@@ -292,6 +295,7 @@ const ManualScoreEntry = () => {
         subjectId: selectedSubject,
         academicYearId: academicYearId,
         termId: termId,
+        examType: examTypeToEnum(examType),
         objectiveScore: scoreForm.objectiveScore ? parseInt(scoreForm.objectiveScore) : null,
         theoryScore: scoreForm.theoryScore ? parseInt(scoreForm.theoryScore) : null,
         testScore: scoreForm.testScore ? parseInt(scoreForm.testScore) : null,
@@ -317,19 +321,10 @@ const ManualScoreEntry = () => {
   };
 
   const determineExamType = () => {
-    const hasObj = scoreForm.objectiveScore;
-    const hasTh = scoreForm.theoryScore;
-    const hasTst = scoreForm.testScore;
-
-    if (hasObj && !hasTh && !hasTst) return 'ObjectiveOnly';
-    if (hasObj && hasTh && !hasTst) return 'ObjectiveAndTheory';
-    if (hasObj && !hasTh && hasTst) return 'ObjectiveAndTest';
-    if (hasObj && hasTh && hasTst) return 'ObjectiveTheoryAndTest';
-    return 'ObjectiveOnly';
+    return examType;
   };
 
   const getExamTypeDisplay = () => {
-    const examType = determineExamType();
     const config = getExamTypeConfig(examType);
     return config.scoringDescription;
   };
@@ -531,12 +526,23 @@ const ManualScoreEntry = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
-            {getExamTypeDisplay()}
-          </Typography>
+          <TextField
+            select
+            fullWidth
+            label="Exam Type"
+            value={examType}
+            onChange={(e) => setExamType(e.target.value)}
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="ObjectiveOnly">Objective Only</MenuItem>
+            <MenuItem value="ObjectiveAndTheory">Objective + Theory</MenuItem>
+            <MenuItem value="ObjectiveAndTest">Objective + Test</MenuItem>
+            <MenuItem value="ObjectiveTheoryAndTest">Objective + Theory + Test</MenuItem>
+          </TextField>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            {/* Objective - always shown */}
+            <Grid item xs={12} sm={examType === 'ObjectiveOnly' ? 12 : 4}>
               <TextField
                 fullWidth
                 label="Objective Score"
@@ -544,36 +550,42 @@ const ManualScoreEntry = () => {
                 type="number"
                 value={scoreForm.objectiveScore}
                 onChange={handleScoreChange}
+                required
                 InputProps={{ inputProps: { min: 0, max: 100 } }}
               />
             </Grid>
 
-            {/* Show Theory only if it might be needed */}
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Theory Score"
-                name="theoryScore"
-                type="number"
-                value={scoreForm.theoryScore}
-                onChange={handleScoreChange}
-                helperText="Optional"
-                InputProps={{ inputProps: { min: 0 } }}
-              />
-            </Grid>
+            {/* Theory - shown for ObjectiveAndTheory and ObjectiveTheoryAndTest */}
+            {examType === 'ObjectiveAndTheory' || examType === 'ObjectiveTheoryAndTest' ? (
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Theory Score"
+                  name="theoryScore"
+                  type="number"
+                  value={scoreForm.theoryScore}
+                  onChange={handleScoreChange}
+                  required
+                  InputProps={{ inputProps: { min: 0, max: 100 } }}
+                />
+              </Grid>
+            ) : null}
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Test Score"
-                name="testScore"
-                type="number"
-                value={scoreForm.testScore}
-                onChange={handleScoreChange}
-                helperText="Optional"
-                InputProps={{ inputProps: { min: 0 } }}
-              />
-            </Grid>
+            {/* Test - shown for ObjectiveAndTest and ObjectiveTheoryAndTest */}
+            {examType === 'ObjectiveAndTest' || examType === 'ObjectiveTheoryAndTest' ? (
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Test Score"
+                  name="testScore"
+                  type="number"
+                  value={scoreForm.testScore}
+                  onChange={handleScoreChange}
+                  required
+                  InputProps={{ inputProps: { min: 0, max: 100 } }}
+                />
+              </Grid>
+            ) : null}
 
             <Grid item xs={12}>
               <TextField
