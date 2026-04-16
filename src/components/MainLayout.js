@@ -31,6 +31,7 @@ import {
   Note,
   TrendingUp,
   Celebration,
+  Edit,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
@@ -69,6 +70,7 @@ const MainLayout = () => {
     { text: 'Users', icon: <School />, path: '/dashboard/users', roles: ['Admin'], color: '#9C27B0' },
     { text: 'Exams', icon: <Assessment />, path: '/dashboard/exams', roles: ['Admin', 'Teacher', 'Student'], color: '#AB47BC' },
     { text: 'Results', icon: <TrendingUp />, path: '/dashboard/results', roles: ['Admin', 'Teacher', 'Student'], color: '#66BB6A' },
+    { text: 'Manual Score', icon: <Edit />, path: '/dashboard/manual-score', roles: ['Admin', 'Teacher'], color: '#FF3E8A' },
     { text: 'Academic Years', icon: <CalendarMonth />, path: '/dashboard/academic-years', roles: ['Admin', 'Teacher', 'Student', 'Parent'], color: '#2196F3' },
     { text: 'Terms', icon: <Note />, path: '/dashboard/terms', roles: ['Admin', 'Teacher', 'Student', 'Parent'], color: '#FF9800' },
     { text: 'Promotions', icon: <Celebration />, path: '/dashboard/promotions', roles: ['Admin', 'Teacher'], color: '#795548' },

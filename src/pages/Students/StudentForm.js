@@ -17,6 +17,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
+import { PageHeader } from '../../components/ui';
 import {
   Person as PersonIcon,
   Save,
@@ -421,94 +422,28 @@ const StudentForm = () => {
     );
   }
 
-  return (
-    <Box sx={{ maxWidth: 900, mx: 'auto' }}>
-      <Card
-        sx={{
-          background: 'rgba(17, 17, 17, 0.8)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: 3,
-        }}
-      >
-        <CardContent sx={{ p: 4 }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Box
-              sx={{
-                width: 50,
-                height: 50,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #FF3E8A 0%, #FF5DA3 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <PersonIcon sx={{ fontSize: 28, color: '#ffffff' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  mb: 0.5,
-                }}
-              >
-                {isEdit ? 'Edit Student' : 'Register New Student'}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-              >
-                {isEdit ? 'Update student information' : 'Fill in the details to register a new student'}
-              </Typography>
-            </Box>
-          </Box>
+return (
+    <Box>
+      <PageHeader
+        title={isEdit ? 'Edit Student' : 'Register New Student'}
+        subtitle={isEdit ? 'Update student information' : 'Add a new student to the system'}
+      />
 
-          {/* Success Message */}
-          {success && (
-            <Alert
-              severity="success"
-              onClose={() => setSuccess('')}
-              sx={{
-                mb: 3,
-                borderRadius: 2,
-                backgroundColor: 'rgba(102, 187, 106, 0.15)',
-                color: '#66BB6A',
-                border: '1px solid rgba(102, 187, 106, 0.3)',
-                '& .MuiAlert-icon': {
-                  color: '#66BB6A',
-                },
-              }}
-            >
-              {success}
-            </Alert>
-          )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
 
-          {/* Error Message */}
-          {error && (
-            <Alert
-              severity="error"
-              onClose={() => setError('')}
-              sx={{
-                mb: 3,
-                borderRadius: 2,
-                backgroundColor: 'rgba(239, 83, 80, 0.15)',
-                color: '#ff6b6b',
-                border: '1px solid rgba(239, 83, 80, 0.3)',
-                '& .MuiAlert-icon': {
-                  color: '#ff6b6b',
-                },
-              }}
-            >
-              {error}
-            </Alert>
-          )}
+      {success && (
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setSuccess(false)}>
+          {success}
+        </Alert>
+      )}
 
-          {/* Form */}
-          <Box component="form" onSubmit={handleSubmit}>
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               {/* Account Information Section */}
               <Grid item xs={12}>
@@ -533,7 +468,7 @@ const StudentForm = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: '#64748B',
                           mb: 1,
                           fontSize: '0.9rem',
                           fontWeight: 500,
@@ -561,7 +496,7 @@ const StudentForm = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: '#64748B',
                           mb: 1,
                           fontSize: '0.9rem',
                           fontWeight: 500,
@@ -589,7 +524,7 @@ const StudentForm = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: '#64748B',
                           mb: 1,
                           fontSize: '0.9rem',
                           fontWeight: 500,
@@ -616,7 +551,7 @@ const StudentForm = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: '#64748B',
                           mb: 1,
                           fontSize: '0.9rem',
                           fontWeight: 500,
@@ -656,7 +591,7 @@ const StudentForm = () => {
                       <Typography
                         variant="body2"
                         sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: '#64748B',
                           mb: 1,
                           fontSize: '0.9rem',
                           fontWeight: 500,
@@ -1307,7 +1242,7 @@ const StudentForm = () => {
                 </Box>
               </Grid>
             </Grid>
-          </Box>
+          </form>
         </CardContent>
       </Card>
     </Box>
@@ -1317,27 +1252,24 @@ const StudentForm = () => {
 // Common styles
 const textFieldStyles = {
   '& .MuiOutlinedInput-root': {
-    backgroundColor: '#111111',
+    backgroundColor: '#f8fafc',
     borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    color: '#ffffff',
+    border: '1px solid rgba(111, 175, 143, 0.2)',
     transition: 'all 0.3s ease',
     '& fieldset': { border: 'none' },
     '&:hover': {
-      border: '1px solid rgba(255, 62, 138, 0.4)',
-      backgroundColor: '#151515',
+      border: '1px solid rgba(111, 175, 143, 0.4)',
     },
     '&.Mui-focused': {
-      border: '1px solid #FF3E8A',
-      backgroundColor: '#151515',
-      boxShadow: '0 0 20px rgba(255, 62, 138, 0.3)',
+      border: '1px solid #6FAF8F',
+      boxShadow: '0 0 20px rgba(111, 175, 143, 0.2)',
     },
     '&.Mui-error': {
       border: '1px solid #ff6b6b',
     },
   },
   '& .MuiInputBase-input': {
-    color: '#ffffff',
+    color: '#1E293B',
     padding: '12px 14px',
     fontSize: '0.95rem',
     '&::placeholder': {
@@ -1350,22 +1282,23 @@ const textFieldStyles = {
 };
 
 const selectStyles = {
-  backgroundColor: '#111111',
+  backgroundColor: '#f8fafc',
   borderRadius: '12px',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  color: '#ffffff',
+  border: '1px solid rgba(111, 175, 143, 0.2)',
+  color: '#1E293B',
   '&:hover': {
-    border: '1px solid rgba(255, 62, 138, 0.4)',
-    backgroundColor: '#151515',
+    border: '1px solid rgba(111, 175, 143, 0.4)',
   },
   '&.Mui-focused': {
-    border: '1px solid #FF3E8A',
-    backgroundColor: '#151515',
-    boxShadow: '0 0 20px rgba(255, 62, 138, 0.3)',
+    border: '1px solid #6FAF8F',
+    boxShadow: '0 0 20px rgba(111, 175, 143, 0.2)',
   },
   '& .MuiSelect-select': {
-    color: '#ffffff',
+    color: '#1E293B',
     padding: '12px 14px',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
   },
   '& .MuiSvgIcon-root': {
     color: 'rgba(255, 255, 255, 0.7)',
@@ -1375,26 +1308,20 @@ const selectStyles = {
 const submitStyles = {
   py: 1.5,
   px: 4,
-  background: '#FF3E8A',
-  borderRadius: '50px',
+  borderRadius: '12px',
   fontWeight: 600,
   fontSize: '1rem',
   textTransform: 'none',
+  background: 'linear-gradient(135deg, #6FAF8F 0%, #4A9079 100%)',
   color: '#ffffff',
-  boxShadow: '0 4px 20px rgba(255, 62, 138, 0.4)',
+  boxShadow: 'none',
   transition: 'all 0.3s ease',
   '&:hover': {
-    background: '#FF5DA3',
-    boxShadow: '0 6px 28px rgba(255, 62, 138, 0.5)',
-    transform: 'translateY(-1px)',
-  },
-  '&:active': {
-    transform: 'translateY(0)',
+    background: 'linear-gradient(135deg, #5A9E7F 0%, #3A8069 100%)',
+    boxShadow: '0 4px 20px rgba(111, 175, 143, 0.3)',
   },
   '&:disabled': {
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: 'rgba(255, 255, 255, 0.3)',
-    boxShadow: 'none',
+    background: '#94a3b8',
   },
 };
 

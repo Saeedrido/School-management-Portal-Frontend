@@ -42,9 +42,10 @@ import {
 } from '../../utils/dataMapping';
 
 const EXAM_TYPES = [
-  { value: 'Objective', label: 'Multiple Choice' },
-  { value: 'Theory', label: 'Theory Exam' },
-  { value: 'Mixed', label: 'Mixed (Theory + Objective)' },
+  { value: 'ObjectiveOnly', label: 'Objective Only (100 marks)' },
+  { value: 'ObjectiveAndTheory', label: 'Objective + Theory' },
+  { value: 'ObjectiveAndTest', label: 'Objective + Test' },
+  { value: 'ObjectiveTheoryAndTest', label: 'Objective + Theory + Test' },
 ];
 
 // Dropdown menu props for consistent scroll behavior
@@ -96,8 +97,9 @@ const ExamForm = () => {
     duration: '60',
     durationUnit: 'minutes',
     totalMarks: 100,
-    objectiveMark: 60,
-    theoryMark: 40,
+    objectiveMark: 100,
+    theoryMark: 0,
+    testMark: 0,
     passingMarks: 40,
     instructions: '',
     allowRetake: false,
@@ -111,6 +113,29 @@ const ExamForm = () => {
       fetchExamData(id);
     }
   }, [id, isEditing]);
+
+  // Dynamic scoring configuration based on exam type
+  useEffect(() => {
+    const examTypeConfig = {
+      ObjectiveOnly: { objectiveMark: 100, theoryMark: 0, testMark: 0, totalMarks: 100 },
+      ObjectiveAndTheory: { objectiveMark: 50, theoryMark: 50, testMark: 0, totalMarks: 100 },
+      ObjectiveAndTest: { objectiveMark: 50, theoryMark: 0, testMark: 50, totalMarks: 100 },
+      ObjectiveTheoryAndTest: { objectiveMark: 30, theoryMark: 30, testMark: 40, totalMarks: 100 },
+    };
+    
+    const config = examTypeConfig[formData.type] || examTypeConfig.ObjectiveOnly;
+    
+    // Auto-update marks based on exam type (only if not editing)
+    if (!isEditing) {
+      setFormData(prev => ({
+        ...prev,
+        objectiveMark: config.objectiveMark,
+        theoryMark: config.theoryMark,
+        testMark: config.testMark,
+        totalMarks: config.totalMarks,
+      }));
+    }
+  }, [formData.type, isEditing]);
 
   useEffect(() => {
     if (formData.classId) {
@@ -403,8 +428,9 @@ const ExamForm = () => {
           duration: exam.durationMinutes?.toString() || '60',
           durationUnit: 'minutes',
           totalMarks: exam.totalMarks || 100,
-          objectiveMark: exam.objectiveMark || 60,
-          theoryMark: exam.theoryMark || 40,
+          objectiveMark: exam.objectiveMark || 100,
+          theoryMark: exam.theoryMark || 0,
+          testMark: exam.testMark || 0,
           passingMarks: exam.passingMark || 40,
           instructions: exam.instructions || '',
           allowRetake: exam.allowRetake || false,
@@ -1122,7 +1148,7 @@ const ExamForm = () => {
                   />
                 </Grid>
 
-                {/* Objective Marks */}
+                {/* Objective Marks - Always show */}
                 <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
@@ -1137,19 +1163,37 @@ const ExamForm = () => {
                   />
                 </Grid>
 
-                {/* Theory Marks */}
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Theory Marks"
-                    name="theoryMark"
-                    type="number"
-                    value={formData.theoryMark}
-                    onChange={handleChange}
-                    inputProps={{ min: 0 }}
-                    sx={textFieldStyles}
-                  />
-                </Grid>
+                {/* Theory Marks - Show for ObjectiveAndTheory and ObjectiveTheoryAndTest */}
+                {(formData.type === 'ObjectiveAndTheory' || formData.type === 'ObjectiveTheoryAndTest') && (
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      label="Theory Marks"
+                      name="theoryMark"
+                      type="number"
+                      value={formData.theoryMark}
+                      onChange={handleChange}
+                      inputProps={{ min: 0 }}
+                      sx={textFieldStyles}
+                    />
+                  </Grid>
+                )}
+
+                {/* Test Marks - Show for ObjectiveAndTest and ObjectiveTheoryAndTest */}
+                {(formData.type === 'ObjectiveAndTest' || formData.type === 'ObjectiveTheoryAndTest') && (
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      label="Test Marks"
+                      name="testMark"
+                      type="number"
+                      value={formData.testMark}
+                      onChange={handleChange}
+                      inputProps={{ min: 0 }}
+                      sx={textFieldStyles}
+                    />
+                  </Grid>
+                )}
 
                 {/* Passing Marks */}
                 <Grid item xs={12} sm={4}>

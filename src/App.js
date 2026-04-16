@@ -36,6 +36,7 @@ import ResultList from './pages/Results/ResultList';
 import StudentResult from './pages/Results/StudentResult';
 import ParentStudentResult from './pages/Results/ParentStudentResult';
 import GradeTheory from './pages/Results/GradeTheory';
+import ManualScoreEntry from './pages/Results/ManualScoreEntry';
 import ParentList from './pages/Parents/ParentList';
 import ParentForm from './pages/Parents/ParentForm';
 import MyChildren from './pages/Parents/MyChildren';
@@ -216,15 +217,10 @@ function AppRoutes() {
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
-        <Route path="parents" element={<ParentList />} />
-        <Route path="parents/new" element={<ParentForm />} />
-        <Route path="parents/:id/edit" element={<ParentForm />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="grade-management" element={<GradeManagement />} />
-        <Route path="student-profiles" element={<StudentProfile />} />
+        <Route path="manual-score" element={<ManualScoreEntry />} />
         <Route path="teacher-assignments" element={<TeacherAssignments />} />
-        <Route path="teacher-remarks" element={<TeacherRemarks />} />
-        <Route path="headmaster-comments" element={<HeadmasterComments />} />
+        <Route path="report-cards" element={<ReportCardList />} />
+        <Route path="parents" element={<ParentList />} />
       </Route>
 
       {/* Teacher Dashboard Routes */}
@@ -245,6 +241,7 @@ function AppRoutes() {
         <Route path="exams/:examId/grade" element={<GradeTheory />} />
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
+        <Route path="manual-score" element={<ManualScoreEntry />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
         <Route path="settings" element={<Settings />} />

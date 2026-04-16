@@ -205,7 +205,7 @@ const StudentList = () => {
     try {
       setLoading(true);
       const api = user?.role === 'Teacher' ? teacherAPI.students : adminAPI.students;
-      const response = await api.getByClassPaged(selectedClass, 1, 100);
+      const response = await api.getByClassPaged(selectedClass, 1, 100, academicYearId);
       
       if (response.data?.success && response.data?.data?.items) {
         setStudents(response.data.data.items);
@@ -267,10 +267,10 @@ const StudentList = () => {
 
       {uploadResult && (
         <Alert severity="success" onClose={() => setUploadResult(null)} sx={{ mb: 2, borderRadius: 2 }}>
-          Successfully uploaded {uploadResult.successRecords?.length || 0} students.
-          {uploadResult.failedRecords?.length > 0 && (
+          Successfully uploaded {uploadResult.successCount || 0} students.
+          {uploadResult.failedCount > 0 && (
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Failed: {uploadResult.failedRecords.length} students
+              Failed: {uploadResult.failedCount} students
             </Typography>
           )}
         </Alert>

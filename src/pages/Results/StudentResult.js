@@ -426,6 +426,9 @@ const StudentResult = () => {
                       Theory Score
                     </TableCell>
                     <TableCell align="center" sx={{ fontWeight: 700, color: '#1B5E20', borderBottom: '2px solid #2E7D32' }}>
+                      Test Score
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: '#1B5E20', borderBottom: '2px solid #2E7D32' }}>
                       Total
                     </TableCell>
                     <TableCell align="center" sx={{ fontWeight: 700, color: '#1B5E20', borderBottom: '2px solid #2E7D32' }}>
@@ -441,6 +444,7 @@ const StudentResult = () => {
                     subjectResults.map((subjectResult, index) => {
                       const objectiveScore = getValue(subjectResult, 'objectiveScore') || getValue(subjectResult, 'ObjectiveScore') || 0;
                       const theoryScore = getValue(subjectResult, 'theoryScore') || getValue(subjectResult, 'TheoryScore') || 0;
+                      const testScore = getValue(subjectResult, 'testScore') || getValue(subjectResult, 'TestScore') || 0;
                       const totalScore = getValue(subjectResult, 'totalScore') || getValue(subjectResult, 'TotalScore') || 0;
                       const maximumScore = getValue(subjectResult, 'maximumScore') || getValue(subjectResult, 'MaximumScore') || 0;
                       const percentage = getValue(subjectResult, 'percentage') || getValue(subjectResult, 'Percentage') || 0;
@@ -466,6 +470,9 @@ const StudentResult = () => {
                           </TableCell>
                           <TableCell align="center" sx={{ color: '#555' }}>
                             {theoryScore}
+                          </TableCell>
+                          <TableCell align="center" sx={{ color: '#555' }}>
+                            {testScore}
                           </TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700, color: '#1B5E20' }}>
                             {totalScore} / {maximumScore}

@@ -40,6 +40,8 @@ import {
   School,
   Badge,
   EmojiEvents,
+  Edit,
+  Bookmark,
 } from '@mui/icons-material';
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
@@ -83,6 +85,8 @@ const DashboardLayout = () => {
     { text: 'Users', icon: <People />, path: '/admin-dashboard/users' },
     { text: 'Exams', icon: <Assignment />, path: '/admin-dashboard/exams' },
     { text: 'Results', icon: <TrendingUp />, path: '/admin-dashboard/results' },
+    { text: 'Manual Score', icon: <Edit />, path: '/admin-dashboard/manual-score' },
+    { text: 'Teacher Assignments', icon: <Bookmark />, path: '/admin-dashboard/teacher-assignments' },
     { text: 'Academic Years', icon: <CalendarMonth />, path: '/admin-dashboard/academic-years' },
     { text: 'Terms', icon: <Note />, path: '/admin-dashboard/terms' },
     { text: 'Promotions', icon: <Assessment />, path: '/admin-dashboard/promotions' },
@@ -99,6 +103,7 @@ const DashboardLayout = () => {
     { text: 'Exams', icon: <Assignment />, path: '/teacher-dashboard/exams' },
     { text: 'Students', icon: <People />, path: '/teacher-dashboard/students' },
     { text: 'Results', icon: <TrendingUp />, path: '/teacher-dashboard/results' },
+    { text: 'Manual Score', icon: <Edit />, path: '/teacher-dashboard/manual-score' },
     { text: 'My ID Card', icon: <Badge />, path: '/my-id-card' },
   ];
 

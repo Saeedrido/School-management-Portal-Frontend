@@ -70,17 +70,74 @@ export const enumToRole = (enumValue) => {
 
 // Exam Type Enum Mapping (must match backend ExamType enum)
 export const EXAM_TYPE_ENUM = {
-  Objective: 1,
-  Theory: 2,
-  Mixed: 3,
+  ObjectiveOnly: 1,
+  ObjectiveAndTheory: 2,
+  ObjectiveAndTest: 3,
+  ObjectiveTheoryAndTest: 4,
 };
 
 export const examTypeToEnum = (type) => {
-  return EXAM_TYPE_ENUM[type] ?? 2; // Default to Theory (2)
+  return EXAM_TYPE_ENUM[type] ?? 1; // Default to ObjectiveOnly (1)
 };
 
 export const enumToExamType = (enumValue) => {
-  return Object.keys(EXAM_TYPE_ENUM).find(key => EXAM_TYPE_ENUM[key] === enumValue) || 'Theory';
+  return Object.keys(EXAM_TYPE_ENUM).find(key => EXAM_TYPE_ENUM[key] === enumValue) || 'ObjectiveOnly';
+};
+
+// Get exam type configuration based on selected type
+export const getExamTypeConfig = (examTypeValue) => {
+  const config = {
+    ObjectiveOnly: { hasObjective: true, hasTheory: false, hasTest: false, objectiveMax: 100, theoryMax: 0, testMax: 0, scoringDescription: 'Objective = 100 marks' },
+    ObjectiveAndTheory: { hasObjective: true, hasTheory: true, hasTest: false, objectiveMax: 50, theoryMax: 50, testMax: 0, scoringDescription: 'Objective + Theory = 100 marks (flexible)' },
+    ObjectiveAndTest: { hasObjective: true, hasTheory: false, hasTest: true, objectiveMax: 50, theoryMax: 0, testMax: 50, scoringDescription: 'Objective + Test = 100 marks (flexible)' },
+    ObjectiveTheoryAndTest: { hasObjective: true, hasTheory: true, hasTest: true, objectiveMax: 30, theoryMax: 30, testMax: 40, scoringDescription: 'Objective + Theory = 60, Test = 40 marks' },
+  };
+  return config[examTypeValue] || config.ObjectiveOnly;
+};
+
+// Validate score based on exam type
+export const validateScore = (examTypeValue, objectiveScore, theoryScore, testScore) => {
+  const config = getExamTypeConfig(examTypeValue);
+  const errors = [];
+  
+  if (config.hasObjective && (objectiveScore === null || objectiveScore === undefined || objectiveScore < 0)) {
+    errors.push('Objective score is required');
+  }
+  if (config.hasObjective && objectiveScore > config.objectiveMax) {
+    errors.push(`Objective score cannot exceed ${config.objectiveMax}`);
+  }
+  
+  if (config.hasTheory && theoryScore !== null && theoryScore > config.theoryMax) {
+    errors.push(`Theory score cannot exceed ${config.theoryMax}`);
+  }
+  
+  if (config.hasTest && testScore !== null && testScore > config.testMax) {
+    errors.push(`Test score cannot exceed ${config.testMax}`);
+  }
+  
+  // Validate total based on exam type
+  if (examTypeValue === 'ObjectiveOnly') {
+    if (objectiveScore > 100) {
+      errors.push('Objective score cannot exceed 100');
+    }
+  } else if (examTypeValue === 'ObjectiveAndTheory') {
+    if ((objectiveScore || 0) + (theoryScore || 0) > 100) {
+      errors.push('Objective + Theory cannot exceed 100');
+    }
+  } else if (examTypeValue === 'ObjectiveAndTest') {
+    if ((objectiveScore || 0) + (testScore || 0) > 100) {
+      errors.push('Objective + Test cannot exceed 100');
+    }
+  } else if (examTypeValue === 'ObjectiveTheoryAndTest') {
+    if ((objectiveScore || 0) + (theoryScore || 0) > 60) {
+      errors.push('Objective + Theory cannot exceed 60');
+    }
+    if ((testScore || 0) > 40) {
+      errors.push('Test score cannot exceed 40');
+    }
+  }
+  
+  return { isValid: errors.length === 0, errors };
 };
 
 // Student Form Data Mapping
@@ -110,7 +167,7 @@ export const mapStudentFormToRegisterStudentDto = (formData) => {
     previousSchool: formData.previousSchool || '',
     classId: formData.classId ? formData.classId : null,
     academicYearId: formData.academicYearId,
-    // termId removed - enrollment will be handled separately
+    termId: formData.termId || null,
   };
 };
 
@@ -193,8 +250,9 @@ export const mapExamFormToCreateDto = (formData, classSubjectId, termId) => {
     examDate: examDate,
     durationMinutes: durationMinutes,
     totalMarks: parseInt(formData.totalMarks) || 100,
-    objectiveMark: parseInt(formData.objectiveMark) || 60,
-    theoryMark: parseInt(formData.theoryMark) || 40,
+    objectiveMark: parseInt(formData.objectiveMark) || 100,
+    theoryMark: parseInt(formData.theoryMark) || 0,
+    testMark: parseInt(formData.testMark) || 0,
     passingMark: parseInt(formData.passingMarks) || 40,
     instructions: formData.instructions || '',
     allowRetake: formData.allowRetake || false,

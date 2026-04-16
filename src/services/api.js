@@ -162,6 +162,7 @@ export const adminAPI = {
     update: (id, data) => api.put(`/api/academicyears/${id}`, data),
     delete: (id) => api.delete(`/api/academicyears/${id}`),
     setActive: (id) => api.post(`/api/academicyears/${id}/set-active`),
+    triggerAutoEnrollment: (id) => api.post(`/api/academicyears/${id}/auto-enroll`),
   },
   terms: {
     getAll: () => api.get('/api/terms'),
@@ -204,7 +205,15 @@ export const adminAPI = {
     getAll: (page = 1, pageSize = 10) => api.get(`/api/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/students/${id}`),
     getByClass: (classId) => api.get(`/api/students/class/${classId}`),
-    getByClassPaged: (classId, page = 1, pageSize = 10) => api.get(`/api/students/class/${classId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
+    getByClassPaged: (classId, page = 1, pageSize = 10, academicYearId = null) => {
+      const params = new URLSearchParams();
+      params.append('pageNumber', page);
+      params.append('pageSize', pageSize);
+      if (academicYearId) {
+        params.append('academicYearId', academicYearId);
+      }
+      return api.get(`/api/students/class/${classId}/paged?${params.toString()}`);
+    },
     getPaged: (page = 1, pageSize = 10) => api.get(`/api/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
     create: (data) => api.post('/api/students', data),
     registerStudent: (data) => api.post('/api/students/register', data),
@@ -315,6 +324,11 @@ export const teacherAPI = {
     gradeTheory: (data) => api.post('/api/examattempts/grade-theory', data),
     reset: (data) => api.post('/api/examattempts/reset', data),
     delete: (id) => api.delete(`/api/examattempts/${id}`),
+  },
+  scores: {
+    manual: (data) => api.post('/api/scores/manual', data),
+    bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
+    getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
   },
   ...adminAPI,
 };

@@ -83,11 +83,7 @@ const TeacherAssignments = () => {
     : [];
 
   useEffect(() => {
-    // Don't fetch data until token is validated
-    if (!tokenValidated) {
-      return;
-    }
-
+    // Fetch data regardless of token validation status
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -141,7 +137,7 @@ const TeacherAssignments = () => {
     };
 
     fetchData();
-  }, [tokenValidated]);
+  }, []);
 
   // Fetch existing assignments when class is selected
   useEffect(() => {

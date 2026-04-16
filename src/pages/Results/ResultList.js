@@ -112,7 +112,9 @@ const ResultList = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await resultsAPI.students.getByClassPaged(selectedClass, 1, 100);
+      const selectedTermData = terms.find(t => t.id === selectedTerm);
+      const academicYearId = selectedTermData?.academicYearId;
+      const response = await resultsAPI.students.getByClassPaged(selectedClass, 1, 100, academicYearId);
       if (response.data?.success) {
         setStudents(response.data.data?.items || []);
       }

@@ -54,6 +54,7 @@ const GradeTheory = () => {
 
   const [gradingForm, setGradingForm] = useState({
     theoryScore: '',
+    testScore: '',
     teacherRemarks: '',
   });
 
@@ -175,6 +176,7 @@ const GradeTheory = () => {
     setSelectedAttempt(attempt);
     setGradingForm({
       theoryScore: attempt.theoryScore || '',
+      testScore: attempt.testScore || '',
       teacherRemarks: attempt.teacherRemarks || '',
     });
     
@@ -230,7 +232,8 @@ const GradeTheory = () => {
     try {
       const response = await teacherAPI.examAttempts.gradeTheory({
         attemptId: selectedAttempt.id,
-        theoryScore: score,
+        theoryScore: score || null,
+        testScore: gradingForm.testScore ? parseInt(gradingForm.testScore) : null,
         teacherRemarks: gradingForm.teacherRemarks,
       });
 

@@ -22,6 +22,7 @@ import {
   Edit,
   Delete,
   CalendarToday,
+  School,
 } from '@mui/icons-material';
 import { academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -38,6 +39,13 @@ const AcademicYearList = () => {
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Auto-enrollment state
+  const [autoEnrollOpen, setAutoEnrollOpen] = useState(false);
+  const [autoEnrollId, setAutoEnrollId] = useState(null);
+  const [autoEnrolling, setAutoEnrolling] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const basePath = '/admin-dashboard';
 
@@ -85,9 +93,36 @@ const AcademicYearList = () => {
           isActive: y.id === id,
         }))
       );
+      setSuccess('Academic year set to active. Students are being enrolled based on promotions.');
+      setSuccessOpen(true);
     } catch (err) {
       setError('Failed to set active academic year');
       console.error(err);
+    }
+  };
+
+  const handleAutoEnrollClick = (id) => {
+    setAutoEnrollId(id);
+    setAutoEnrollOpen(true);
+  };
+
+  const handleAutoEnrollConfirm = async () => {
+    setAutoEnrolling(true);
+    try {
+      const response = await academicYearsAPI.triggerAutoEnrollment(autoEnrollId);
+      if (response.data?.success) {
+        setSuccess(response.data.message || 'Auto-enrollment triggered successfully!');
+        setSuccessOpen(true);
+      } else {
+        setError(response.data?.message || 'Failed to trigger auto-enrollment');
+      }
+    } catch (err) {
+      setError('Failed to trigger auto-enrollment');
+      console.error(err);
+    } finally {
+      setAutoEnrolling(false);
+      setAutoEnrollOpen(false);
+      setAutoEnrollId(null);
     }
   };
 
@@ -204,7 +239,18 @@ const AcademicYearList = () => {
                     </TableCell>
                     {hasRole('Admin') && (
                       <TableCell align="right">
-                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end', alignItems: 'center' }}>
+                          {year.isActive && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<School />}
+                              onClick={() => handleAutoEnrollClick(year.id)}
+                              sx={{ borderColor: '#3B82F6', color: '#3B82F6', fontSize: '0.7rem', borderRadius: 2, px: 1 }}
+                            >
+                              Enroll
+                            </Button>
+                          )}
                           {!year.isActive && (
                             <Button
                               size="small"
@@ -248,6 +294,40 @@ const AcademicYearList = () => {
         message="Are you sure you want to delete this academic year? This action cannot be undone."
         confirmText="Delete"
       />
+
+      <ConfirmDialog
+        open={autoEnrollOpen}
+        onClose={() => setAutoEnrollOpen(false)}
+        onConfirm={handleAutoEnrollConfirm}
+        title="Trigger Student Enrollment"
+        message="This will enroll students based on their promotion status (promoted to next class, retained in same class). Students with published promotions will be automatically enrolled. Continue?"
+        confirmText="Enroll Students"
+        confirmLoading={autoEnrolling}
+      />
+
+      {successOpen && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            zIndex: 9999,
+            p: 2,
+            bgcolor: '#10B981',
+            color: 'white',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            maxWidth: 400,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Typography sx={{ fontSize: '0.9rem' }}>{success}</Typography>
+            <IconButton size="small" onClick={() => setSuccessOpen(false)} sx={{ color: 'white' }}>
+              ×
+            </IconButton>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
