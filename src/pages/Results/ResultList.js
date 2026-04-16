@@ -23,6 +23,10 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Assessment,
@@ -30,6 +34,8 @@ import {
   Search,
   Visibility,
   TrendingUp,
+  Publish,
+  Info,
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -43,11 +49,13 @@ const ResultList = () => {
   
   const isAdmin = hasRole('Admin');
   const isTeacher = hasRole('Teacher');
+  const canManageResults = isAdmin || isTeacher;
 
   const resultsAPI = isTeacher ? teacherAPI : adminAPI;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   const [classes, setClasses] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -56,6 +64,9 @@ const ResultList = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -131,6 +142,44 @@ const ResultList = () => {
     s.studentNumber?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const selectedTermData = terms.find(t => t.id === selectedTerm);
+  const termType = selectedTermData?.termType?.toString() || selectedTermData?.termType || '';
+  const isThirdTerm = termType === 'Third';
+  const canPublish = selectedClass && selectedTerm && !isThirdTerm && canManageResults;
+
+  const handlePublishResults = async () => {
+    if (!selectedClass || !selectedTerm) return;
+    
+    setPublishing(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const response = await resultsAPI.results.publish({
+        termId: selectedTerm,
+        classId: selectedClass,
+      });
+      
+      if (response.data?.success) {
+        setSuccess(response.data.message || 'Results published successfully');
+        setPublishDialogOpen(false);
+      } else {
+        setError(response.data?.message || 'Failed to publish results');
+      }
+    } catch (err) {
+      console.error('Error publishing results:', err);
+      setError('Failed to publish results. Please try again.');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleOpenPublishDialog = () => {
+    setError('');
+    setSuccess('');
+    setPublishDialogOpen(true);
+  };
+
   return (
     <Box>
       <PageHeader
@@ -139,8 +188,14 @@ const ResultList = () => {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError('')}>
           {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setSuccess('')}>
+          {success}
         </Alert>
       )}
 
@@ -214,6 +269,35 @@ const ResultList = () => {
               />
             </Grid>
           </Grid>
+          
+          {canPublish && (
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="contained"
+                startIcon={<Publish />}
+                onClick={handleOpenPublishDialog}
+                sx={{
+                  bgcolor: '#2E7D32',
+                  '&:hover': { bgcolor: '#1B5E20' },
+                  borderRadius: 2,
+                }}
+              >
+                Publish Results
+              </Button>
+            </Box>
+          )}
+          
+          {isThirdTerm && selectedClass && selectedTerm && (
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+              <Alert 
+                icon={<Info />} 
+                severity="info"
+                sx={{ borderRadius: 2, bgcolor: '#E3F2FD' }}
+              >
+                To publish Third Term results, go to the Promotions page
+              </Alert>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
@@ -288,6 +372,41 @@ const ResultList = () => {
           </TableContainer>
         )}
       </Card>
+
+      {/* Publish Confirmation Dialog */}
+      <Dialog
+        open={publishDialogOpen}
+        onClose={() => setPublishDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1B5E20' }}>
+          Publish Results
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Are you sure you want to publish results for this class and term?
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748B' }}>
+            This will make the results visible to parents and students. Once published, you cannot unpublish.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={() => setPublishDialogOpen(false)} sx={{ color: '#64748B' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePublishResults}
+            variant="contained"
+            disabled={publishing}
+            startIcon={publishing ? <CircularProgress size={18} /> : <Publish />}
+            sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' } }}
+          >
+            {publishing ? 'Publishing...' : 'Publish'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

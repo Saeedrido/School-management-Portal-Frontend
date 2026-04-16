@@ -243,8 +243,8 @@ const AddStudentParent = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAF9' }}>
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #F5F7FA 0%, #E8F5E9 100%)', p: { xs: 2, sm: 3 } }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
         <PageHeader
           title="Add Student & Parent"
           subtitle="Enroll a new student and create or link a parent account"
@@ -269,6 +269,24 @@ const AddStudentParent = () => {
           </Alert>
         )}
 
+        {/* Tabs */}
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, v) => setActiveTab(v)} 
+          sx={{ 
+            mb: 3,
+            '& .MuiTab-root': { 
+              fontWeight: 600,
+              color: '#64748B',
+              '&.Mui-selected': { color: '#2E7D32' }
+            },
+            '& .MuiTabs-indicator': { bgcolor: '#2E7D32' }
+          }}
+        >
+          <Tab label="Add New Student & Parent" />
+          <Tab label="Link Existing Student to Parent" />
+        </Tabs>
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />
@@ -277,12 +295,12 @@ const AddStudentParent = () => {
           <>
             {/* Tab 0: Add Student + Parent */}
             {activeTab === 0 && (
-              <Card sx={{ background: 'rgba(17, 17, 17, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 3 }}>
+              <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                 <CardContent sx={{ p: 4 }}>
                   <Grid container spacing={3}>
                     {/* Student Section */}
                     <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#FF3E8A', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1B5E20', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <School /> Student Information
                       </Typography>
                     </Grid>
@@ -295,6 +313,7 @@ const AddStudentParent = () => {
                         onChange={handleStudentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -306,6 +325,7 @@ const AddStudentParent = () => {
                         onChange={handleStudentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -317,6 +337,7 @@ const AddStudentParent = () => {
                         onChange={handleStudentChange}
                         fullWidth
                         placeholder="Auto-generated if empty"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -329,6 +350,7 @@ const AddStudentParent = () => {
                         onChange={handleStudentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="Male">Male</MenuItem>
                         <MenuItem value="Female">Female</MenuItem>
@@ -345,6 +367,7 @@ const AddStudentParent = () => {
                         fullWidth
                         required
                         InputLabelProps={{ shrink: true }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -356,6 +379,7 @@ const AddStudentParent = () => {
                         value={studentData.email}
                         onChange={handleStudentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -366,6 +390,7 @@ const AddStudentParent = () => {
                         value={studentData.phoneNumber}
                         onChange={handleStudentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -377,6 +402,7 @@ const AddStudentParent = () => {
                         value={studentData.classId}
                         onChange={handleStudentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="">Select Class</MenuItem>
                         {classes.map((cls) => (
@@ -387,7 +413,7 @@ const AddStudentParent = () => {
 
                     {/* Parent Section */}
                     <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#FF3E8A', mb: 2, mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1B5E20', mb: 2, mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Person /> Parent/Guardian Information
                       </Typography>
                     </Grid>
@@ -400,6 +426,7 @@ const AddStudentParent = () => {
                         onChange={handleParentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -411,6 +438,7 @@ const AddStudentParent = () => {
                         onChange={handleParentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -422,6 +450,7 @@ const AddStudentParent = () => {
                         value={parentData.email}
                         onChange={handleParentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -433,6 +462,7 @@ const AddStudentParent = () => {
                         onChange={handleParentChange}
                         fullWidth
                         required
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -443,6 +473,7 @@ const AddStudentParent = () => {
                         value={parentData.alternativePhone}
                         onChange={handleParentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -454,6 +485,7 @@ const AddStudentParent = () => {
                         value={parentData.relationship}
                         onChange={handleParentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="Father">Father</MenuItem>
                         <MenuItem value="Mother">Mother</MenuItem>
@@ -469,6 +501,7 @@ const AddStudentParent = () => {
                         value={parentData.occupation}
                         onChange={handleParentChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -481,6 +514,7 @@ const AddStudentParent = () => {
                         fullWidth
                         multiline
                         rows={2}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
 
@@ -490,6 +524,7 @@ const AddStudentParent = () => {
                         <Button
                           variant="outlined"
                           onClick={() => navigate('/admin-dashboard')}
+                          sx={{ borderColor: '#64748B', color: '#64748B' }}
                         >
                           Cancel
                         </Button>
@@ -498,10 +533,7 @@ const AddStudentParent = () => {
                           onClick={handleSubmitStudentParent}
                           disabled={submitting}
                           startIcon={submitting ? <CircularProgress size={20} /> : <Save />}
-                          sx={{
-                            background: '#FF3E8A',
-                            '&:hover': { background: '#FF5DA3' },
-                          }}
+                          sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' } }}
                         >
                           {submitting ? 'Saving...' : 'Create Student & Parent'}
                         </Button>
@@ -514,14 +546,14 @@ const AddStudentParent = () => {
 
             {/* Tab 1: Link Student to Parent */}
             {activeTab === 1 && (
-              <Card sx={{ background: 'rgba(17, 17, 17, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 3 }}>
+              <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                 <CardContent sx={{ p: 4 }}>
                   <Grid container spacing={3}>
                     <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#FF3E8A', mb: 2 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1B5E20', mb: 2 }}>
                         Link Existing Student to Existing Parent
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 3 }}>
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 3 }}>
                         Use this to link a student who doesn't have a parent linked yet, or to add additional parent links.
                       </Typography>
                     </Grid>
@@ -534,6 +566,7 @@ const AddStudentParent = () => {
                         value={linkData.parentId}
                         onChange={handleLinkChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="">Select Parent</MenuItem>
                         {parents.map((parent) => (
@@ -552,6 +585,7 @@ const AddStudentParent = () => {
                         value={linkData.studentId}
                         onChange={handleLinkChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="">Select Student</MenuItem>
                         {students.map((student) => (
@@ -570,6 +604,7 @@ const AddStudentParent = () => {
                         value={linkData.relationship}
                         onChange={handleLinkChange}
                         fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="Father">Father</MenuItem>
                         <MenuItem value="Mother">Mother</MenuItem>
@@ -584,6 +619,7 @@ const AddStudentParent = () => {
                         <Button
                           variant="outlined"
                           onClick={() => navigate('/admin-dashboard')}
+                          sx={{ borderColor: '#64748B', color: '#64748B' }}
                         >
                           Cancel
                         </Button>
@@ -592,10 +628,7 @@ const AddStudentParent = () => {
                           onClick={handleSubmitLink}
                           disabled={submitting}
                           startIcon={submitting ? <CircularProgress size={20} /> : <LinkIcon />}
-                          sx={{
-                            background: '#FF3E8A',
-                            '&:hover': { background: '#FF5DA3' },
-                          }}
+                          sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' } }}
                         >
                           {submitting ? 'Linking...' : 'Link Student to Parent'}
                         </Button>

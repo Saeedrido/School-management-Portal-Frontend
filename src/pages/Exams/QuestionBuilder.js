@@ -24,6 +24,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -61,6 +62,7 @@ const QuestionBuilder = () => {
   const [success, setSuccess] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, index: null });
   const [uploadFormatDialog, setUploadFormatDialog] = useState(false);
+  const [uploadingDocx, setUploadingDocx] = useState(false);
   const [examInfo, setExamInfo] = useState({
     title: isEditing ? 'Mid-Term Mathematics Examination' : '',
     type: 'Objective',
@@ -68,7 +70,7 @@ const QuestionBuilder = () => {
     hasStarted: false,
   });
 
-  const fileInputRef = useRef(null);
+  const fileInputId = 'docx-upload-input';
 
   const handleUploadClick = () => {
     if (!examInfo.hasStarted) {
@@ -78,9 +80,12 @@ const QuestionBuilder = () => {
 
   const handleUploadConfirm = () => {
     setUploadFormatDialog(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    setTimeout(() => {
+      const fileInput = document.getElementById(fileInputId);
+      if (fileInput) {
+        fileInput.click();
+      }
+    }, 300);
   };
 
   // Load existing questions and exam info
@@ -817,6 +822,66 @@ const QuestionBuilder = () => {
           </Card>
         )}
 
+        {/* Hidden File Input - Always rendered */}
+        <input
+          id={fileInputId}
+          accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          style={{ display: 'none' }}
+          type="file"
+          onChange={async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            setUploadingDocx(true);
+            const formData = new FormData();
+            formData.append('File', file);
+
+            try {
+              const response = await api.post(`/api/exams/${examId}/questions/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
+
+              if (response.data?.success) {
+                const fetchResponse = await api.get(`/api/questions/exam/${examId}`);
+                if (fetchResponse.data?.success && fetchResponse.data?.data) {
+                  const mappedQuestions = fetchResponse.data.data.map(q => {
+                    const isObjective = (q.options && q.options.length > 0) && (q.options.length > 1 || q.options[0].value !== "True/False");
+                    const mappedQ = {
+                      id: q.id,
+                      type: isObjective ? 'Objective' : 'Theory',
+                      question: q.questionText,
+                      marks: q.marks || 1,
+                      explanation: q.explanation || '',
+                      difficulty: 'Medium',
+                      modelAnswer: '',
+                    };
+
+                    if (isObjective) {
+                      mappedQ.options = q.options.map(opt => opt.value);
+                      const correctOpt = q.options.find(opt => opt.isCorrect);
+                      mappedQ.correctAnswer = correctOpt ? correctOpt.value : '';
+                    } else {
+                      mappedQ.modelAnswer = q.explanation || '';
+                    }
+
+                    return mappedQ;
+                  });
+                  setQuestions(mappedQuestions);
+                }
+                setSuccess('Questions uploaded successfully!');
+              } else {
+                setError(response.data?.message || 'Failed to upload questions');
+              }
+            } catch (err) {
+              console.error('Failed to upload document', err);
+              setError('An error occurred during file upload.');
+            } finally {
+              setUploadingDocx(false);
+              event.target.value = '';
+            }
+          }}
+        />
+
         {/* Questions List */}
         {questions.length > 0 && (
           <Card
@@ -846,76 +911,17 @@ const QuestionBuilder = () => {
                   Questions ({questions.length})
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <input
-                    ref={fileInputRef}
-                    accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    style={{ display: 'none' }}
-                    id="raised-button-file"
-                    type="file"
-                    onChange={async (event) => {
-                      const file = event.target.files[0];
-                      if (!file) return;
-
-                      const formData = new FormData();
-                      formData.append('File', file);
-
-                      try {
-                        const response = await api.post(`/api/exams/${examId}/questions/upload`, formData, {
-                          headers: { 'Content-Type': 'multipart/form-data' },
-                        });
-
-                        if (response.data?.success) {
-                          // Fetch all questions again to ensure we have the latest list
-                          const fetchResponse = await api.get(`/api/questions/exam/${examId}`);
-                          if (fetchResponse.data?.success && fetchResponse.data?.data) {
-                            const mappedQuestions = fetchResponse.data.data.map(q => {
-                              const isObjective = (q.options && q.options.length > 0) && (q.options.length > 1 || q.options[0].value !== "True/False");
-                              const mappedQ = {
-                                id: q.id,
-                                type: isObjective ? 'Objective' : 'Theory',
-                                question: q.questionText,
-                                marks: q.marks || 1,
-                                explanation: q.explanation || '',
-                                difficulty: 'Medium',
-                                modelAnswer: '',
-                              };
-
-                              if (isObjective) {
-                                mappedQ.options = q.options.map(opt => opt.value);
-                                const correctOpt = q.options.find(opt => opt.isCorrect);
-                                mappedQ.correctAnswer = correctOpt ? correctOpt.value : '';
-                              } else {
-                                mappedQ.modelAnswer = q.explanation || '';
-                              }
-
-                              return mappedQ;
-                            });
-                            setQuestions(mappedQuestions);
-                          }
-                          setSuccess('Questions uploaded successfully!');
-                        } else {
-                          setError(response.data?.message || 'Failed to upload questions');
-                        }
-                      } catch (err) {
-                        console.error('Failed to upload document', err);
-                        setError('An error occurred during file upload.');
-                      }
-
-                      // Reset file input
-                      event.target.value = '';
-                    }}
-                  />
                   <Button
                     variant="outlined"
-                    startIcon={<Description />}
+                    startIcon={uploadingDocx ? <CircularProgress size={18} /> : <Description />}
                     onClick={handleUploadClick}
-                    disabled={examInfo.hasStarted}
+                    disabled={examInfo.hasStarted || uploadingDocx}
                     sx={{
                       color: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
                       borderColor: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
                     }}
                   >
-                    {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
+                    {examInfo.hasStarted ? 'Cannot Upload' : uploadingDocx ? 'Uploading...' : 'Upload DOCX'}
                   </Button>
                   <Button
                     variant="contained"
@@ -1216,15 +1222,15 @@ const QuestionBuilder = () => {
                 </Button>
                 <Button
                   variant="outlined"
-                  startIcon={<Description />}
+                  startIcon={uploadingDocx ? <CircularProgress size={18} /> : <Description />}
                   onClick={handleUploadClick}
-                  disabled={examInfo.hasStarted}
+                  disabled={examInfo.hasStarted || uploadingDocx}
                   sx={{
                     color: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
                     borderColor: examInfo.hasStarted ? '#9e9e9e' : '#6FAF8F',
                   }}
                 >
-                  {examInfo.hasStarted ? 'Cannot Upload' : 'Upload DOCX'}
+                  {examInfo.hasStarted ? 'Cannot Upload' : uploadingDocx ? 'Uploading...' : 'Upload DOCX'}
                 </Button>
               </Box>
             </CardContent>

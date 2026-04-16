@@ -441,7 +441,7 @@ return (
         </Alert>
       )}
 
-      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
+      <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', bgcolor: '#fff' }}>
         <CardContent sx={{ p: 3 }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -450,11 +450,11 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Account Information
@@ -574,7 +574,7 @@ return (
                               <IconButton
                                 onClick={() => setShowPassword(!showPassword)}
                                 edge="end"
-                                sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                                sx={{ color: '#1E293B' }}
                               >
                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                               </IconButton>
@@ -621,12 +621,12 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     mt: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Personal Information
@@ -638,7 +638,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -667,7 +667,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -701,7 +701,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -727,12 +727,12 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     mt: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Address Information
@@ -744,7 +744,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -774,7 +774,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -802,7 +802,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -830,7 +830,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -855,12 +855,12 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     mt: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Medical Information (Optional)
@@ -872,7 +872,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -906,7 +906,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -936,7 +936,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -961,7 +961,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -986,12 +986,12 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     mt: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Emergency Contact
@@ -1003,7 +1003,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1031,7 +1031,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1059,7 +1059,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1089,12 +1089,12 @@ return (
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#ffffff',
+                    color: '#1B5E20',
                     fontWeight: 600,
                     mb: 2,
                     mt: 2,
                     pb: 1,
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
                   }}
                 >
                   Class Enrollment
@@ -1106,7 +1106,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1144,7 +1144,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1182,7 +1182,7 @@ return (
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: '#1E293B',
                       mb: 1,
                       fontSize: '0.9rem',
                       fontWeight: 500,
@@ -1252,7 +1252,7 @@ return (
 // Common styles
 const textFieldStyles = {
   '& .MuiOutlinedInput-root': {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fff',
     borderRadius: '12px',
     border: '1px solid rgba(111, 175, 143, 0.2)',
     transition: 'all 0.3s ease',
@@ -1273,7 +1273,23 @@ const textFieldStyles = {
     padding: '12px 14px',
     fontSize: '0.95rem',
     '&::placeholder': {
-      color: 'rgba(255, 255, 255, 0.35)',
+      color: '#94A3B8',
+      opacity: 1,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#1E293B',
+    fontWeight: 500,
+    '&.Mui-focused': {
+      color: '#1B5E20',
+    },
+    '&.Mui-error': {
+      color: '#ff6b6b',
+    },
+    '&.Mui-required': {
+      '& .MuiFormLabel-asterisk': {
+        color: '#ff6b6b',
+      },
     },
   },
   '& .MuiFormHelperText-root': {
@@ -1301,7 +1317,7 @@ const selectStyles = {
     border: 'none',
   },
   '& .MuiSvgIcon-root': {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#1E293B',
   },
 };
 

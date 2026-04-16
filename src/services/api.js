@@ -246,7 +246,7 @@ export const adminAPI = {
     delete: (id) => api.delete(`/api/questions/${id}`),
   },
   results: {
-    getByStudentAndTerm: (studentId, termId) => api.get(`/api/results/student/${studentId}/term/${termId}`),
+    getByStudentAndTerm: (studentId, termId, includeUnpublished = false) => api.get(`/api/results/student/${studentId}/term/${termId}?includeUnpublished=${includeUnpublished}`),
     getStudentResults: (studentId, page = 1, pageSize = 20) => api.get(`/api/results/student/${studentId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getCumulative: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
     getCumulativeResults: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
@@ -255,6 +255,7 @@ export const adminAPI = {
     getStudentAvailableTerms: (studentId) => api.get(`/api/results/student/${studentId}/available-terms`),
     publish: (data) => api.post('/api/results/publish', data),
     updateRemarks: (id, data) => api.put(`/api/results/${id}`, data),
+    updatePsychomotorAffective: (id, data) => api.put(`/api/results/${id}/psychomotor-affective`, data),
     delete: (id) => api.delete(`/api/results/${id}`),
     calculatePositions: (data) => api.post('/api/results/positions/calculate', data),
   },

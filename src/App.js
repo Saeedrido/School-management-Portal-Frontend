@@ -220,8 +220,11 @@ function AppRoutes() {
         <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="manual-score" element={<ManualScoreEntry />} />
         <Route path="teacher-assignments" element={<TeacherAssignments />} />
+        <Route path="grade-management" element={<GradeManagement />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
+        <Route path="student-profiles" element={<StudentProfile />} />
+        <Route path="students/:studentId/profile" element={<StudentProfile />} />
       </Route>
 
       {/* Teacher Dashboard Routes */}

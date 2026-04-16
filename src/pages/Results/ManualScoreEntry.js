@@ -47,6 +47,7 @@ const ManualScoreEntry = () => {
 
   const [classes, setClasses] = useState([]);
   const [classSubjects, setClassSubjects] = useState([]);
+  const [teacherAssignments, setTeacherAssignments] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [terms, setTerms] = useState([]);
   const [currentAcademicYear, setCurrentAcademicYear] = useState(null);
@@ -79,13 +80,12 @@ const ManualScoreEntry = () => {
     if (selectedClass && selectedClass !== '') {
       loadClassSubjects(selectedClass);
       loadStudents(selectedClass);
-      setClassSubjects([]);
-      setStudents([]);
-      setFilteredStudents([]);
+      setSelectedSubject('');
     } else {
       setClassSubjects([]);
       setStudents([]);
       setFilteredStudents([]);
+      setSelectedSubject('');
     }
   }, [selectedClass]);
 
@@ -115,13 +115,36 @@ const ManualScoreEntry = () => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [classesRes, academicYearsRes, termsRes] = await Promise.all([
-        adminAPI.classes.getAll(),
+      
+      const isTeacher = hasRole('Teacher');
+      
+      if (isTeacher) {
+        // Teachers can only see classes they're assigned to
+        const assignmentsRes = await teacherAPI.classSubjects.getMyAssignments();
+        if (assignmentsRes.data?.success) {
+          const assignments = assignmentsRes.data.data?.items || [];
+          setTeacherAssignments(assignments);
+          const uniqueClasses = [];
+          const seenClassIds = new Set();
+          assignments.forEach(a => {
+            const classId = a.classId || (a.class && a.class.id);
+            if (a.class && !seenClassIds.has(classId)) {
+              seenClassIds.add(classId);
+              uniqueClasses.push(a.class);
+            }
+          });
+          setClasses(uniqueClasses);
+        }
+      } else {
+        const classesRes = await adminAPI.classes.getAll();
+        if (classesRes.data?.success) setClasses(classesRes.data.data);
+      }
+      
+      const [academicYearsRes, termsRes] = await Promise.all([
         academicYearsAPI.getAll(),
         termsAPI.getAll(),
       ]);
 
-      if (classesRes.data?.success) setClasses(classesRes.data.data);
       if (academicYearsRes.data?.success) {
         setAcademicYears(academicYearsRes.data.data);
         const current = academicYearsRes.data.data.find((y) => y.isCurrent);
@@ -148,14 +171,30 @@ const ManualScoreEntry = () => {
   const loadClassSubjects = async (classId) => {
     try {
       setError('');
-      const response = await teacherAPI.classSubjects.getByClass(classId);
-      console.log('ClassSubjects response:', response.data);
-      if (response.data?.success && Array.isArray(response.data.data)) {
-        setClassSubjects(response.data.data);
-      } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
-        setClassSubjects(response.data.data.items);
+      const isTeacher = hasRole('Teacher');
+      
+      if (isTeacher && teacherAssignments.length > 0) {
+        const classAssignments = teacherAssignments.filter(
+          a => String(a.classId) === String(classId)
+        );
+        
+        const uniqueSubjects = [];
+        classAssignments.forEach(a => {
+          const subjectData = a.subject || { id: a.subjectId, name: `Subject (ID: ${a.subjectId.substring(0,8)})` };
+          if (!uniqueSubjects.find(s => s.id === a.subjectId)) {
+            uniqueSubjects.push(subjectData);
+          }
+        });
+        setClassSubjects(uniqueSubjects);
       } else {
-        setClassSubjects([]);
+        const response = await teacherAPI.classSubjects.getByClass(classId);
+        if (response.data?.success && Array.isArray(response.data.data)) {
+          setClassSubjects(response.data.data);
+        } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
+          setClassSubjects(response.data.data.items);
+        } else {
+          setClassSubjects([]);
+        }
       }
     } catch (err) {
       console.error('Failed to load subjects:', err);
@@ -193,23 +232,31 @@ const ManualScoreEntry = () => {
       if (!selectedAcademicYear || !selectedTerm) return;
 
       const yearId = selectedAcademicYear;
+      const termInfo = terms.find((t) => t.id === selectedTerm);
+      const subjectInfo = classSubjects.find((cs) => cs.id === selectedSubject);
+      
+      console.log('Loading scores - academicYear:', yearId, 'term:', termInfo?.name, 'subject:', subjectInfo?.name);
+      
       // For each student, check if they have existing scores
       const updatedStudents = await Promise.all(
         students.map(async (student) => {
           try {
-            const response = await teacherAPI.scores.getStudentScores(student.id, yearId);
+            const response = await (hasRole('Admin') ? adminAPI.scores : teacherAPI.scores).getStudentScores(student.id, yearId);
+            console.log('Scores for student', student.id, ':', response.data);
+            
             if (response.data?.success) {
               const scores = response.data.data;
+              const subjectName = subjectInfo?.name || subjectInfo?.subject?.name;
               const existingScore = scores.find(
                 (s) =>
-                  s.subjectName ===
-                    classSubjects.find((cs) => cs.id === selectedSubject)?.subject?.name &&
-                  s.termName === terms.find((t) => t.id === selectedTerm)?.name
+                  s.subjectName === subjectName &&
+                  s.termName === termInfo?.name
               );
+              console.log('Found score for', student.firstName, ':', existingScore);
               return { ...student, existingScore };
             }
           } catch (e) {
-            // Ignore errors for individual students
+            console.error('Error fetching score for student', student.id, e);
           }
           return student;
         })
@@ -395,7 +442,7 @@ const ManualScoreEntry = () => {
                 <MenuItem value="">Select Subject</MenuItem>
                 {classSubjects.map((cs) => (
                   <MenuItem key={cs.id} value={cs.id}>
-                    {cs.subject?.name}
+                    {cs.name || cs.subject?.name || `Subject (ID: ${cs.id?.substring(0,8)})`}
                   </MenuItem>
                 ))}
               </TextField>
