@@ -187,7 +187,7 @@ const ManualScoreEntry = () => {
         });
         setClassSubjects(uniqueSubjects);
       } else {
-        const response = await teacherAPI.classSubjects.getByClass(classId);
+        const response = await (hasRole('Admin') ? adminAPI : teacherAPI).classSubjects.getByClass(classId);
         if (response.data?.success && Array.isArray(response.data.data)) {
           setClassSubjects(response.data.data);
         } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
@@ -205,7 +205,8 @@ const ManualScoreEntry = () => {
 
   const loadStudents = async (classId) => {
     try {
-      const response = await teacherAPI.students.getByClass(classId);
+      const apiToUse = hasRole('Admin') ? adminAPI : teacherAPI;
+      const response = await apiToUse.students.getByClass(classId);
       console.log('Students response:', response.data);
       if (response.data?.success && Array.isArray(response.data.data)) {
         const studentsList = response.data.data;
@@ -229,30 +230,41 @@ const ManualScoreEntry = () => {
   const loadExistingScores = async () => {
     // Load existing scores for the selected combination
     try {
-      if (!selectedAcademicYear || !selectedTerm) return;
+      if (!selectedAcademicYear || !selectedTerm || students.length === 0) {
+        console.log('loadExistingScores skipped - missing params or no students');
+        return;
+      }
 
       const yearId = selectedAcademicYear;
       const termInfo = terms.find((t) => t.id === selectedTerm);
       const subjectInfo = classSubjects.find((cs) => cs.id === selectedSubject);
       
-      console.log('Loading scores - academicYear:', yearId, 'term:', termInfo?.name, 'subject:', subjectInfo?.name);
+      console.log('=== loadExistingScores ===');
+      console.log('students.length:', students.length);
+      console.log('selectedAcademicYear:', yearId);
+      console.log('selectedTerm:', selectedTerm, termInfo?.name);
+      console.log('selectedSubject:', selectedSubject, subjectInfo?.name);
+      console.log('terms array:', terms);
+      console.log('classSubjects array:', classSubjects);
       
-      // For each student, check if they have existing scores
+      // Use adminAPI for both admin and teacher - scores should be visible to both
       const updatedStudents = await Promise.all(
         students.map(async (student) => {
           try {
-            const response = await (hasRole('Admin') ? adminAPI.scores : teacherAPI.scores).getStudentScores(student.id, yearId);
-            console.log('Scores for student', student.id, ':', response.data);
+            const response = await adminAPI.scores.getStudentScores(student.id, yearId);
+            console.log('Scores response for', student.firstName, ':', response.data);
             
             if (response.data?.success) {
-              const scores = response.data.data;
+              const scores = response.data.data || [];
               const subjectName = subjectInfo?.name || subjectInfo?.subject?.name;
+              console.log('Searching for - subjectName:', subjectName, 'termName:', termInfo?.name);
+              console.log('All scores for this student:', scores);
+              
               const existingScore = scores.find(
                 (s) =>
                   s.subjectName === subjectName &&
                   s.termName === termInfo?.name
               );
-              console.log('Found score for', student.firstName, ':', existingScore);
               return { ...student, existingScore };
             }
           } catch (e) {
@@ -261,6 +273,7 @@ const ManualScoreEntry = () => {
           return student;
         })
       );
+      console.log('Updated students with scores:', updatedStudents.filter(s => s.existingScore).length);
       setStudents(updatedStudents);
       setFilteredStudents(updatedStudents);
     } catch (err) {

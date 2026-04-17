@@ -309,6 +309,9 @@ export const adminAPI = {
     createStudentAndParent: (data) => api.post('/api/parents/create-student-parent', data),
     getMyChildren: () => api.get('/api/parents/my-children'),
   },
+  scores: {
+    getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
+  },
 };
 
 // ============================================
