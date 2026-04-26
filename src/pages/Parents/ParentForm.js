@@ -8,24 +8,10 @@ import {
   Button,
   TextField,
   Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  IconButton,
   Alert,
   CircularProgress,
 } from '@mui/material';
-import {
-  ArrowBack,
-  Save,
-  Person,
-  Email,
-  Phone,
-  Business,
-  LocationOn,
-  PersonAdd,
-} from '@mui/icons-material';
+import { Save, PersonAdd, Person } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { PageHeader } from '../../components/ui';
 
@@ -54,7 +40,6 @@ const ParentForm = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Load students for linking
         const studentsRes = await adminAPI.students.getAll();
         if (studentsRes.data) {
           const studentsData = studentsRes.data.data || studentsRes.data;
@@ -62,12 +47,10 @@ const ParentForm = () => {
             id: s.id,
             name: `${s.firstName} ${s.lastName}`,
             class: s.class?.name || 'N/A',
-            currentParent: null
           })) : []);
         }
 
         if (isEditing && id) {
-          // Fetch parent data
           const parentRes = await adminAPI.parents.getById(parseInt(id));
           if (parentRes.data) {
             const parentData = parentRes.data;
@@ -94,39 +77,35 @@ const ParentForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
-    const errors = {};
-
     if (!formData.firstName.trim()) {
-      errors.firstName = 'First name is required';
+      setError('First name is required');
+      return false;
     }
     if (!formData.lastName.trim()) {
-      errors.lastName = 'Last name is required';
+      setError('Last name is required');
+      return false;
     }
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      setError('Email is required');
+      return false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = 'Invalid email format';
+      setError('Invalid email format');
+      return false;
     }
     if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required';
+      setError('Phone number is required');
+      return false;
     }
-
-    return Object.keys(errors).length === 0;
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setSubmitting(true);
     setError('');
@@ -149,8 +128,6 @@ const ParentForm = () => {
       }
 
       setSuccess(true);
-      
-      // Redirect after 2 seconds
       setTimeout(() => {
         navigate('/admin-dashboard/parents');
       }, 2000);
@@ -187,52 +164,24 @@ const ParentForm = () => {
           ]}
         />
 
-        {/* Error Alert */}
         {error && (
-          <Alert
-            severity="error"
-            onClose={() => setError('')}
-            sx={{ mb: 3 }}
-          >
+          <Alert severity="error" onClose={() => setError('')} sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
 
-        {/* Success Alert */}
         {success && (
-          <Alert
-            severity="success"
-            onClose={() => setSuccess(false)}
-            sx={{ mb: 3 }}
-          >
-            {isEditing
-              ? 'Parent updated successfully!'
-              : 'Parent added successfully!'}
+          <Alert severity="success" onClose={() => setSuccess(false)} sx={{ mb: 3 }}>
+            {isEditing ? 'Parent updated successfully!' : 'Parent added successfully!'}
           </Alert>
         )}
 
-        {/* Form Card */}
-        <Card
-          sx={{
-            background: 'rgba(17, 17, 17, 0.8)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 3,
-          }}
-        >
+        <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)' }}>
           <CardContent sx={{ p: 4 }}>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* Personal Information */}
                 <Grid item xs={12}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      color: '#6FAF8F',
-                      mb: 2,
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B', mb: 2 }}>
                     Personal Information
                   </Typography>
                 </Grid>
@@ -246,25 +195,6 @@ const ParentForm = () => {
                     fullWidth
                     required
                     disabled={submitting}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
@@ -277,25 +207,6 @@ const ParentForm = () => {
                     fullWidth
                     required
                     disabled={submitting}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
@@ -309,25 +220,6 @@ const ParentForm = () => {
                     fullWidth
                     required
                     disabled={submitting}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
@@ -340,39 +232,11 @@ const ParentForm = () => {
                     fullWidth
                     required
                     disabled={submitting}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
-                {/* Contact Information */}
                 <Grid item xs={12}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      color: '#6FAF8F',
-                      mb: 2,
-                      mt: 1,
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B', mb: 2, mt: 1 }}>
                     Contact Information
                   </Typography>
                 </Grid>
@@ -385,30 +249,6 @@ const ParentForm = () => {
                     onChange={handleChange}
                     fullWidth
                     disabled={submitting}
-                    InputProps={{
-                      startAdornment: (
-                        <Business sx={{ color: 'rgba(255, 255, 255, 0.4)' }} />
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
@@ -422,138 +262,49 @@ const ParentForm = () => {
                     multiline
                     rows={2}
                     disabled={submitting}
-                    InputProps={{
-                      startAdornment: (
-                        <LocationOn sx={{ color: 'rgba(255, 255, 255, 0.4)' }} />
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontWeight: 500,
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6FAF8F',
-                        },
-                      },
-                    }}
                   />
                 </Grid>
 
-                {/* Student Links */}
                 <Grid item xs={12}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      color: '#6FAF8F',
-                      mb: 2,
-                      mt: 1,
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B', mb: 2, mt: 1 }}>
                     Link Students
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      mb: 2,
-                    }}
-                  >
+                  <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
                     Select one or more students to link this parent/guardian to.
                   </Typography>
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      flexWrap: 'wrap',
-                    }}
-                  >
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     {students.map((student) => {
                       const isSelected = formData.studentIds.includes(student.id);
-
                       return (
                         <Button
                           key={student.id}
                           variant={isSelected ? 'contained' : 'outlined'}
                           size="small"
-                          startIcon={
-                            isSelected ? (
-                              <PersonAdd sx={{ fontSize: 16 }} />
-                            ) : (
-                              <Person sx={{ fontSize: 16 }} />
-                            )
-                          }
                           onClick={() => toggleStudentSelection(student.id)}
                           sx={{
                             ...(isSelected && {
-                              background: '#6FAF8F',
-                              color: '#ffffff',
-                              '&:hover': {
-                                background: '#FF5DA3',
-                              },
-                            }),
-                            ...(!isSelected && {
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                              color: 'rgba(255, 255, 255, 0.7)',
-                              '&:hover': {
-                                borderColor: '#6FAF8F',
-                                color: '#6FAF8F',
-                                background: 'rgba(255, 62, 138, 0.05)',
-                              },
+                              background: '#15803d',
+                              '&:hover': { background: '#166534' },
                             }),
                           }}
                         >
-                          {student.name}
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              ml: 1,
-                              ...(isSelected && { color: 'white' }),
-                            }}
-                          >
-                            {student.class}
-                          </Typography>
+                          <PersonAdd sx={{ fontSize: 16, mr: 0.5 }} />
+                          {student.name} ({student.class})
                         </Button>
                       );
                     })}
                   </Box>
                 </Grid>
 
-                {/* Action Buttons */}
                 <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      justifyContent: 'flex-end',
-                      mt: 4,
-                    }}
-                  >
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
                     <Button
                       variant="outlined"
                       onClick={() => navigate('/admin-dashboard/parents')}
                       disabled={submitting}
-                      sx={{
-                        color: '#ffffff',
-                        borderColor: 'rgba(255, 255, 255, 0.3)',
-                        '&:hover': {
-                          borderColor: '#ffffff',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                        },
-                      }}
                     >
                       Cancel
                     </Button>
@@ -562,21 +313,7 @@ const ParentForm = () => {
                       type="submit"
                       disabled={submitting}
                       startIcon={submitting ? <CircularProgress size={20} /> : <Save />}
-                      onClick={handleSubmit}
-                      sx={{
-                        background: '#6FAF8F',
-                        color: '#ffffff',
-                        borderRadius: '50px',
-                        fontWeight: 600,
-                        textTransform: 'none',
-                        '&:hover': {
-                          background: '#FF5DA3',
-                        },
-                        '&:disabled': {
-                          background: 'rgba(255, 62, 138, 0.3)',
-                          color: 'rgba(255, 255, 255, 0.3)',
-                        },
-                      }}
+                      sx={{ background: '#15803d', '&:hover': { background: '#166534' } }}
                     >
                       {submitting ? 'Saving...' : isEditing ? 'Update Parent' : 'Add Parent'}
                     </Button>
@@ -584,59 +321,6 @@ const ParentForm = () => {
                 </Grid>
               </Grid>
             </form>
-          </CardContent>
-        </Card>
-
-        {/* Info Card */}
-        <Card
-          sx={{
-            mt: 3,
-            background: 'rgba(17, 17, 17, 0.8)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 3,
-          }}
-        >
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Person sx={{ fontSize: 32, color: '#6FAF8F' }} />
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#ffffff',
-                    mb: 1,
-                  }}
-                >
-                  Parent Management
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
-                >
-                  Important: After adding a parent, link them to their children using the "Students" button
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Email sx={{ fontSize: 20, color: '#6FAF8F' }} />
-              <Box>
-                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                  Contact support for help adding parents or managing student relationships.
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <LocationOn sx={{ fontSize: 20, color: '#6FAF8F' }} />
-              <Box>
-                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                  Parents can view their children's academic performance and reports.
-                </Typography>
-              </Box>
-            </Box>
           </CardContent>
         </Card>
       </Box>

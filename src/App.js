@@ -37,6 +37,7 @@ import StudentResult from './pages/Results/StudentResult';
 import ParentStudentResult from './pages/Results/ParentStudentResult';
 import GradeTheory from './pages/Results/GradeTheory';
 import ManualScoreEntry from './pages/Results/ManualScoreEntry';
+import ResultSheetPage from './pages/Results/ResultSheetPage';
 import ParentList from './pages/Parents/ParentList';
 import ParentForm from './pages/Parents/ParentForm';
 import MyChildren from './pages/Parents/MyChildren';
@@ -223,6 +224,8 @@ function AppRoutes() {
         <Route path="grade-management" element={<GradeManagement />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
+        <Route path="parents/new" element={<ParentForm />} />
+        <Route path="parents/:id/edit" element={<ParentForm />} />
         <Route path="student-profiles" element={<StudentProfile />} />
         <Route path="students/:studentId/profile" element={<StudentProfile />} />
       </Route>

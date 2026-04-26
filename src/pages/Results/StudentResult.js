@@ -43,7 +43,6 @@ import {
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import ResultDownloadTemplate from '../../components/ui/ResultDownloadTemplate';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -878,19 +877,6 @@ const StudentResult = () => {
           </Paper>
         )}
       </Container>
-
-      {/* Hidden Result Download Template */}
-      <Box sx={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <ResultDownloadTemplate
-          ref={downloadTemplateRef}
-          result={result}
-          student={student}
-          term={term}
-          academicYear={academicYear}
-          subjectResults={subjectResults}
-          totals={{ totalObtained, totalMaximum, overallPercentage }}
-        />
-      </Box>
 
       {/* Psychomotor & Affective Traits Modal */}
       <Dialog

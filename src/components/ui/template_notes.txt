@@ -1,0 +1,35 @@
+// This is a placeholder to track what you need to provide
+// Tell me the structure of your PDF template
+
+/*
+Expected structure:
+1. [School Name]
+2. [School Address]
+
+3. Student Name: ______
+4. Admission No: ______
+5. Class: ______
+6. Session: ______
+7. Term: ______
+8. Sex: ______
+
+TABLE:
+| S/N | Subject | 1st CA | 1st Exam | 1st Total | 2nd CA | 2nd Exam | 2nd Total | 3rd CA | 3rd Exam | 3rd Total | Cum Total | Average | Grade |
+|-----|---------|--------|----------|-----------|--------|----------|-----------|--------|----------|-----------|----------|----------|---------|-------|
+|  1  | English |       |          |           |        |          |           |        |          |           |          |         |       |
+|  2  | Math    |       |          |           |        |          |           |        |          |           |          |         |       |
+... (how many rows?)
+
+TOTAL SUMMARY:
+Total Obtained: ___
+Total Maximum: ___
+Overall Average: ___
+Grade: ___
+
+REMARKS:
+Teacher's Remark: ________________
+Principal's Comment: ________________
+
+*/
+
+// Please provide the structure above so I can build the exact template
