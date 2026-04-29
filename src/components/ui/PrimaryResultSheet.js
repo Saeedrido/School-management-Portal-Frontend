@@ -31,15 +31,6 @@ const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
                               data?.firstTermScore !== undefined;
   const isThirdTerm = termType === 3 || hasCumulativeFields;
 
-  // DEBUG: Trace term data flow
-  console.log('=== PrimaryResultSheet DEBUG ===');
-  console.log('Full term object:', JSON.stringify(data?.Term || data?.term, null, 2));
-  console.log('termType:', termType, 'isThirdTerm:', isThirdTerm, 'hasCumulativeFields:', hasCumulativeFields);
-  console.log('term?.nextTermResumeDate:', term?.nextTermResumeDate);
-  console.log('term?.NextTermResumeDate:', term?.NextTermResumeDate);
-  console.log('academicYear?.endDate:', academicYear?.endDate);
-  console.log('academicYear?.EndDate:', academicYear?.EndDate);
-
   const subjectResults = data?.SubjectResults || data?.subjectResults || [];
 
   const psychomotorData = data?.PsychomotorSkills || data?.psychomotorSkills || data?.Psychomotor || data?.psychomotor || {};

@@ -63,16 +63,6 @@ const ResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
     nextTermResumeDisplay = '-';
   }
 
-  // DEBUG: Trace term data flow
-  console.log('=== ResultSheet DEBUG ===');
-  console.log('Full term object:', JSON.stringify(data?.Term || data?.term, null, 2));
-  console.log('termType:', termType, 'isThirdTerm:', isThirdTerm);
-  console.log('term?.nextTermResumeDate:', term?.nextTermResumeDate);
-  console.log('term?.NextTermResumeDate:', term?.NextTermResumeDate);
-  console.log('academicYear?.endDate:', academicYear?.endDate);
-  console.log('academicYear?.EndDate:', academicYear?.EndDate);
-  console.log('nextTermResumeDisplay:', nextTermResumeDisplay);
-  
   const subjectResults = data?.SubjectResults || data?.subjectResults || [];
   
   const processedSubjects = subjectResults.map(subject => {
