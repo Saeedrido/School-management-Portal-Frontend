@@ -31,18 +31,36 @@ const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
                               data?.firstTermScore !== undefined;
   const isThirdTerm = termType === 3 || hasCumulativeFields;
 
-  const subjectResults = data?.SubjectResults || data?.subjectResults || [];
+  // DEBUG: Trace term data flow
+  console.log('=== PrimaryResultSheet DEBUG ===');
+  console.log('Full term object:', JSON.stringify(data?.Term || data?.term, null, 2));
+  console.log('termType:', termType, 'isThirdTerm:', isThirdTerm, 'hasCumulativeFields:', hasCumulativeFields);
+  console.log('term?.nextTermResumeDate:', term?.nextTermResumeDate);
+  console.log('term?.NextTermResumeDate:', term?.NextTermResumeDate);
+  console.log('academicYear?.endDate:', academicYear?.endDate);
+  console.log('academicYear?.EndDate:', academicYear?.EndDate);
 
-  console.log('PrimaryResultSheet - data keys:', Object.keys(data || {}));
-  console.log('PrimaryResultSheet - PsychomotorSkills:', data?.PsychomotorSkills || data?.psychomotorSkills || 'NOT FOUND');
-  console.log('PrimaryResultSheet - AffectiveTraits:', data?.AffectiveTraits || data?.affectiveTraits || 'NOT FOUND');
-  console.log('PrimaryResultSheet - hasCumulativeFields:', hasCumulativeFields, 'termType:', termType, 'isThirdTerm:', isThirdTerm);
+  const subjectResults = data?.SubjectResults || data?.subjectResults || [];
 
   const psychomotorData = data?.PsychomotorSkills || data?.psychomotorSkills || data?.Psychomotor || data?.psychomotor || {};
   const affectiveData = data?.AffectiveTraits || data?.affectiveTraits || data?.Affective || data?.affective || {};
 
   const termResumeDate = term?.nextTermResumeDate || term?.NextTermResumeDate || '';
   const termStartDate = term?.startDate || term?.StartDate || academicYear?.startDate || academicYear?.StartDate || '';
+  const academicYearEnd = academicYear?.endDate || academicYear?.EndDate || '';
+
+  // Fallback for next term date: if not set, estimate from academic year end
+  let nextTermDisplay = '';
+  if (termResumeDate) {
+    nextTermDisplay = new Date(termResumeDate).toLocaleDateString();
+  } else if (academicYearEnd) {
+    // Add ~1 month to academic year end as fallback
+    const d = new Date(academicYearEnd);
+    d.setMonth(d.getMonth() + 1);
+    nextTermDisplay = d.toLocaleDateString();
+  } else {
+    nextTermDisplay = '______________________';
+  }
 
   const numberInClass = data?.numberOfStudents || data?.NumberOfStudents || data?.classSize || data?.ClassSize || '______';
 
@@ -473,7 +491,7 @@ const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
 
       {/* FOOTER */}
       <Box sx={{ textAlign: 'center', pt: 2, borderTop: '1px solid black', fontSize: '11px' }}>
-        <Typography sx={{ mb: 0.5 }}><strong>Next Term Begins:</strong> {termResumeDate ? new Date(termResumeDate).toLocaleDateString() : '______________________'}</Typography>
+        <Typography sx={{ mb: 0.5 }}><strong>Next Term Begins:</strong> {nextTermDisplay}</Typography>
         <Typography sx={{ fontSize: '9px', mt: 0.5 }}>(Please return this card to school at the beginning of next term)</Typography>
       </Box>
     </Box>

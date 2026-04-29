@@ -48,6 +48,30 @@ const ResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
   
   // Define isThirdTerm AFTER termType is determined
   const isThirdTerm = termType === 3;
+
+  // Next term resume date fallback: if not set, estimate from academic year end
+  const termResumeDate = term?.nextTermResumeDate || term?.NextTermResumeDate || '';
+  const academicYearEnd = academicYear?.endDate || academicYear?.EndDate || '';
+  let nextTermResumeDisplay = '';
+  if (termResumeDate) {
+    nextTermResumeDisplay = new Date(termResumeDate).toLocaleDateString();
+  } else if (academicYearEnd) {
+    const d = new Date(academicYearEnd);
+    d.setMonth(d.getMonth() + 1);
+    nextTermResumeDisplay = d.toLocaleDateString();
+  } else {
+    nextTermResumeDisplay = '-';
+  }
+
+  // DEBUG: Trace term data flow
+  console.log('=== ResultSheet DEBUG ===');
+  console.log('Full term object:', JSON.stringify(data?.Term || data?.term, null, 2));
+  console.log('termType:', termType, 'isThirdTerm:', isThirdTerm);
+  console.log('term?.nextTermResumeDate:', term?.nextTermResumeDate);
+  console.log('term?.NextTermResumeDate:', term?.NextTermResumeDate);
+  console.log('academicYear?.endDate:', academicYear?.endDate);
+  console.log('academicYear?.EndDate:', academicYear?.EndDate);
+  console.log('nextTermResumeDisplay:', nextTermResumeDisplay);
   
   const subjectResults = data?.SubjectResults || data?.subjectResults || [];
   
@@ -497,10 +521,7 @@ const subjectCount = processedSubjects.length || 1;
           <Typography sx={{ fontWeight: 'bold', fontSize: '10px' }}>Next Term/Session Resumes On:</Typography>
           <Box sx={{ borderBottom: '1px solid black', minWidth: '150px', ml: 1 }}>
             <Typography sx={{ fontSize: '10px' }}>
-              {/* Handle both PascalCase and camelCase from backend */}
-              {term?.NextTermResumeDate || term?.nextTermResumeDate 
-                ? new Date(term.NextTermResumeDate || term.nextTermResumeDate).toLocaleDateString() 
-                : '-'}
+              {nextTermResumeDisplay}
             </Typography>
           </Box>
         </Box>
