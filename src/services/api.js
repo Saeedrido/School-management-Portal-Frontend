@@ -163,6 +163,7 @@ export const adminAPI = {
     delete: (id) => api.delete(`/api/academicyears/${id}`),
     setActive: (id) => api.post(`/api/academicyears/${id}/set-active`),
     triggerAutoEnrollment: (id) => api.post(`/api/academicyears/${id}/auto-enroll`),
+    updateResumeDate: (id, data) => api.put(`/api/academicyears/${id}/resume-date`, data),
   },
   terms: {
     getAll: () => api.get('/api/terms'),
@@ -173,6 +174,7 @@ export const adminAPI = {
     update: (id, data) => api.put(`/api/terms/${id}`, data),
     delete: (id) => api.delete(`/api/terms/${id}`),
     setActive: (id) => api.post(`/api/terms/${id}/set-active`),
+    updateResumeDate: (id, data) => api.put(`/api/terms/${id}/resume-date`, data),
   },
   classes: {
     getAll: () => api.get('/api/classes'),
@@ -311,6 +313,8 @@ export const adminAPI = {
   },
   scores: {
     getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
+    manual: (data) => api.post('/api/scores/manual', data),
+    bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
   },
 };
 

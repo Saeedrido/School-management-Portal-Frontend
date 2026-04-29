@@ -35,7 +35,7 @@ import {
   School,
   Book,
 } from '@mui/icons-material';
-import { adminAPI } from '../../services/api';
+import { adminAPI, academicYearsAPI } from '../../services/api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const ITEM_HEIGHT = 48;
@@ -122,12 +122,35 @@ const TeacherAssignments = () => {
           console.log('No active term found:', termErr.response?.status);
         }
 
-        // Fetch all terms
-        const allTermsResponse = await adminAPI.terms.getAll();
-        if (allTermsResponse.data?.success && allTermsResponse.data?.data) {
-          setTerms(allTermsResponse.data.data);
+        // Fetch terms for active academic year
+        try {
+          const activeYearRes = await academicYearsAPI.getActive();
+          const activeYearId = activeYearRes.data?.success && activeYearRes.data?.data?.id 
+            ? activeYearRes.data.data.id 
+            : null;
+          
+          if (activeYearId) {
+            const termsRes = await adminAPI.terms.getByAcademicYear(activeYearId);
+            if (termsRes.data?.success && termsRes.data?.data) {
+              setTerms(termsRes.data.data);
+              // Auto-select active term
+              const activeTerm = termsRes.data.data.find(t => t.isActive);
+              if (activeTerm) setSelectedTerm(activeTerm.id);
+            }
+          } else {
+            // Fallback to all terms
+            const allTermsResponse = await adminAPI.terms.getAll();
+            if (allTermsResponse.data?.success && allTermsResponse.data?.data) {
+              setTerms(allTermsResponse.data.data);
+            }
+          }
+        } catch (termErr) {
+          // Fallback to all terms
+          const allTermsResponse = await adminAPI.terms.getAll();
+          if (allTermsResponse.data?.success && allTermsResponse.data?.data) {
+            setTerms(allTermsResponse.data.data);
+          }
         }
-
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to load required data');

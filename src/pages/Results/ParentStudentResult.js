@@ -20,8 +20,19 @@ import {
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import ResultSheet from '../../components/ui/ResultSheet';
+import PrimaryResultSheet from '../../components/ui/PrimaryResultSheet';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+
+// Check if result is for Primary/Nursery level
+const isPrimaryLevel = (resultData) => {
+  const classInfo = resultData?.Class || resultData?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  const primaryLevels = ['Primary', 'Nursery', 'Creche', 'Daycare'];
+  return primaryLevels.some(level => 
+    schoolLevel.toLowerCase().includes(level.toLowerCase())
+  );
+};
 
 const ParentStudentResult = () => {
   const navigate = useNavigate();
@@ -199,8 +210,12 @@ const ParentStudentResult = () => {
       } else {
         // Fetch regular term result
         const response = await adminAPI.results.getByStudentAndTerm(effectiveStudentId, selectedTerm);
+        console.log('Result API response:', response);
+        console.log('Result data:', response.data);
         if (response.data && response.data.success && response.data.data) {
           const resultData = Array.isArray(response.data.data) ? response.data.data[0] : response.data.data;
+          console.log('ResultData:', resultData);
+          console.log('Term data in resultData:', resultData.Term);
           // Calculate CA + Exam for each subject row
           if (resultData.SubjectResults) {
             resultData.SubjectResults = resultData.SubjectResults.map(sr => ({
@@ -400,10 +415,17 @@ const ParentStudentResult = () => {
                 {/* Result Sheet Preview */}
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                   <Box ref={resultSheetRef}>
-                    <ResultSheet 
-                      data={result || cumulativeResult} 
-                      readOnly={true}
-                    />
+                    {isPrimaryLevel(result || cumulativeResult) ? (
+                      <PrimaryResultSheet 
+                        data={result || cumulativeResult} 
+                        readOnly={true}
+                      />
+                    ) : (
+                      <ResultSheet 
+                        data={result || cumulativeResult} 
+                        readOnly={true}
+                      />
+                    )}
                   </Box>
                 </Box>
               </Box>

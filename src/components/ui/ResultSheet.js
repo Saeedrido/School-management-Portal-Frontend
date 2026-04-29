@@ -1,6 +1,21 @@
 import React, { forwardRef } from 'react';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 
+// Check if this is a Primary/Nursery result (use SchoolLevel from class)
+const isPrimaryLevel = (data) => {
+  const classInfo = data?.Class || data?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  // Primary Nursery, Primary, Nursery, Creche are primary/early childhood levels
+  const primaryLevels = ['Primary', 'Nursery', 'Creche', 'Daycare'];
+  return primaryLevels.some(level => 
+    schoolLevel.toLowerCase().includes(level.toLowerCase())
+  );
+};
+
+// If primary/nursery level, we could render a different template
+// For now, we'll conditionally show a message that primary template is coming soon
+// The main ResultSheet continues below for Secondary level
+
 const ResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
   // Check both subject-level and top-level for cumulative data
   const hasSubjectCumulativeData = data?.SubjectResults?.[0]?.cumulativeAverageScore !== undefined || data?.SubjectResults?.[0]?.firstTermScore !== undefined;
@@ -480,7 +495,14 @@ const subjectCount = processedSubjects.length || 1;
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 'bold', fontSize: '10px' }}>Next Term/Session Resumes On:</Typography>
-          <Box sx={{ borderBottom: '1px solid black', minWidth: '150px', ml: 1 }}></Box>
+          <Box sx={{ borderBottom: '1px solid black', minWidth: '150px', ml: 1 }}>
+            <Typography sx={{ fontSize: '10px' }}>
+              {/* Handle both PascalCase and camelCase from backend */}
+              {term?.NextTermResumeDate || term?.nextTermResumeDate 
+                ? new Date(term.NextTermResumeDate || term.nextTermResumeDate).toLocaleDateString() 
+                : '-'}
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 'bold', fontSize: '10px' }}>Promoted To:</Typography>

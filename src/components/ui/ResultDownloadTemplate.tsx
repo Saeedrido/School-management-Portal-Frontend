@@ -385,7 +385,13 @@ const ResultDownloadTemplate = forwardRef<HTMLDivElement, ResultDownloadTemplate
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 'bold', fontSize: '11px' }}>Next Term/Session Resumes On:</Typography>
-          <Box sx={{ borderBottom: '1px solid black', minWidth: '150px', ml: 1 }}></Box>
+          <Box sx={{ borderBottom: '1px solid black', minWidth: '150px', ml: 1 }}>
+            <Typography sx={{ fontSize: '11px' }}>
+              {term?.NextTermResumeDate || term?.nextTermResumeDate 
+                ? new Date(term.NextTermResumeDate || term.nextTermResumeDate).toLocaleDateString() 
+                : '-'}
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 'bold', fontSize: '11px' }}>Promoted To:</Typography>

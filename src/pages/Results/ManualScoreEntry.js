@@ -77,6 +77,12 @@ const ManualScoreEntry = () => {
   }, []);
 
   useEffect(() => {
+    if (selectedAcademicYear) {
+      loadTermsByAcademicYear(selectedAcademicYear);
+    }
+  }, [selectedAcademicYear]);
+
+  useEffect(() => {
     if (selectedClass && selectedClass !== '') {
       loadClassSubjects(selectedClass);
       loadStudents(selectedClass);
@@ -140,31 +146,41 @@ const ManualScoreEntry = () => {
         if (classesRes.data?.success) setClasses(classesRes.data.data);
       }
       
-      const [academicYearsRes, termsRes] = await Promise.all([
+      const [academicYearsRes] = await Promise.all([
         academicYearsAPI.getAll(),
-        termsAPI.getAll(),
       ]);
 
       if (academicYearsRes.data?.success) {
         setAcademicYears(academicYearsRes.data.data);
-        const current = academicYearsRes.data.data.find((y) => y.isCurrent);
+        const current = academicYearsRes.data.data.find((y) => y.isActive);
         if (current) {
           setSelectedAcademicYear(current.id);
           setCurrentAcademicYear(current);
-        }
-      }
-      if (termsRes.data?.success) {
-        setTerms(termsRes.data.data);
-        const current = termsRes.data.data.find((t) => t.isCurrent);
-        if (current) {
-          setSelectedTerm(current.id);
-          setCurrentTerm(current);
         }
       }
     } catch (err) {
       setError('Failed to load initial data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTermsByAcademicYear = async (academicYearId) => {
+    try {
+      const termsRes = await termsAPI.getByAcademicYear(academicYearId);
+      if (termsRes.data?.success) {
+        setTerms(termsRes.data.data);
+        const current = termsRes.data.data.find((t) => t.isActive);
+        if (current) {
+          setSelectedTerm(current.id);
+          setCurrentTerm(current);
+        } else if (termsRes.data.data.length > 0) {
+          setSelectedTerm(termsRes.data.data[0].id);
+          setCurrentTerm(termsRes.data.data[0]);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading terms:', err);
     }
   };
 
@@ -362,7 +378,9 @@ const ManualScoreEntry = () => {
         remarks: scoreForm.remarks,
       };
 
-      const response = await teacherAPI.scores.manual(dto);
+      // Use adminAPI since teacherAPI might have caching issues
+      const response = await adminAPI.scores.manual(dto);
+      console.log('API Response:', response);
 
       if (response.data?.success) {
         setSuccess('Score saved successfully!');
@@ -374,7 +392,9 @@ const ManualScoreEntry = () => {
         setError(response.data?.message || 'Failed to save score');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save score');
+      console.error('Save score error:', err);
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.message || err.response?.data || 'Failed to save score');
     } finally {
       setSaving(false);
     }

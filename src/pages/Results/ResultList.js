@@ -37,7 +37,7 @@ import {
   Publish,
   Info,
 } from '@mui/icons-material';
-import { adminAPI, teacherAPI } from '../../services/api';
+import { adminAPI, teacherAPI, academicYearsAPI, termsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader, StatusBadge } from '../../components/ui';
 
@@ -77,12 +77,27 @@ const ResultList = () => {
       setLoading(true);
       setError('');
 
-      const termsResponse = await resultsAPI.terms.getAll();
+      // Get active academic year first
+      const activeYearRes = await academicYearsAPI.getActive();
+      const activeYearId = activeYearRes.data?.success && activeYearRes.data?.data 
+        ? activeYearRes.data.data.id 
+        : null;
+
+      // Get terms for active academic year
+      let termsResponse;
+      if (activeYearId) {
+        termsResponse = await termsAPI.getByAcademicYear(activeYearId);
+      } else {
+        termsResponse = await termsAPI.getAll();
+      }
+      
       if (termsResponse.data?.success) {
         setTerms(termsResponse.data.data || []);
         const activeTerm = termsResponse.data.data?.find(t => t.isActive);
         if (activeTerm) {
           setSelectedTerm(activeTerm.id);
+        } else if (termsResponse.data.data?.length > 0) {
+          setSelectedTerm(termsResponse.data.data[0].id);
         }
       }
 

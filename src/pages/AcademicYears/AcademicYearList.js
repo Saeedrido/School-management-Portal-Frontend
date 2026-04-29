@@ -16,6 +16,11 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   Add,
@@ -23,6 +28,7 @@ import {
   Delete,
   CalendarToday,
   School,
+  Event,
 } from '@mui/icons-material';
 import { academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -46,6 +52,12 @@ const AcademicYearList = () => {
   const [autoEnrolling, setAutoEnrolling] = useState(false);
   const [success, setSuccess] = useState('');
   const [successOpen, setSuccessOpen] = useState(false);
+
+  // Resume date dialog state
+  const [resumeDateOpen, setResumeDateOpen] = useState(false);
+  const [resumeDateId, setResumeDateId] = useState(null);
+  const [resumeDate, setResumeDate] = useState('');
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const basePath = '/admin-dashboard';
 
@@ -123,6 +135,34 @@ const AcademicYearList = () => {
       setAutoEnrolling(false);
       setAutoEnrollOpen(false);
       setAutoEnrollId(null);
+    }
+  };
+
+  const handleResumeDateClick = (year) => {
+    setResumeDateId(year.id);
+    setResumeDate(year.nextTermResumeDate ? new Date(year.nextTermResumeDate).toISOString().split('T')[0] : '');
+    setResumeDateOpen(true);
+  };
+
+  const handleResumeDateSave = async () => {
+    setResumeLoading(true);
+    try {
+      const dateValue = resumeDate ? new Date(resumeDate) : null;
+      const response = await academicYearsAPI.updateResumeDate(resumeDateId, { nextTermResumeDate: dateValue });
+      if (response.data?.success) {
+        setSuccess(response.data.message || 'Resume date updated!');
+        setSuccessOpen(true);
+        fetchAcademicYears();
+      } else {
+        setError(response.data?.message || 'Failed to update resume date');
+      }
+    } catch (err) {
+      setError('Failed to update resume date');
+      console.error(err);
+    } finally {
+      setResumeLoading(false);
+      setResumeDateOpen(false);
+      setResumeDateId(null);
     }
   };
 
@@ -304,6 +344,31 @@ const AcademicYearList = () => {
         confirmText="Enroll Students"
         confirmLoading={autoEnrolling}
       />
+
+      {/* Resume Date Dialog */}
+      <Dialog open={resumeDateOpen} onClose={() => setResumeDateOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Set Next Term Resume Date</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Set the date when the next term/session is expected to resume. This is required before publishing results.
+          </Typography>
+          <TextField
+            label="Resume Date"
+            type="date"
+            fullWidth
+            value={resumeDate}
+            onChange={(e) => setResumeDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split('T')[0] }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResumeDateOpen(false)}>Cancel</Button>
+          <Button onClick={handleResumeDateSave} variant="contained" disabled={resumeLoading}>
+            {resumeLoading ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {successOpen && (
         <Box

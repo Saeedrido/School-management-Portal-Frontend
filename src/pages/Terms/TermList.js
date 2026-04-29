@@ -20,6 +20,11 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   Add,
@@ -27,6 +32,7 @@ import {
   Delete,
   DateRange,
   CalendarToday,
+  Event,
 } from '@mui/icons-material';
 import { termsAPI, academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +51,14 @@ const TermList = () => {
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Resume date dialog state
+  const [resumeDateOpen, setResumeDateOpen] = useState(false);
+  const [resumeDateId, setResumeDateId] = useState(null);
+  const [resumeDate, setResumeDate] = useState('');
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const basePath = '/admin-dashboard';
 
@@ -89,6 +103,12 @@ const TermList = () => {
     }
   };
 
+  const getTermStatus = (term) => {
+    if (term.isActive) return { label: 'Active', color: '#FFFFFF', bg: '#10B981' };
+    if (new Date(term.endDate) < new Date()) return { label: 'Completed', color: '#64748B', bg: '#E2E8F0' };
+    return { label: 'Scheduled', color: '#64748B', bg: '#F1F5F9' };
+  };
+
   const handleDeleteClick = (id) => {
     setDeleteId(id);
     setConfirmOpen(true);
@@ -107,7 +127,7 @@ const TermList = () => {
     setDeleteId(null);
   };
 
-  const handleSetActive = async (id) => {
+const handleSetActive = async (id) => {
     try {
       await termsAPI.setActive(id);
       fetchTerms(selectedYear);
@@ -117,9 +137,32 @@ const TermList = () => {
     }
   };
 
-  const getTermStatus = (term) => {
-    if (term.isActive) return { label: 'Active', bg: '#DCFCE7', color: '#166534' };
-    return { label: 'Inactive', bg: '#F1F5F9', color: '#475569' };
+  const handleResumeDateClick = (term) => {
+    setResumeDateId(term.id);
+    setResumeDate(term.nextTermResumeDate ? new Date(term.nextTermResumeDate).toISOString().split('T')[0] : '');
+    setResumeDateOpen(true);
+  };
+
+  const handleResumeDateSave = async () => {
+    setResumeLoading(true);
+    try {
+      const dateValue = resumeDate ? new Date(resumeDate) : null;
+      const response = await termsAPI.updateResumeDate(resumeDateId, { nextTermResumeDate: dateValue });
+      if (response.data?.success) {
+        setSuccess(response.data.message || 'Resume date updated!');
+        setSuccessOpen(true);
+        fetchTerms(selectedYear);
+      } else {
+        setError(response.data?.message || 'Failed to update resume date');
+      }
+    } catch (err) {
+      setError('Failed to update resume date');
+      console.error(err);
+    } finally {
+      setResumeLoading(false);
+      setResumeDateOpen(false);
+      setResumeDateId(null);
+    }
   };
 
   if (loading) {
@@ -172,6 +215,7 @@ const TermList = () => {
                 <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Term</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Start Date</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>End Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Next Term Resume</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
                 {hasRole('Admin') && (
                   <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
@@ -218,6 +262,9 @@ const TermList = () => {
                       <TableCell sx={{ color: '#64748B' }}>
                         {term.endDate ? new Date(term.endDate).toLocaleDateString() : '-'}
                       </TableCell>
+                      <TableCell sx={{ color: term.nextTermResumeDate ? '#10B981' : '#EF4444', fontWeight: term.nextTermResumeDate ? 400 : 500 }}>
+                        {term.nextTermResumeDate ? new Date(term.nextTermResumeDate).toLocaleDateString() : 'Not set'}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={status.label}
@@ -233,6 +280,20 @@ const TermList = () => {
                       {hasRole('Admin') && (
                         <TableCell align="right">
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Event />}
+                              onClick={() => handleResumeDateClick(term)}
+                              sx={{
+                                borderColor: '#F59E0B',
+                                color: '#F59E0B',
+                                fontSize: '0.7rem',
+                                borderRadius: 2,
+                              }}
+                            >
+                              Resume
+                            </Button>
                             {!term.isActive && (
                               <Button
                                 size="small"
@@ -282,6 +343,56 @@ const TermList = () => {
         message="Are you sure you want to delete this term? This action cannot be undone."
         confirmText="Delete"
       />
+
+      {/* Resume Date Dialog */}
+      <Dialog open={resumeDateOpen} onClose={() => setResumeDateOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Set Next Term Resume Date</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Set the date when the NEXT term is expected to resume. This is required before publishing results.
+          </Typography>
+          <TextField
+            label="Resume Date"
+            type="date"
+            fullWidth
+            value={resumeDate}
+            onChange={(e) => setResumeDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split('T')[0] }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResumeDateOpen(false)}>Cancel</Button>
+          <Button onClick={handleResumeDateSave} variant="contained" disabled={resumeLoading}>
+            {resumeLoading ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Toast */}
+      {successOpen && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            zIndex: 9999,
+            p: 2,
+            bgcolor: '#10B981',
+            color: 'white',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            maxWidth: 400,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Typography sx={{ fontSize: '0.9rem' }}>{success}</Typography>
+            <IconButton size="small" onClick={() => setSuccessOpen(false)} sx={{ color: 'white' }}>
+              ×
+            </IconButton>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
