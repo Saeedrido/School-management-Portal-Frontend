@@ -21,16 +21,32 @@ import {
 import { adminAPI } from '../../services/api';
 import ResultSheet from '../../components/ui/ResultSheet';
 import PrimaryResultSheet from '../../components/ui/PrimaryResultSheet';
+import KGResultSheet from '../../components/ui/KGResultSheet';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-// Check if result is for Primary/Nursery level
-const isPrimaryLevel = (resultData) => {
+// Check if result is for KG/Preparatory level
+const isKGLevel = (resultData) => {
   const classInfo = resultData?.Class || resultData?.class || {};
   const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
-  const primaryLevels = ['Primary', 'Nursery', 'Creche', 'Daycare'];
-  return primaryLevels.some(level => 
-    schoolLevel.toLowerCase().includes(level.toLowerCase())
+  const className = classInfo.name || classInfo.Name || classInfo.displayName || '';
+  const kgLevels = ['Preparatory', 'KG', 'Kindergarten', 'Pre-K', 'Preprimary'];
+  return [...kgLevels, 'Creche', 'Daycare'].some(level =>
+    schoolLevel.toLowerCase().includes(level.toLowerCase()) ||
+    className.toLowerCase().includes(level.toLowerCase())
+  );
+};
+
+// Check if result is for Primary/Nursery level
+const isPrimaryLevel = (resultData) => {
+  if (isKGLevel(resultData)) return false;
+  const classInfo = resultData?.Class || resultData?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  const className = classInfo.name || classInfo.Name || classInfo.displayName || '';
+  const primaryLevels = ['Primary', 'Nursery'];
+  return primaryLevels.some(level =>
+    schoolLevel.toLowerCase().includes(level.toLowerCase()) ||
+    className.toLowerCase().includes(level.toLowerCase())
   );
 };
 
@@ -415,14 +431,19 @@ const ParentStudentResult = () => {
                 {/* Result Sheet Preview */}
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                   <Box ref={resultSheetRef}>
-                    {isPrimaryLevel(result || cumulativeResult) ? (
-                      <PrimaryResultSheet 
-                        data={result || cumulativeResult} 
+                    {isKGLevel(result || cumulativeResult) ? (
+                      <KGResultSheet
+                        data={result || cumulativeResult}
+                        readOnly={true}
+                      />
+                    ) : isPrimaryLevel(result || cumulativeResult) ? (
+                      <PrimaryResultSheet
+                        data={result || cumulativeResult}
                         readOnly={true}
                       />
                     ) : (
-                      <ResultSheet 
-                        data={result || cumulativeResult} 
+                      <ResultSheet
+                        data={result || cumulativeResult}
                         readOnly={true}
                       />
                     )}

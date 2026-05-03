@@ -189,6 +189,8 @@ const ManualScoreEntry = () => {
       setError('');
       const isTeacher = hasRole('Teacher');
       
+      console.log('loadClassSubjects: classId=', classId, 'isTeacher=', isTeacher, 'teacherAssignments=', teacherAssignments.length);
+      
       if (isTeacher && teacherAssignments.length > 0) {
         const classAssignments = teacherAssignments.filter(
           a => String(a.classId) === String(classId)
@@ -196,7 +198,11 @@ const ManualScoreEntry = () => {
         
         const uniqueSubjects = [];
         classAssignments.forEach(a => {
-          const subjectData = a.subject || { id: a.subjectId, name: `Subject (ID: ${a.subjectId.substring(0,8)})` };
+          const subjectData = {
+            id: a.subjectId,
+            name: a.subject?.name || a.subject?.Name || `Subject (ID: ${a.subjectId?.substring(0,8)})`,
+            subject: a.subject,
+          };
           if (!uniqueSubjects.find(s => s.id === a.subjectId)) {
             uniqueSubjects.push(subjectData);
           }
@@ -204,10 +210,21 @@ const ManualScoreEntry = () => {
         setClassSubjects(uniqueSubjects);
       } else {
         const response = await (hasRole('Admin') ? adminAPI : teacherAPI).classSubjects.getByClass(classId);
+        console.log('loadClassSubjects admin - response:', response.data);
         if (response.data?.success && Array.isArray(response.data.data)) {
-          setClassSubjects(response.data.data);
+          const subjects = response.data.data.map(cs => ({
+            id: cs.id,
+            name: cs.name || cs.Subject?.Name || cs.subject?.name || '',
+            subject: cs.subject || cs.Subject,
+          }));
+          setClassSubjects(subjects);
         } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
-          setClassSubjects(response.data.data.items);
+          const subjects = response.data.data.items.map(cs => ({
+            id: cs.id,
+            name: cs.name || cs.Subject?.Name || cs.subject?.name || '',
+            subject: cs.subject || cs.Subject,
+          }));
+          setClassSubjects(subjects);
         } else {
           setClassSubjects([]);
         }
@@ -244,7 +261,6 @@ const ManualScoreEntry = () => {
   };
 
   const loadExistingScores = async () => {
-    // Load existing scores for the selected combination
     try {
       if (!selectedAcademicYear || !selectedTerm || students.length === 0) {
         console.log('loadExistingScores skipped - missing params or no students');
@@ -255,31 +271,30 @@ const ManualScoreEntry = () => {
       const termInfo = terms.find((t) => t.id === selectedTerm);
       const subjectInfo = classSubjects.find((cs) => cs.id === selectedSubject);
       
-      console.log('=== loadExistingScores ===');
-      console.log('students.length:', students.length);
-      console.log('selectedAcademicYear:', yearId);
-      console.log('selectedTerm:', selectedTerm, termInfo?.name);
-      console.log('selectedSubject:', selectedSubject, subjectInfo?.name);
-      console.log('terms array:', terms);
-      console.log('classSubjects array:', classSubjects);
+      const subjectName = subjectInfo?.name || '';
       
-      // Use adminAPI for both admin and teacher - scores should be visible to both
+      console.log('=== loadExistingScores ===');
+      console.log('subjectInfo:', subjectInfo);
+      console.log('subjectName resolved:', subjectName);
+      console.log('termInfo.name:', termInfo?.name);
+      
       const updatedStudents = await Promise.all(
         students.map(async (student) => {
           try {
             const response = await adminAPI.scores.getStudentScores(student.id, yearId);
-            console.log('Scores response for', student.firstName, ':', response.data);
             
             if (response.data?.success) {
               const scores = response.data.data || [];
-              const subjectName = subjectInfo?.name || subjectInfo?.subject?.name;
-              console.log('Searching for - subjectName:', subjectName, 'termName:', termInfo?.name);
-              console.log('All scores for this student:', scores);
+              console.log('Scores for', student.firstName, 'length:', scores.length);
               
               const existingScore = scores.find(
-                (s) =>
-                  s.subjectName === subjectName &&
-                  s.termName === termInfo?.name
+                (s) => {
+                  const match = s.subjectName === subjectName && s.termName === termInfo?.name;
+                  if (!match && s.subjectName && s.termName) {
+                    console.log('  Mismatch:', s.subjectName, 'vs', subjectName, '|', s.termName, 'vs', termInfo?.name);
+                  }
+                  return match;
+                }
               );
               return { ...student, existingScore };
             }
@@ -475,7 +490,7 @@ const ManualScoreEntry = () => {
                 <MenuItem value="">Select Subject</MenuItem>
                 {classSubjects.map((cs) => (
                   <MenuItem key={cs.id} value={cs.id}>
-                    {cs.name || cs.subject?.name || `Subject (ID: ${cs.id?.substring(0,8)})`}
+                    {cs.name || `Subject (ID: ${cs.id?.substring(0,8)})`}
                   </MenuItem>
                 ))}
               </TextField>

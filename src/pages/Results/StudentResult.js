@@ -61,9 +61,10 @@ const StudentResult = () => {
   // Use teacherAPI for teachers, adminAPI for admins
   const resultsAPI = isTeacher ? teacherAPI : adminAPI;
 
-  // Get termId from query params
+  // Get termId and classId from query params
   const searchParams = new URLSearchParams(location.search);
   const termIdFromQuery = searchParams.get('termId');
+  const classIdFromQuery = searchParams.get('classId');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -170,31 +171,54 @@ const StudentResult = () => {
     }
   };
 
+  // Helper to get value from object with case-insensitive key matching
+  const getTraitValue = (obj, key) => {
+    if (!obj) return '';
+    // Try exact key first
+    if (obj[key] !== undefined && obj[key] !== null) return obj[key];
+    // Try lowercase
+    const lowerKey = key.charAt(0).toLowerCase() + key.slice(1);
+    if (obj[lowerKey] !== undefined && obj[lowerKey] !== null) return obj[lowerKey];
+    // Try PascalCase
+    const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+    if (obj[pascalKey] !== undefined && obj[pascalKey] !== null) return obj[pascalKey];
+    return '';
+  };
+
+  // Helper to get all trait values from a source object (handles both camelCase and PascalCase)
+  const getTraitObject = (result, camelKey, pascalKey) => {
+    return result?.[camelKey] || result?.[pascalKey] || {};
+  };
+
   const handleOpenPsychomotorModal = () => {
-    const psychomotor = result?.psychomotorSkills || result?.PsychomotorSkills;
-    const affective = result?.affectiveTraits || result?.AffectiveTraits;
+    const psychomotor = getTraitObject(result, 'psychomotorSkills', 'PsychomotorSkills');
+    const affective = getTraitObject(result, 'affectiveTraits', 'AffectiveTraits');
+    
+    console.log('=== Modal Open ===');
+    console.log('Raw psychomotor from result:', JSON.stringify(psychomotor));
+    console.log('Raw affective from result:', JSON.stringify(affective));
     
     setPsychomotorData({
-      drawingPainting: psychomotor?.drawingPainting || '',
-      gamesSports: psychomotor?.gamesSports || '',
-      handwriting: psychomotor?.handwriting || '',
-      verbalFluency: psychomotor?.verbalFluency || '',
-      musicalSkills: psychomotor?.musicalSkills || '',
-      handlingTools: psychomotor?.handlingTools || '',
+      drawingPainting: getTraitValue(psychomotor, 'drawingPainting'),
+      gamesSports: getTraitValue(psychomotor, 'gamesSports'),
+      handwriting: getTraitValue(psychomotor, 'handwriting'),
+      verbalFluency: getTraitValue(psychomotor, 'verbalFluency'),
+      musicalSkills: getTraitValue(psychomotor, 'musicalSkills'),
+      handlingTools: getTraitValue(psychomotor, 'handlingTools'),
     });
     
     setAffectiveData({
-      punctuality: affective?.punctuality || '',
-      politeness: affective?.politeness || '',
-      perseverance: affective?.perseverance || '',
-      honesty: affective?.honesty || '',
-      health: affective?.health || '',
-      helpingOthers: affective?.helpingOthers || '',
-      attentiveness: affective?.attentiveness || '',
-      emotionalStability: affective?.emotionalStability || '',
-      attitudeToClassWork: affective?.attitudeToClassWork || '',
-      speakingHandwriting: affective?.speakingHandwriting || '',
-      spiritOfCooperation: affective?.spiritOfCooperation || '',
+      punctuality: getTraitValue(affective, 'punctuality'),
+      politeness: getTraitValue(affective, 'politeness'),
+      perseverance: getTraitValue(affective, 'perseverance'),
+      honesty: getTraitValue(affective, 'honesty'),
+      health: getTraitValue(affective, 'health'),
+      helpingOthers: getTraitValue(affective, 'helpingOthers'),
+      attentiveness: getTraitValue(affective, 'attentiveness'),
+      emotionalStability: getTraitValue(affective, 'emotionalStability'),
+      attitudeToClassWork: getTraitValue(affective, 'attitudeToClassWork'),
+      speakingHandwriting: getTraitValue(affective, 'speakingHandwriting'),
+      spiritOfCooperation: getTraitValue(affective, 'spiritOfCooperation'),
     });
     
     setPsychomotorModalOpen(true);
@@ -205,14 +229,17 @@ const StudentResult = () => {
     
     setSavingPsychomotor(true);
     try {
+      console.log('Saving psychomotor/affective:', { psychomotorData, affectiveData });
       const response = await resultsAPI.results.updatePsychomotorAffective(result.id, {
         psychomotorSkills: psychomotorData,
         affectiveTraits: affectiveData,
       });
       
+      console.log('Save response:', response.data);
+      
       if (response.data?.success) {
         setPsychomotorModalOpen(false);
-        fetchStudentResult();
+        await fetchStudentResult();
       } else {
         setError(response.data?.message || 'Failed to save psychomotor and affective traits');
       }
@@ -239,7 +266,7 @@ const StudentResult = () => {
       setError('Term ID is required');
       setLoading(false);
     }
-  }, [studentId, termIdFromQuery]);
+  }, [studentId, termIdFromQuery, classIdFromQuery]);
 
   const fetchStudentResult = async () => {
     try {
@@ -249,7 +276,7 @@ const StudentResult = () => {
       // Fetch student results using ResultController endpoint ONLY
       // Admin/Teacher can see unpublished results, parents can only see published
       const includeUnpublished = hasRole('Admin') || hasRole('Teacher');
-      const response = await resultsAPI.results.getByStudentAndTerm(studentId, termIdFromQuery, includeUnpublished);
+      const response = await resultsAPI.results.getByStudentAndTerm(studentId, termIdFromQuery, includeUnpublished, classIdFromQuery);
 
       if (response.data?.success) {
         const results = response.data.data || [];
@@ -335,6 +362,43 @@ const StudentResult = () => {
   const subjectResults = result 
     ? (result.subjectResults || result.SubjectResults || [])
     : [];
+
+  // Detect if this is a KG student
+  const classInfo = result?.Class || result?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  const className = classInfo.name || classInfo.Name || classInfo.displayName || '';
+  const isKGStudent = ['Preparatory', 'KG', 'Kindergarten', 'Pre-K', 'Preprimary', 'Creche', 'Daycare'].some(level =>
+    schoolLevel.toLowerCase().includes(level.toLowerCase()) ||
+    className.toLowerCase().includes(level.toLowerCase())
+  );
+
+  // KG Assessment items mapping (each has its own unique backend key)
+  const KG_ASSESSMENT_ITEMS = [
+    { label: 'Ability to Identify Shapes', key: 'abilityToIdentifyShapes', group: 'psychomotor' },
+    { label: 'Ability to Colour', key: 'abilityToColour', group: 'psychomotor' },
+    { label: 'Ability to Communicate with Peer', key: 'abilityToCommunicateWithPeer', group: 'psychomotor' },
+    { label: 'Showing Good Habit', key: 'showingGoodHabit', group: 'psychomotor' },
+    { label: 'Table Manner', key: 'tableManner', group: 'psychomotor' },
+    { label: 'Communication Skill & Language', key: 'communicationSkillLanguage', group: 'psychomotor' },
+    { label: 'Ability to Identify & Write Letters', key: 'abilityToIdentifyWriteLetters', group: 'psychomotor' },
+    { label: 'Ability to Identify Objects at School', key: 'abilityToIdentifyObjectsSchool', group: 'psychomotor' },
+    { label: 'Ability to Identify Objects at Home', key: 'abilityToIdentifyObjectsHome', group: 'psychomotor' },
+    { label: 'Attitude Towards Classwork', key: 'attitudeTowardsClasswork', group: 'psychomotor' },
+    { label: 'Punctuality', key: 'kgPunctuality', group: 'affective' },
+    { label: 'Physical Appearance', key: 'kgPhysicalAppearance', group: 'affective' },
+    { label: 'Adjusting to Good Habit', key: 'kgAdjustingGoodHabit', group: 'affective' },
+    { label: 'Adjusting to Good Eating Habit', key: 'kgAdjustingGoodEating', group: 'affective' },
+    { label: 'Regularity in School', key: 'kgRegularityInSchool', group: 'affective' },
+    { label: 'Ability to Differentiate Colour', key: 'abilityToDifferentiateColour', group: 'psychomotor' },
+    { label: 'Ability to Scribble', key: 'abilityToScribble', group: 'psychomotor' },
+    { label: 'Ability to Recite Rhymes', key: 'abilityToReciteRhymes', group: 'psychomotor' },
+    { label: 'Sport', key: 'kgSport', group: 'affective' },
+    { label: 'Ability to Clap to Tone', key: 'abilityToClapToTone', group: 'psychomotor' },
+    { label: 'Ability to Dance to Music', key: 'abilityToDanceToMusic', group: 'psychomotor' },
+    { label: 'Ability to Twist', key: 'abilityToTwist', group: 'psychomotor' },
+    { label: 'Ability to Relate with Peer', key: 'kgAbilityToRelateWithPeer', group: 'affective' },
+    { label: 'Attitude Towards Assignment', key: 'kgAttitudeTowardsAssignment', group: 'affective' },
+  ];
 
   // Calculate totals
   const calculateTotal = () => {
@@ -738,101 +802,147 @@ const StudentResult = () => {
               )}
 
               {/* Psychomotor Skills & Affective Traits Display */}
-              {(result.psychomotorSkills || result.PsychomotorSkills || result.affectiveTraits || result.AffectiveTraits) && (
+              {(result?.psychomotorSkills || result?.PsychomotorSkills || result?.affectiveTraits || result?.AffectiveTraits) && (() => {
+                const psychomotor = getTraitObject(result, 'psychomotorSkills', 'PsychomotorSkills');
+                const affective = getTraitObject(result, 'affectiveTraits', 'AffectiveTraits');
+                console.log('=== Display Psychomotor/Affective ===');
+                console.log('psychomotor object:', JSON.stringify(psychomotor));
+                console.log('affective object:', JSON.stringify(affective));
+                
+                return (
                 <Box sx={{ mt: 3 }}>
                   <Divider sx={{ mb: 2 }} />
                   <Typography variant="h6" sx={{ fontWeight: 700, color: '#1B5E20', mb: 2 }}>
-                    Psychomotor Skills & Affective Traits
+                    {isKGStudent ? 'Affective / Psychomotor Assessment' : 'Psychomotor Skills & Affective Traits'}
                   </Typography>
-                  <Grid container spacing={3}>
-                    {/* Psychomotor Skills */}
-                    <Grid item xs={12} md={6}>
-                      <Card sx={{ borderRadius: 2, border: '2px solid #7B1FA2' }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#7B1FA2', mb: 2 }}>
-                            Psychomotor Skills
-                          </Typography>
-                          <Grid container spacing={2}>
-                            {[
-                              { label: 'Drawing & Painting', key: 'drawingPainting' },
-                              { label: 'Games & Sports', key: 'gamesSports' },
-                              { label: 'Handwriting', key: 'handwriting' },
-                              { label: 'Verbal Fluency', key: 'verbalFluency' },
-                              { label: 'Musical Skills', key: 'musicalSkills' },
-                              { label: 'Handling Tools', key: 'handlingTools' },
-                            ].map((item) => {
-                              const value = getValue(result.psychomotorSkills || result.PsychomotorSkills, item.key) || getValue(result.PsychomotorSkills, item.key) || '';
-                              return (
-                                <Grid item xs={12} sm={6} key={item.key}>
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" sx={{ color: '#555' }}>
-                                      {item.label}
-                                    </Typography>
-                                    <Chip
-                                      label={value || '-'}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: value ? '#EDE7F6' : '#F5F5F5',
-                                        color: value ? '#7B1FA2' : '#757575',
-                                        fontWeight: 700,
-                                      }}
-                                    />
-                                  </Box>
-                                </Grid>
-                              );
-                            })}
-                          </Grid>
-                        </CardContent>
-                      </Card>
+
+                  {isKGStudent ? (
+                    /* KG Assessment Items - single card with all 24 items */
+                    <Card sx={{ borderRadius: 2, border: '2px solid #1B5E20' }}>
+                      <CardContent>
+                        <Grid container spacing={2}>
+                          {KG_ASSESSMENT_ITEMS.map((item) => {
+                            const psychomotor = getTraitObject(result, 'psychomotorSkills', 'PsychomotorSkills');
+                            const affective = getTraitObject(result, 'affectiveTraits', 'AffectiveTraits');
+                            // Try both psychomotor and affective sources since KG items can come from either
+                            const value = getTraitValue(psychomotor, item.key) || getTraitValue(affective, item.key) || '-';
+                            return (
+                              <Grid item xs={12} sm={6} md={4} key={item.key + item.label}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Typography variant="body2" sx={{ color: '#555', fontSize: '12px' }}>
+                                    {item.label}
+                                  </Typography>
+                                  <Chip
+                                    label={value}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: value !== '-' ? '#E8F5E9' : '#F5F5F5',
+                                      color: value !== '-' ? '#1B5E20' : '#757575',
+                                      fontWeight: 700,
+                                    }}
+                                  />
+                                </Box>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    /* Regular Psychomotor & Affective - two cards side by side */
+                    <Grid container spacing={3}>
+                      {/* Psychomotor Skills */}
+                      <Grid item xs={12} md={6}>
+                        <Card sx={{ borderRadius: 2, border: '2px solid #7B1FA2' }}>
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#7B1FA2', mb: 2 }}>
+                              Psychomotor Skills
+                            </Typography>
+                            <Grid container spacing={2}>
+                              {[
+                                { label: 'Drawing & Painting', key: 'drawingPainting' },
+                                { label: 'Games & Sports', key: 'gamesSports' },
+                                { label: 'Handwriting', key: 'handwriting' },
+                                { label: 'Verbal Fluency', key: 'verbalFluency' },
+                                { label: 'Musical Skills', key: 'musicalSkills' },
+                                { label: 'Handling Tools', key: 'handlingTools' },
+                              ].map((item) => {
+                                const psychomotor = getTraitObject(result, 'psychomotorSkills', 'PsychomotorSkills');
+                                const value = getTraitValue(psychomotor, item.key) || '-';
+                                return (
+                                  <Grid item xs={12} sm={6} key={item.key}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <Typography variant="body2" sx={{ color: '#555' }}>
+                                        {item.label}
+                                      </Typography>
+                                      <Chip
+                                        label={value}
+                                        size="small"
+                                        sx={{
+                                          bgcolor: value !== '-' ? '#EDE7F6' : '#F5F5F5',
+                                          color: value !== '-' ? '#7B1FA2' : '#757575',
+                                          fontWeight: 700,
+                                        }}
+                                      />
+                                    </Box>
+                                  </Grid>
+                                );
+                              })}
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      {/* Affective Traits */}
+                      <Grid item xs={12} md={6}>
+                        <Card sx={{ borderRadius: 2, border: '2px solid #00796B' }}>
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00796B', mb: 2 }}>
+                              Affective Traits
+                            </Typography>
+                            <Grid container spacing={2}>
+                              {[
+                                { label: 'Punctuality', key: 'punctuality' },
+                                { label: 'Politeness', key: 'politeness' },
+                                { label: 'Perseverance', key: 'perseverance' },
+                                { label: 'Honesty', key: 'honesty' },
+                                { label: 'Health', key: 'health' },
+                                { label: 'Helping Others', key: 'helpingOthers' },
+                                { label: 'Attentiveness', key: 'attentiveness' },
+                                { label: 'Emotional Stability', key: 'emotionalStability' },
+                                { label: 'Attitude to Class Work', key: 'attitudeToClassWork' },
+                                { label: 'Speaking/Handwriting', key: 'speakingHandwriting' },
+                                { label: 'Spirit of Cooperation', key: 'spiritOfCooperation' },
+                              ].map((item) => {
+                                const affective = getTraitObject(result, 'affectiveTraits', 'AffectiveTraits');
+                                const value = getTraitValue(affective, item.key) || '-';
+                                return (
+                                  <Grid item xs={12} sm={6} key={item.key}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <Typography variant="body2" sx={{ color: '#555' }}>
+                                        {item.label}
+                                      </Typography>
+                                      <Chip
+                                        label={value}
+                                        size="small"
+                                        sx={{
+                                          bgcolor: value !== '-' ? '#E0F2F1' : '#F5F5F5',
+                                          color: value !== '-' ? '#00796B' : '#757575',
+                                          fontWeight: 700,
+                                        }}
+                                      />
+                                    </Box>
+                                  </Grid>
+                                );
+                              })}
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
-                    {/* Affective Traits */}
-                    <Grid item xs={12} md={6}>
-                      <Card sx={{ borderRadius: 2, border: '2px solid #00796B' }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00796B', mb: 2 }}>
-                            Affective Traits
-                          </Typography>
-                          <Grid container spacing={2}>
-                            {[
-                              { label: 'Punctuality', key: 'punctuality' },
-                              { label: 'Politeness', key: 'politeness' },
-                              { label: 'Perseverance', key: 'perseverance' },
-                              { label: 'Honesty', key: 'honesty' },
-                              { label: 'Health', key: 'health' },
-                              { label: 'Helping Others', key: 'helpingOthers' },
-                              { label: 'Attentiveness', key: 'attentiveness' },
-                              { label: 'Emotional Stability', key: 'emotionalStability' },
-                              { label: 'Attitude to Class Work', key: 'attitudeToClassWork' },
-                              { label: 'Speaking/Handwriting', key: 'speakingHandwriting' },
-                              { label: 'Spirit of Cooperation', key: 'spiritOfCooperation' },
-                            ].map((item) => {
-                              const value = getValue(result.affectiveTraits || result.AffectiveTraits, item.key) || '';
-                              return (
-                                <Grid item xs={12} sm={6} key={item.key}>
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" sx={{ color: '#555' }}>
-                                      {item.label}
-                                    </Typography>
-                                    <Chip
-                                      label={value || '-'}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: value ? '#E0F2F1' : '#F5F5F5',
-                                        color: value ? '#00796B' : '#757575',
-                                        fontWeight: 700,
-                                      }}
-                                    />
-                                  </Box>
-                                </Grid>
-                              );
-                            })}
-                          </Grid>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  </Grid>
+                  )}
                 </Box>
-              )}
+              );
+              })()}
 
               {/* Published Status */}
               <Box sx={{ mt: 3, textAlign: 'center' }}>
@@ -887,89 +997,131 @@ const StudentResult = () => {
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
         <DialogTitle sx={{ bgcolor: '#7B1FA2', color: 'white', fontWeight: 700 }}>
-          Psychomotor Skills & Affective Traits
+          {isKGStudent ? 'Affective / Psychomotor Assessment' : 'Psychomotor Skills & Affective Traits'}
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Typography variant="body2" sx={{ color: '#757575', mb: 3 }}>
-            Rate each trait with grades A-F (A = Excellent, F = Needs Improvement)
+            {isKGStudent
+              ? 'Rate each assessment item with grades A-D (A = Excellent, D = Fair)'
+              : 'Rate each trait with grades A-F (A = Excellent, F = Needs Improvement)'}
           </Typography>
-          
-          {/* Psychomotor Skills */}
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#7B1FA2', mb: 2 }}>
-            Psychomotor Skills
-          </Typography>
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            {[
-              { label: 'Drawing & Painting', key: 'drawingPainting' },
-              { label: 'Games & Sports', key: 'gamesSports' },
-              { label: 'Handwriting', key: 'handwriting' },
-              { label: 'Verbal Fluency', key: 'verbalFluency' },
-              { label: 'Musical Skills', key: 'musicalSkills' },
-              { label: 'Handling Tools', key: 'handlingTools' },
-            ].map((item) => (
-              <Grid item xs={12} sm={6} key={item.key}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', mb: 0.5 }}>
-                  {item.label}
-                </Typography>
-                <Select
-                  fullWidth
-                  value={psychomotorData[item.key]}
-                  onChange={(e) => handlePsychomotorChange(item.key, e.target.value)}
-                  displayEmpty
-                  sx={{ 
-                    bgcolor: 'white',
-                    '& .MuiSelect-select': { py: 1.5 }
-                  }}
-                >
-                  <MenuItem value=""><em>Select grade</em></MenuItem>
-                  {GRADES.map((grade) => (
-                    <MenuItem key={grade} value={grade}>{grade}</MenuItem>
-                  ))}
-                </Select>
-              </Grid>
-            ))}
-          </Grid>
 
-          {/* Affective Traits */}
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#00796B', mb: 2 }}>
-            Affective Traits
-          </Typography>
-          <Grid container spacing={2}>
-            {[
-              { label: 'Punctuality', key: 'punctuality' },
-              { label: 'Politeness', key: 'politeness' },
-              { label: 'Perseverance', key: 'perseverance' },
-              { label: 'Honesty', key: 'honesty' },
-              { label: 'Health', key: 'health' },
-              { label: 'Helping Others', key: 'helpingOthers' },
-              { label: 'Attentiveness', key: 'attentiveness' },
-              { label: 'Emotional Stability', key: 'emotionalStability' },
-              { label: 'Attitude to Class Work', key: 'attitudeToClassWork' },
-              { label: 'Speaking/Handwriting', key: 'speakingHandwriting' },
-              { label: 'Spirit of Cooperation', key: 'spiritOfCooperation' },
-            ].map((item) => (
-              <Grid item xs={12} sm={6} md={4} key={item.key}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', mb: 0.5 }}>
-                  {item.label}
-                </Typography>
-                <Select
-                  fullWidth
-                  value={affectiveData[item.key]}
-                  onChange={(e) => handleAffectiveChange(item.key, e.target.value)}
-                  displayEmpty
-                  sx={{ 
-                    bgcolor: 'white',
-                    '& .MuiSelect-select': { py: 1.5 }
-                  }}
-                >
-                  <MenuItem value=""><em>Select grade</em></MenuItem>
-                  {GRADES.map((grade) => (
-                    <MenuItem key={grade} value={grade}>{grade}</MenuItem>
-                  ))}
-                </Select>
+          {isKGStudent ? (
+            /* KG Assessment Items - all 24 items in one table-like layout */
+            <Grid container spacing={2}>
+              {KG_ASSESSMENT_ITEMS.map((item) => {
+                const value = psychomotorData[item.key] || affectiveData[item.key] || '';
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={item.key + item.label}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', mb: 0.5, fontSize: '12px' }}>
+                      {item.label}
+                    </Typography>
+                    <Select
+                      fullWidth
+                      size="small"
+                      value={value}
+                      onChange={(e) => {
+                        if (item.group === 'psychomotor') {
+                          handlePsychomotorChange(item.key, e.target.value);
+                        } else {
+                          handleAffectiveChange(item.key, e.target.value);
+                        }
+                      }}
+                      displayEmpty
+                      sx={{
+                        bgcolor: 'white',
+                        '& .MuiSelect-select': { py: 1 }
+                      }}
+                    >
+                      <MenuItem value=""><em>Select grade</em></MenuItem>
+                      {['A', 'B', 'C', 'D'].map((grade) => (
+                        <MenuItem key={grade} value={grade}>{grade}</MenuItem>
+                      ))}
+                    </Select>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          ) : (
+            <>
+              {/* Regular Psychomotor Skills */}
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#7B1FA2', mb: 2 }}>
+                Psychomotor Skills
+              </Typography>
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                {[
+                  { label: 'Drawing & Painting', key: 'drawingPainting' },
+                  { label: 'Games & Sports', key: 'gamesSports' },
+                  { label: 'Handwriting', key: 'handwriting' },
+                  { label: 'Verbal Fluency', key: 'verbalFluency' },
+                  { label: 'Musical Skills', key: 'musicalSkills' },
+                  { label: 'Handling Tools', key: 'handlingTools' },
+                ].map((item) => (
+                  <Grid item xs={12} sm={6} key={item.key}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', mb: 0.5 }}>
+                      {item.label}
+                    </Typography>
+                    <Select
+                      fullWidth
+                      value={psychomotorData[item.key]}
+                      onChange={(e) => handlePsychomotorChange(item.key, e.target.value)}
+                      displayEmpty
+                      sx={{
+                        bgcolor: 'white',
+                        '& .MuiSelect-select': { py: 1.5 }
+                      }}
+                    >
+                      <MenuItem value=""><em>Select grade</em></MenuItem>
+                      {GRADES.map((grade) => (
+                        <MenuItem key={grade} value={grade}>{grade}</MenuItem>
+                      ))}
+                    </Select>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+
+              {/* Regular Affective Traits */}
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#00796B', mb: 2 }}>
+                Affective Traits
+              </Typography>
+              <Grid container spacing={2}>
+                {[
+                  { label: 'Punctuality', key: 'punctuality' },
+                  { label: 'Politeness', key: 'politeness' },
+                  { label: 'Perseverance', key: 'perseverance' },
+                  { label: 'Honesty', key: 'honesty' },
+                  { label: 'Health', key: 'health' },
+                  { label: 'Helping Others', key: 'helpingOthers' },
+                  { label: 'Attentiveness', key: 'attentiveness' },
+                  { label: 'Emotional Stability', key: 'emotionalStability' },
+                  { label: 'Attitude to Class Work', key: 'attitudeToClassWork' },
+                  { label: 'Speaking/Handwriting', key: 'speakingHandwriting' },
+                  { label: 'Spirit of Cooperation', key: 'spiritOfCooperation' },
+                ].map((item) => (
+                  <Grid item xs={12} sm={6} md={4} key={item.key}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', mb: 0.5 }}>
+                      {item.label}
+                    </Typography>
+                    <Select
+                      fullWidth
+                      value={affectiveData[item.key]}
+                      onChange={(e) => handleAffectiveChange(item.key, e.target.value)}
+                      displayEmpty
+                      sx={{
+                        bgcolor: 'white',
+                        '& .MuiSelect-select': { py: 1.5 }
+                      }}
+                    >
+                      <MenuItem value=""><em>Select grade</em></MenuItem>
+                      {GRADES.map((grade) => (
+                        <MenuItem key={grade} value={grade}>{grade}</MenuItem>
+                      ))}
+                    </Select>
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setPsychomotorModalOpen(false)} sx={{ color: '#757575' }}>

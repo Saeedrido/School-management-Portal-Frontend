@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import schoolLogo from '../../assets/school logo imj/school-logo bck.png';
 
 const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
   const student = data?.Student || data?.student || {};
@@ -280,16 +281,22 @@ const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
       }}
     >
       {/* HEADER */}
-      <Box sx={{ textAlign: 'center', mb: 2, pb: 1, borderBottom: '2px solid black' }}>
-        <Typography sx={{ fontSize: '18px', fontWeight: 'bold' }}>
-          ROYAL SCHOLARS ACADEMY
-        </Typography>
-        <Typography sx={{ fontSize: '11px', mt: 0.5 }}>
-          NO 4, DAISI OKEOWO AVENUE, EYITA, IKORODU, LAGOS
-        </Typography>
-        <Typography sx={{ fontSize: '14px', fontWeight: 'bold', mt: 1, textDecoration: 'underline' }}>
-          CONTINUOUS ASSESSMENT FOR {termName} TERM YEAR {academicYear?.name || academicYear?.Name || '2024/2025'}
-        </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, pb: 1, borderBottom: '2px solid black' }}>
+        <Box component="img" src={schoolLogo} sx={{ height: 140, mr: 2 }} alt="School Logo" />
+        <Box sx={{ textAlign: 'center', flex: 1 }}>
+          <Typography sx={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '1px' }}>
+            300 ARUNDEL LEARNING CENTRE
+          </Typography>
+          <Typography sx={{ fontSize: '12px', mt: 0.5 }}>
+            12A, Olusegun Asokun Close, Nopa Bus Stop, Evita OjoKoro Road, Ikorodu
+          </Typography>
+          <Typography sx={{ fontSize: '12px' }}>
+            Phone: 08023196047, 08033995565
+          </Typography>
+          <Typography sx={{ fontSize: '15px', fontWeight: 'bold', mt: 1, textDecoration: 'underline' }}>
+            CONTINUOUS ASSESSMENT FOR {termName} TERM YEAR {academicYear?.name || academicYear?.Name || '2024/2025'}
+          </Typography>
+        </Box>
       </Box>
 
       {/* STUDENT NAME BAR */}

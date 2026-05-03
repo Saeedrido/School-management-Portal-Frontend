@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import schoolLogo from '../../assets/school logo imj/school-logo bck.png';
 
 // Check if this is a Primary/Nursery result (use SchoolLevel from class)
 const isPrimaryLevel = (data) => {
@@ -231,18 +232,13 @@ const subjectCount = processedSubjects.length || 1;
   return (
     <Box ref={ref} sx={{ width: '1100px', padding: '20px', fontFamily: '"Times New Roman", Arial, sans-serif', backgroundColor: '#ffffff', boxSizing: 'border-box' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, pb: 2, borderBottom: '2px solid black' }}>
-        <Box sx={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid black' }}>
-          <Typography sx={{ fontSize: '10px', textAlign: 'center' }}>SCHOOL<br/>LOGO</Typography>
-        </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, pb: 2, borderBottom: '2px solid black' }}>
+        <Box component="img" src={schoolLogo} sx={{ height: 150, mr: 2 }} alt="School Logo" />
         <Box sx={{ textAlign: 'center', flex: 1 }}>
-          <Typography sx={{ fontSize: '24px', fontWeight: 'bold', letterSpacing: '1px' }}>ROYAL SCHOLARS ACADEMY</Typography>
-          <Typography sx={{ fontSize: '11px', fontWeight: 'bold', mt: 0.5 }}>NO 4, DAISI OKEOWO AVENUE, EYITA, IKORODU, LAGOS</Typography>
-          <Typography sx={{ fontSize: '10px', fontWeight: 'bold', mt: 0.5 }}>Tel: 08175975161, 08055302518</Typography>
-          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', mt: 1, textDecoration: 'underline' }}>{session} ACADEMIC SESSION - {termName.toUpperCase()} RESULT</Typography>
-        </Box>
-        <Box sx={{ width: '100px', height: '100px', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography sx={{ fontSize: '10px', textAlign: 'center' }}>PASSPORT<br/>PHOTO</Typography>
+          <Typography sx={{ fontSize: '26px', fontWeight: 'bold', letterSpacing: '1px' }}>300 ARUNDEL LEARNING CENTRE</Typography>
+          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', mt: 0.5 }}>12A, Olusegun Asokun Close, Nopa Bus Stop, Evita OjoKoro Road, Ikorodu</Typography>
+          <Typography sx={{ fontSize: '11px', fontWeight: 'bold', mt: 0.5 }}>Tel: 08023196047, 08033995565</Typography>
+          <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mt: 1, textDecoration: 'underline' }}>{session} ACADEMIC SESSION - {termName.toUpperCase()} RESULT</Typography>
         </Box>
       </Box>
 

@@ -374,7 +374,7 @@ const ResultList = () => {
                         variant="contained"
                         size="small"
                         startIcon={<Visibility />}
-                        onClick={() => navigate(`${basePath}/results/student/${student.id}?termId=${selectedTerm}`)}
+                        onClick={() => navigate(`${basePath}/results/student/${student.id}?termId=${selectedTerm}&classId=${selectedClass}`)}
                         sx={{ borderRadius: 2 }}
                       >
                         View Results

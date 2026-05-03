@@ -248,7 +248,10 @@ export const adminAPI = {
     delete: (id) => api.delete(`/api/questions/${id}`),
   },
   results: {
-    getByStudentAndTerm: (studentId, termId, includeUnpublished = false) => api.get(`/api/results/student/${studentId}/term/${termId}?includeUnpublished=${includeUnpublished}`),
+    getByStudentAndTerm: (studentId, termId, includeUnpublished = false, classId = null) => {
+      const url = `/api/results/student/${studentId}/term/${termId}?includeUnpublished=${includeUnpublished}${classId ? `&classId=${classId}` : ''}`;
+      return api.get(url);
+    },
     getStudentResults: (studentId, page = 1, pageSize = 20) => api.get(`/api/results/student/${studentId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getCumulative: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
     getCumulativeResults: (studentId, academicYearId) => api.get(`/api/results/cumulative/student/${studentId}/academic-year/${academicYearId}`),
