@@ -42,9 +42,11 @@ import {
   EmojiEvents,
   Edit,
   Bookmark,
+  Campaign,
 } from '@mui/icons-material';
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
+import InformationModal from './ui/InformationModal';
 
 const drawerWidth = 260;
 
@@ -57,6 +59,7 @@ const DashboardLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
 
   const handleLogout = () => {
     setAnchorEl(null);
@@ -94,6 +97,7 @@ const DashboardLayout = () => {
     { text: 'Report Cards', icon: <Quiz />, path: '/admin-dashboard/report-cards' },
     { text: 'Grade Management', icon: <TrendingUp />, path: '/admin-dashboard/grade-management' },
     { text: 'Student Profiles', icon: <Person />, path: '/admin-dashboard/student-profiles' },
+    { text: 'Information', icon: <Campaign />, action: 'info' },
   ];
 
   const teacherMenuItems = [
@@ -214,13 +218,18 @@ const DashboardLayout = () => {
 
       <List sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 0 }}>
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const itemKey = item.path || item.action;
+          const isActive = item.path ? location.pathname === item.path : false;
           return (
-            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+            <ListItem key={itemKey} disablePadding sx={{ mb: 0.5 }}>
               <Tooltip title={collapsed ? item.text : ''} placement="right">
                 <ListItemButton
                   onClick={() => {
-                    navigate(item.path);
+                    if (item.action === 'info') {
+                      setInfoModalOpen(true);
+                    } else if (item.path) {
+                      navigate(item.path);
+                    }
                     if (isMobile) setMobileOpen(false);
                   }}
                   selected={isActive}
@@ -586,6 +595,8 @@ const DashboardLayout = () => {
           </Box>
         </Box>
       </Box>
+
+      <InformationModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
     </Box>
   );
 };

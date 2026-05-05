@@ -416,6 +416,13 @@ export const commentsAPI = {
 };
 
 // ============================================
+// INFORMATION API (Admin - send notifications to parents)
+// ============================================
+export const informationAPI = {
+  send: (data) => api.post('/api/information/send', data),
+};
+
+// ============================================
 // SHARED API
 // ============================================
 export const sharedAPI = {
