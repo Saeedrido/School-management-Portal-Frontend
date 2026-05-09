@@ -34,7 +34,6 @@ import {
   Logout,
   ChevronLeft,
   Settings,
-  Notifications,
   Person,
   KeyboardArrowDown,
   School,
@@ -47,6 +46,7 @@ import {
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
 import InformationModal from './ui/InformationModal';
+import NotificationDropdown from './ui/NotificationDropdown';
 
 const drawerWidth = 260;
 
@@ -439,18 +439,7 @@ const DashboardLayout = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              size="small"
-              sx={{
-                color: '#64748B',
-                '&:hover': {
-                  color: '#6FAF8F',
-                  background: 'rgba(111, 175, 143, 0.1)',
-                },
-              }}
-            >
-              <Notifications sx={{ fontSize: 22 }} />
-            </IconButton>
+            {user?.role !== 'Admin' && <NotificationDropdown />}
             <IconButton
               size="small"
               sx={{

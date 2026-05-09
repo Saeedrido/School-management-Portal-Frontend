@@ -4,6 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
 import { MockDataProvider } from './context/MockDataContext';
+import { NotificationProvider } from './context/NotificationContext';
 import DashboardLayout from './components/DashboardLayout';
 import Login from './pages/Auth/Login';
 import StudentLogin from './pages/Auth/StudentLogin';
@@ -304,9 +305,11 @@ function App() {
     <CustomThemeProvider>
       <AuthProvider>
         <MockDataProvider>
+          <NotificationProvider>
           <Router>
             <AppRoutes />
           </Router>
+          </NotificationProvider>
         </MockDataProvider>
       </AuthProvider>
     </CustomThemeProvider>

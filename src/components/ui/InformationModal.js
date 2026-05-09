@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,9 +14,16 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  Autocomplete,
   Chip,
   InputAdornment,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Checkbox,
+  Paper,
+  Collapse,
 } from '@mui/material';
 import {
   Send,
@@ -27,6 +34,8 @@ import {
   School,
   People,
   Person,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { adminAPI, informationAPI } from '../../services/api';
 
@@ -36,14 +45,24 @@ const InformationModal = ({ open, onClose }) => {
   const [date, setDate] = useState('');
   const [amount, setAmount] = useState('');
   const [recipientType, setRecipientType] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedClass, setSelectedClass] = useState('');
-  const [students, setStudents] = useState([]);
+
+  // Specific Students mode
+  const [specificClassId, setSpecificClassId] = useState('');
+  const [specificClassStudents, setSpecificClassStudents] = useState([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState(new Set());
+  const [loadedClasses, setLoadedClasses] = useState({});
+
+  // By Class mode
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [classStudents, setClassStudents] = useState([]);
+  const [selectedClassStudentIds, setSelectedClassStudentIds] = useState(new Set());
+
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSelectedStudents, setShowSelectedStudents] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -64,21 +83,69 @@ const InformationModal = ({ open, onClose }) => {
   };
 
   const fetchStudentsByClass = async (classId) => {
-    if (!classId) {
-      setStudents([]);
-      return;
-    }
+    if (!classId) return [];
     setLoadingStudents(true);
     try {
       const response = await adminAPI.students.getByClass(classId);
       if (response.data?.success) {
-        setStudents(response.data.data || []);
+        return response.data.data || [];
       }
     } catch (err) {
       console.error('Failed to fetch students:', err);
     } finally {
       setLoadingStudents(false);
     }
+    return [];
+  };
+
+  const handleLoadSpecificClass = async (classId) => {
+    setSpecificClassId(classId);
+    if (!classId) {
+      setSpecificClassStudents([]);
+      return;
+    }
+    if (loadedClasses[classId]) {
+      setSpecificClassStudents(loadedClasses[classId]);
+      return;
+    }
+    const students = await fetchStudentsByClass(classId);
+    setSpecificClassStudents(students);
+    setLoadedClasses(prev => ({ ...prev, [classId]: students }));
+  };
+
+  const handleToggleSpecificStudent = (studentId) => {
+    setSelectedStudentIds(prev => {
+      const next = new Set(prev);
+      if (next.has(studentId)) {
+        next.delete(studentId);
+      } else {
+        next.add(studentId);
+      }
+      return next;
+    });
+  };
+
+  const handleLoadClassStudents = async (classId) => {
+    setSelectedClassId(classId);
+    setSelectedClassStudentIds(new Set());
+    if (!classId) {
+      setClassStudents([]);
+      return;
+    }
+    const students = await fetchStudentsByClass(classId);
+    setClassStudents(students);
+  };
+
+  const handleToggleClassStudent = (studentId) => {
+    setSelectedClassStudentIds(prev => {
+      const next = new Set(prev);
+      if (next.has(studentId)) {
+        next.delete(studentId);
+      } else {
+        next.add(studentId);
+      }
+      return next;
+    });
   };
 
   const resetForm = () => {
@@ -87,11 +154,16 @@ const InformationModal = ({ open, onClose }) => {
     setDate('');
     setAmount('');
     setRecipientType('');
-    setSelectedStudent(null);
-    setSelectedClass('');
-    setStudents([]);
+    setSpecificClassId('');
+    setSpecificClassStudents([]);
+    setSelectedStudentIds(new Set());
+    setLoadedClasses({});
+    setSelectedClassId('');
+    setClassStudents([]);
+    setSelectedClassStudentIds(new Set());
     setError('');
     setSuccess('');
+    setShowSelectedStudents(false);
   };
 
   const handleClose = () => {
@@ -101,18 +173,31 @@ const InformationModal = ({ open, onClose }) => {
 
   const handleRecipientTypeChange = (e) => {
     setRecipientType(e.target.value);
-    setSelectedStudent(null);
-    setSelectedClass('');
-    setStudents([]);
+    setSpecificClassId('');
+    setSpecificClassStudents([]);
+    setSelectedStudentIds(new Set());
+    setSelectedClassId('');
+    setClassStudents([]);
+    setSelectedClassStudentIds(new Set());
     setError('');
   };
 
-  const handleClassChange = (e) => {
-    const classId = e.target.value;
-    setSelectedClass(classId);
-    if (recipientType === 'class') {
-      fetchStudentsByClass(classId);
-    }
+  const getSelectedStudentCount = () => {
+    return selectedStudentIds.size;
+  };
+
+  const getAllSelectedStudents = () => {
+    const all = [];
+    selectedStudentIds.forEach(sid => {
+      for (const clsStudents of Object.values(loadedClasses)) {
+        const found = clsStudents.find(s => s.id === sid || s.studentProfileId === sid);
+        if (found) {
+          all.push(found);
+          break;
+        }
+      }
+    });
+    return all;
   };
 
   const handleSubmit = async () => {
@@ -145,18 +230,24 @@ const InformationModal = ({ open, onClose }) => {
       payload.amount = parseFloat(amount);
     }
 
-    if (recipientType === 'single') {
-      if (!selectedStudent) {
-        setError('Please select a student.');
+    if (recipientType === 'specific') {
+      if (selectedStudentIds.size === 0) {
+        setError('Please select at least one student.');
         return;
       }
-      payload.studentId = selectedStudent.id;
+      payload.recipientType = 'single';
+      payload.studentIds = Array.from(selectedStudentIds);
     } else if (recipientType === 'class') {
-      if (!selectedClass) {
+      if (!selectedClassId) {
         setError('Please select a class.');
         return;
       }
-      payload.classId = selectedClass;
+      if (selectedClassStudentIds.size > 0) {
+        payload.recipientType = 'single';
+        payload.studentIds = Array.from(selectedClassStudentIds);
+      } else {
+        payload.classId = selectedClassId;
+      }
     }
 
     setLoading(true);
@@ -166,7 +257,13 @@ const InformationModal = ({ open, onClose }) => {
         const result = response.data.data;
         let successMsg = `Information sent successfully!`;
         if (result.sentCount !== undefined) {
-          successMsg += ` Sent: ${result.sentCount}, Skipped: ${result.skippedCount}, Failed: ${result.failedCount}`;
+          successMsg += ` Sent: ${result.sentCount}, Failed: ${result.failedCount}`;
+          if (result.skippedCount > 0) {
+            successMsg += `, Skipped: ${result.skippedCount} (no linked parent)`;
+          }
+          if (result.failedStudentNames?.length > 0) {
+            successMsg += `\nSkipped students: ${result.failedStudentNames.join(', ')}`;
+          }
         }
         setSuccess(successMsg);
         setTimeout(() => {
@@ -195,7 +292,7 @@ const InformationModal = ({ open, onClose }) => {
         </Button>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ maxHeight: 480, overflow: 'auto' }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
             {error}
@@ -208,7 +305,6 @@ const InformationModal = ({ open, onClose }) => {
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {/* Message Type */}
           <FormControl fullWidth>
             <InputLabel>Message Type</InputLabel>
             <Select
@@ -222,7 +318,6 @@ const InformationModal = ({ open, onClose }) => {
             </Select>
           </FormControl>
 
-          {/* Message Content */}
           <TextField
             label="Message Content"
             multiline
@@ -233,7 +328,6 @@ const InformationModal = ({ open, onClose }) => {
             placeholder="Enter your message..."
           />
 
-          {/* Conditional: Date for Excursion */}
           {messageType === 'Excursion' && (
             <TextField
               label="Excursion Date"
@@ -252,7 +346,6 @@ const InformationModal = ({ open, onClose }) => {
             />
           )}
 
-          {/* Conditional: Amount for School Fees */}
           {messageType === 'School Fees Reminder' && (
             <TextField
               label="Amount (&#8358;)"
@@ -270,7 +363,6 @@ const InformationModal = ({ open, onClose }) => {
             />
           )}
 
-          {/* Recipient Type */}
           <FormControl fullWidth>
             <InputLabel>Send To</InputLabel>
             <Select
@@ -278,74 +370,26 @@ const InformationModal = ({ open, onClose }) => {
               label="Send To"
               onChange={handleRecipientTypeChange}
             >
-              <MenuItem value="single">Single Student</MenuItem>
+              <MenuItem value="specific">Specific Students</MenuItem>
               <MenuItem value="class">By Class</MenuItem>
               <MenuItem value="all">Whole School</MenuItem>
             </Select>
           </FormControl>
 
-          {/* Conditional: Single Student Selection */}
-          {recipientType === 'single' && (
+          {/* Specific Students - Multi-select across classes */}
+          {recipientType === 'specific' && (
             <Box>
               <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Person fontSize="small" /> Select Student
+                <Person fontSize="small" /> Select Students
               </Typography>
-              <Autocomplete
-                options={students}
-                loading={loadingStudents}
-                getOptionLabel={(option) => `${option.firstName} ${option.lastName} (${option.studentNumber})`}
-                value={selectedStudent}
-                onChange={(e, newValue) => setSelectedStudent(newValue)}
-                onInputChange={(e, newInputValue) => {
-                  if (newInputValue.length >= 2) {
-                    fetchStudentsByClass(selectedClass);
-                  }
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Search by name or student number..."
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <>
-                          {loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
-                    }}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props}>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {option.firstName} {option.lastName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {option.studentNumber}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                Tip: Select a class below to filter students, or search by name/student number
-              </Typography>
-              {/* Class filter for student search */}
-              <FormControl fullWidth sx={{ mt: 1 }}>
-                <InputLabel>Filter by Class (optional)</InputLabel>
+
+              <FormControl fullWidth size="small">
+                <InputLabel>Choose a class</InputLabel>
                 <Select
-                  value={selectedClass}
-                  label="Filter by Class (optional)"
-                  onChange={(e) => {
-                    setSelectedClass(e.target.value);
-                    fetchStudentsByClass(e.target.value);
-                  }}
-                  size="small"
+                  value={specificClassId}
+                  label="Choose a class"
+                  onChange={(e) => handleLoadSpecificClass(e.target.value)}
                 >
-                  <MenuItem value="">All Classes</MenuItem>
                   {classes.map((cls) => (
                     <MenuItem key={cls.id} value={cls.id}>
                       {cls.name}
@@ -353,10 +397,96 @@ const InformationModal = ({ open, onClose }) => {
                   ))}
                 </Select>
               </FormControl>
+
+              {specificClassId && specificClassStudents.length > 0 && (
+                <Paper variant="outlined" sx={{ mt: 1.5, maxHeight: 200, overflow: 'auto', borderRadius: 2 }}>
+                  <List dense disablePadding>
+                    {specificClassStudents.map((student) => {
+                      const studentId = student.id || student.studentProfileId;
+                      const labelId = `specific-student-${studentId}`;
+                      return (
+                        <ListItem key={studentId} disablePadding>
+                          <ListItemButton
+                            dense
+                            onClick={() => handleToggleSpecificStudent(studentId)}
+                          >
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                              <Checkbox
+                                edge="start"
+                                checked={selectedStudentIds.has(studentId)}
+                                tabIndex={-1}
+                                disableRipple
+                                inputProps={{ 'aria-labelledby': labelId }}
+                                sx={{ '&.Mui-checked': { color: '#6FAF8F' } }}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              id={labelId}
+                              primary={`${student.firstName || ''} ${student.lastName || ''}`}
+                              secondary={student.studentNumber}
+                              primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                              secondaryTypographyProps={{ variant: 'caption' }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Paper>
+              )}
+
+              {specificClassId && specificClassStudents.length === 0 && !loadingStudents && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  No students found in this class.
+                </Typography>
+              )}
+
+              {loadingStudents && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} sx={{ color: '#6FAF8F' }} />
+                </Box>
+              )}
+
+              {getSelectedStudentCount() > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    size="small"
+                    onClick={() => setShowSelectedStudents(!showSelectedStudents)}
+                    sx={{ textTransform: 'none', color: '#6FAF8F', fontWeight: 600, fontSize: '0.8rem' }}
+                    endIcon={showSelectedStudents ? <ExpandLess /> : <ExpandMore />}
+                  >
+                    {getSelectedStudentCount()} student{getSelectedStudentCount() > 1 ? 's' : ''} selected
+                  </Button>
+                  <Collapse in={showSelectedStudents}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                      {getAllSelectedStudents().map((student) => {
+                        const studentId = student.id || student.studentProfileId;
+                        return (
+                          <Chip
+                            key={studentId}
+                            label={`${student.firstName || ''} ${student.lastName || ''}`}
+                            size="small"
+                            onDelete={() => handleToggleSpecificStudent(studentId)}
+                            sx={{
+                              bgcolor: 'rgba(111, 175, 143, 0.1)',
+                              color: '#4E8C70',
+                              fontWeight: 500,
+                            }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  </Collapse>
+                </Box>
+              )}
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+                Pick a class, select students, then switch to another class to add more. Selections persist across classes.
+              </Typography>
             </Box>
           )}
 
-          {/* Conditional: Class Selection */}
+          {/* By Class - with optional student-level selection */}
           {recipientType === 'class' && (
             <Box>
               <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -365,9 +495,9 @@ const InformationModal = ({ open, onClose }) => {
               <FormControl fullWidth>
                 <InputLabel>Select Class</InputLabel>
                 <Select
-                  value={selectedClass}
+                  value={selectedClassId}
                   label="Select Class"
-                  onChange={handleClassChange}
+                  onChange={(e) => handleLoadClassStudents(e.target.value)}
                 >
                   {classes.map((cls) => (
                     <MenuItem key={cls.id} value={cls.id}>
@@ -376,18 +506,68 @@ const InformationModal = ({ open, onClose }) => {
                   ))}
                 </Select>
               </FormControl>
-              {selectedClass && (
-                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <People fontSize="small" color="action" />
-                  <Typography variant="caption" color="text.secondary">
-                    {students.length} student(s) in this class
+
+              {selectedClassId && classStudents.length > 0 && (
+                <Box sx={{ mt: 1.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                    Optionally select specific students (leave all unchecked to send to entire class):
                   </Typography>
+                  <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto', borderRadius: 2 }}>
+                    <List dense disablePadding>
+                      {classStudents.map((student) => {
+                        const studentId = student.id || student.studentProfileId;
+                        const labelId = `class-student-${studentId}`;
+                        return (
+                          <ListItem key={studentId} disablePadding>
+                            <ListItemButton
+                              dense
+                              onClick={() => handleToggleClassStudent(studentId)}
+                            >
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                <Checkbox
+                                  edge="start"
+                                  checked={selectedClassStudentIds.has(studentId)}
+                                  tabIndex={-1}
+                                  disableRipple
+                                  inputProps={{ 'aria-labelledby': labelId }}
+                                  sx={{ '&.Mui-checked': { color: '#6FAF8F' } }}
+                                />
+                              </ListItemIcon>
+                              <ListItemText
+                                id={labelId}
+                                primary={`${student.firstName || ''} ${student.lastName || ''}`}
+                                secondary={student.studentNumber}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                                secondaryTypographyProps={{ variant: 'caption' }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        );
+                      })}
+                    </List>
+                  </Paper>
+                  {selectedClassStudentIds.size > 0 && (
+                    <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#6FAF8F', fontWeight: 600 }}>
+                      {selectedClassStudentIds.size} of {classStudents.length} student(s) selected
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {selectedClassId && classStudents.length === 0 && !loadingStudents && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  No students found in this class.
+                </Typography>
+              )}
+
+              {loadingStudents && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} sx={{ color: '#6FAF8F' }} />
                 </Box>
               )}
             </Box>
           )}
 
-          {/* Whole School confirmation */}
           {recipientType === 'all' && (
             <Alert severity="info" icon={<Info fontSize="small" />}>
               This will send the information to all students with linked parent email addresses.

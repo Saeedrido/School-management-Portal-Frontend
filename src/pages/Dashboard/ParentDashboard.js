@@ -68,7 +68,6 @@ const ParentDashboard = () => {
     { icon: <People />, label: 'Total Children', value: children.length, color: '#6FAF8F', bg: '#E8F5E9' },
     { icon: <TrendingUp />, label: 'Avg. Performance', value: '85%', color: '#2196F3', bg: '#E3F2FD' },
     { icon: <MenuBook />, label: 'Upcoming Exams', value: '2', color: '#FF9800', bg: '#FFF3E0' },
-    { icon: <Notifications />, label: 'Notifications', value: '3', color: '#9C27B0', bg: '#F3E5F5' },
   ];
 
   const activities = [

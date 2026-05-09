@@ -420,6 +420,10 @@ export const commentsAPI = {
 // ============================================
 export const informationAPI = {
   send: (data) => api.post('/api/information/send', data),
+  getHistory: (isRead) => api.get('/api/information/history', { params: { isRead } }),
+  markAsRead: (userNotificationId) => api.post(`/api/information/mark-as-read/${userNotificationId}`),
+  markAllAsRead: () => api.post('/api/information/mark-all-as-read'),
+  deleteNotification: (userNotificationId) => api.delete(`/api/information/${userNotificationId}`),
 };
 
 // ============================================
