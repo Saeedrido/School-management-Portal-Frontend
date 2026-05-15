@@ -183,7 +183,7 @@ const ResultList = () => {
       }
     } catch (err) {
       console.error('Error publishing results:', err);
-      setError('Failed to publish results. Please try again.');
+      setError(err.response?.data?.message || 'Failed to publish results. Please try again.');
     } finally {
       setPublishing(false);
     }

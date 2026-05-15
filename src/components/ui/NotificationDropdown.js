@@ -50,8 +50,9 @@ const getMessageTypeColor = (messageType) => {
 
 const getTimeAgo = (dateString) => {
   if (!dateString) return '';
+  const normalized = /[Zz]|[+-]\d{2}:\d{2}$/.test(dateString) ? dateString : dateString + 'Z';
   const now = Date.now();
-  const date = new Date(dateString).getTime();
+  const date = new Date(normalized).getTime();
   const diffMs = now - date;
 
   if (diffMs < 0) return 'Just now';
@@ -68,7 +69,7 @@ const getTimeAgo = (dateString) => {
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
 
-  return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(normalized).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const NotificationDropdown = () => {

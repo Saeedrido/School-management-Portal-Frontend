@@ -102,9 +102,6 @@ const KGResultSheet = ({ data = {}, readOnly = false }) => {
 
   const termResume = term?.nextTermResumeDate || term?.NextTermResumeDate || '';
   const nextTermBegins = termResume ? new Date(termResume).toLocaleDateString() : '____________';
-  const termEndDate = term?.endDate || term?.EndDate || '';
-  const nextTermEnds = termEndDate ? new Date(termEndDate).toLocaleDateString() : '____________';
-
   const numberInClass = data?.numberOfStudents || data?.NumberOfStudents || '______';
 
   // Detect 3rd term / cumulative
@@ -231,12 +228,6 @@ const KGResultSheet = ({ data = {}, readOnly = false }) => {
             <strong>NEXT TERM BEGINS:</strong>
             <Box sx={{ borderBottom: '1px solid #000', mx: 1, minWidth: 100, pb: '2px' }}>
               <Typography component="span">{nextTermBegins}</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
-            <strong>NEXT TERM ENDS:</strong>
-            <Box sx={{ borderBottom: '1px solid #000', mx: 1, minWidth: 100, pb: '2px' }}>
-              <Typography component="span">{nextTermEnds}</Typography>
             </Box>
           </Box>
         </Box>

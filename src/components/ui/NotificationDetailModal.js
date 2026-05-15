@@ -41,7 +41,8 @@ const getMessageTypeColor = (messageType) => {
 
 const formatDateTime = (dateString) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
+  const normalized = /[Zz]|[+-]\d{2}:\d{2}$/.test(dateString) ? dateString : dateString + 'Z';
+  const date = new Date(normalized);
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',

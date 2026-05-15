@@ -199,11 +199,11 @@ const ManualScoreEntry = () => {
         const uniqueSubjects = [];
         classAssignments.forEach(a => {
           const subjectData = {
-            id: a.subjectId,
+            id: a.id,
             name: a.subject?.name || a.subject?.Name || `Subject (ID: ${a.subjectId?.substring(0,8)})`,
             subject: a.subject,
           };
-          if (!uniqueSubjects.find(s => s.id === a.subjectId)) {
+          if (!uniqueSubjects.find(s => s.id === a.id)) {
             uniqueSubjects.push(subjectData);
           }
         });
