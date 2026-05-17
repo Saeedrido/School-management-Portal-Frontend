@@ -488,8 +488,14 @@ const subjectCount = processedSubjects.length || 1;
       {/* Comments */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2, pb: 1, borderBottom: '1px solid black' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography sx={{ fontWeight: 'bold', fontSize: '10px', minWidth: '160px' }}>Class Teacher's Comment:</Typography>
-          <Box sx={{ borderBottom: '1px solid black', flex: 1, mx: 1, pb: 0.5 }}><Typography sx={{ fontSize: '10px' }}>{teacherRemarks || 'Good performance, keep it up!'}</Typography></Box>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '10px', minWidth: '160px' }}>Teacher's Comment:</Typography>
+          <Box sx={{ borderBottom: '1px solid black', flex: 1, mx: 1, pb: 0.5 }}><Typography sx={{ fontSize: '10px' }}>{(data?.teacherComment || data?.TeacherComment || teacherRemarks) || 'Good performance, keep it up!'}</Typography></Box>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '10px', minWidth: '70px' }}>Signature:</Typography>
+          <Box sx={{ borderBottom: '1px solid black', width: '100px', ml: 1 }}></Box>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '10px', minWidth: '160px' }}>Behavior & Work Habits:</Typography>
+          <Box sx={{ borderBottom: '1px solid black', flex: 1, mx: 1, pb: 0.5 }}><Typography sx={{ fontSize: '10px' }}>{(data?.behaviorComment || data?.BehaviorComment) || 'Demonstrates good behavior and work habits.'}</Typography></Box>
           <Typography sx={{ fontWeight: 'bold', fontSize: '10px', minWidth: '70px' }}>Signature:</Typography>
           <Box sx={{ borderBottom: '1px solid black', width: '100px', ml: 1 }}></Box>
         </Box>

@@ -62,7 +62,6 @@ const GradeTheory = () => {
   const [gradingForm, setGradingForm] = useState({
     theoryScore: '',
     testScore: '',
-    teacherRemarks: '',
   });
 
   useEffect(() => {
@@ -184,7 +183,6 @@ const GradeTheory = () => {
     setGradingForm({
       theoryScore: attempt.theoryScore || '',
       testScore: attempt.testScore || '',
-      teacherRemarks: attempt.teacherRemarks || '',
     });
     
     // For exam-based grading (examId), use the already fetched exam
@@ -209,7 +207,7 @@ const GradeTheory = () => {
   const handleCloseGrading = () => {
     setGradingDialogOpen(false);
     setSelectedAttempt(null);
-    setGradingForm({ theoryScore: '', teacherRemarks: '' });
+    setGradingForm({ theoryScore: '', testScore: '' });
   };
 
   const handleGradeSubmit = async (e) => {
@@ -247,7 +245,6 @@ const GradeTheory = () => {
         attemptId: selectedAttempt.id,
         theoryScore: isTestScorePage ? null : (score || null),
         testScore: isTestScorePage ? (score ? parseFloat(score) : null) : (gradingForm.testScore ? parseInt(gradingForm.testScore) : null),
-        teacherRemarks: gradingForm.teacherRemarks,
       });
 
       if (response.data?.success) {
@@ -606,17 +603,7 @@ const GradeTheory = () => {
                 />
               )}
 
-              {/* Remarks Input */}
-              <TextField
-                fullWidth
-                label="Teacher's Remarks (Optional)"
-                multiline
-                rows={4}
-                value={gradingForm.teacherRemarks}
-                onChange={(e) => setGradingForm({ ...gradingForm, teacherRemarks: e.target.value })}
-                placeholder="Add feedback for the student..."
-                sx={{ mb: 2 }}
-              />
+
             </Box>
           )}
         </DialogContent>

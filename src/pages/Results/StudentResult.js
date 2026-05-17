@@ -45,8 +45,34 @@ import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import ResultSheet from '../../components/ui/ResultSheet';
+import PrimaryResultSheet from '../../components/ui/PrimaryResultSheet';
+import KGResultSheet from '../../components/ui/KGResultSheet';
 
 const GRADES = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+const isKGLevel = (resultData) => {
+  const classInfo = resultData?.Class || resultData?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  const className = classInfo.name || classInfo.Name || classInfo.displayName || '';
+  const kgLevels = ['Preparatory', 'KG', 'Kindergarten', 'Pre-K', 'Preprimary'];
+  return [...kgLevels, 'Creche', 'Daycare'].some(level =>
+    schoolLevel.toLowerCase().includes(level.toLowerCase()) ||
+    className.toLowerCase().includes(level.toLowerCase())
+  );
+};
+
+const isPrimaryLevel = (resultData) => {
+  if (isKGLevel(resultData)) return false;
+  const classInfo = resultData?.Class || resultData?.class || {};
+  const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
+  const className = classInfo.name || classInfo.Name || classInfo.displayName || '';
+  const primaryLevels = ['Primary', 'Nursery'];
+  return primaryLevels.some(level =>
+    schoolLevel.toLowerCase().includes(level.toLowerCase()) ||
+    className.toLowerCase().includes(level.toLowerCase())
+  );
+};
 
 const StudentResult = () => {
   const navigate = useNavigate();
@@ -777,14 +803,26 @@ const StudentResult = () => {
                 </Box>
               </Box>
 
-              {/* Teacher Remarks */}
-              {(result.teacherRemarks || result.TeacherRemarks) && (
+              {/* Teacher Comments */}
+              {(result.teacherComment || result.TeacherComment || result.teacherRemarks || result.TeacherRemarks) && (
                 <Box sx={{ mt: 3, p: 2, bgcolor: '#E3F2FD', borderRadius: 2 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#1565C0', mb: 1 }}>
-                    Teacher's Remarks:
+                    Teacher's Comment:
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#333' }}>
-                    {result.teacherRemarks || result.TeacherRemarks}
+                    {result.teacherComment || result.TeacherComment || result.teacherRemarks || result.TeacherRemarks}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Behavior Comment */}
+              {(result.behaviorComment || result.BehaviorComment) && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: '#F3E5F5', borderRadius: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#7B1FA2', mb: 1 }}>
+                    Behavior & Work Habits:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#333' }}>
+                    {result.behaviorComment || result.BehaviorComment}
                   </Typography>
                 </Box>
               )}
@@ -1138,6 +1176,21 @@ const StudentResult = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Hidden Template for Download */}
+      {result && (
+        <Box sx={{ position: 'absolute', left: -9999, top: 0 }}>
+          <Box ref={downloadTemplateRef}>
+            {isKGLevel(result) ? (
+              <KGResultSheet data={result} readOnly={true} />
+            ) : isPrimaryLevel(result) ? (
+              <PrimaryResultSheet data={result} readOnly={true} />
+            ) : (
+              <ResultSheet data={result} readOnly={true} />
+            )}
+          </Box>
+        </Box>
+      )}
 
       {/* Print Styles */}
       <style>{`

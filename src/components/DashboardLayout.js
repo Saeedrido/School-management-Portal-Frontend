@@ -42,6 +42,7 @@ import {
   Edit,
   Bookmark,
   Campaign,
+  Comment,
 } from '@mui/icons-material';
 import schoolLogo from '../assets/school logo imj/school-logo bck.png';
 import { useAuth } from '../context/AuthContext';
@@ -98,6 +99,9 @@ const DashboardLayout = () => {
     { text: 'Grade Management', icon: <TrendingUp />, path: '/admin-dashboard/grade-management' },
     { text: 'Student Profiles', icon: <Person />, path: '/admin-dashboard/student-profiles' },
     { text: 'Information', icon: <Campaign />, action: 'info' },
+    { separator: true },
+    { text: 'Entrance Exams', icon: <School />, path: '/admin-dashboard/entrance-exams' },
+    { text: 'Candidates', icon: <People />, path: '/admin-dashboard/entrance-candidates' },
   ];
 
   const teacherMenuItems = [
@@ -108,6 +112,7 @@ const DashboardLayout = () => {
     { text: 'Students', icon: <People />, path: '/teacher-dashboard/students' },
     { text: 'Results', icon: <TrendingUp />, path: '/teacher-dashboard/results' },
     { text: 'Manual Score', icon: <Edit />, path: '/teacher-dashboard/manual-score' },
+    { text: 'Student Comments', icon: <Comment />, path: '/teacher-dashboard/student-comments' },
     { text: 'My ID Card', icon: <Badge />, path: '/my-id-card' },
   ];
 
@@ -217,7 +222,8 @@ const DashboardLayout = () => {
       </Box>
 
       <List sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 0 }}>
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx) => {
+          if (item.separator) return <Divider key={`sep-${idx}`} sx={{ borderColor: 'rgba(111, 175, 143, 0.15)', my: 1.5, mx: 2 }} />;
           const itemKey = item.path || item.action;
           const isActive = item.path ? location.pathname === item.path : false;
           return (

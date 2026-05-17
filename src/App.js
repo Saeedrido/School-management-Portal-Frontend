@@ -46,6 +46,7 @@ import TeacherDashboard from './pages/Dashboard/TeacherDashboard';
 import TeacherSchedule from './pages/Teachers/TeacherSchedule';
 import TeacherTopStudents from './pages/Teachers/TeacherTopStudents';
 import TeacherAssignments from './pages/Teachers/TeacherAssignments';
+import TeacherComments from './pages/Teachers/TeacherComments';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import ParentDashboard from './pages/Dashboard/ParentDashboard';
 import SystemStatus from './pages/Admin/SystemStatus';
@@ -57,119 +58,61 @@ import StudentProfile from './pages/Students/StudentProfile';
 import LandingPage from './pages/landingPage';
 import PaymentPage from './pages/PaymentPage';
 import Gallery from './pages/Gallery';
+import EntranceExamList from './pages/EntranceExams/EntranceExamList';
+import EntranceExamForm from './pages/EntranceExams/EntranceExamForm';
+import EntranceExamDetail from './pages/EntranceExams/EntranceExamDetail';
+import EntranceExamQuestions from './pages/EntranceExams/EntranceExamQuestions';
+import EntranceCandidateRegister from './pages/EntranceExams/EntranceCandidateRegister';
+import EntranceCandidateList from './pages/EntranceExams/EntranceCandidateList';
+import EntranceCandidateResult from './pages/EntranceExams/EntranceCandidateResult';
+import EntranceExamTake from './pages/EntranceExams/EntranceExamTake';
 
-// Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, hasRole, loading, tokenValidated, user } = useAuth();
-
-  console.log('🔒 ProtectedRoute - isAuthenticated:', isAuthenticated, 'tokenValidated:', tokenValidated, 'user:', user, 'allowedRoles:', allowedRoles);
-
-  if (loading) {
-    console.log('🔒 ProtectedRoute - Loading...');
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!isAuthenticated || !tokenValidated) {
-    console.log('🔒 ProtectedRoute - Not authenticated, redirecting to /login');
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRoles && !hasRole(allowedRoles)) {
-    console.log('🔒 ProtectedRoute - Role not allowed, redirecting to /dashboard. user.role:', user?.role);
-    return <Navigate to="/dashboard" />;
-  }
-
-  console.log('🔒 ProtectedRoute - Allowing access');
-  return children;
-};
-
-// Role-Based Dashboard Redirect Component
-const RoleBasedDashboardRedirect = () => {
-  const { user, loading, tokenValidated } = useAuth();
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!user || !tokenValidated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === 'Admin') {
-    return <Navigate to="/admin-dashboard" replace />;
-  } else if (user.role === 'Teacher') {
-    return <Navigate to="/teacher-dashboard" replace />;
-  } else if (user.role === 'Student') {
-    return <Navigate to="/student-dashboard" replace />;
-  } else if (user.role === 'Parent') {
-    return <Navigate to="/parent-dashboard" replace />;
-  }
-
-  return <Navigate to="/login" replace />;
-};
-
-// Public Route Component
-const PublicRoute = ({ children }) => {
-  const { loading, user, isAuthenticated } = useAuth();
-
-  console.log('🔓 PublicRoute - isAuthenticated:', isAuthenticated, 'user:', user);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  // If already authenticated, redirect to appropriate dashboard
-  if (isAuthenticated && user) {
-    console.log('🔓 PublicRoute - Already authenticated, redirecting...');
-    if (user.role === 'Student') {
-      return <Navigate to="/student-dashboard" replace />;
-    } else if (user.role === 'Teacher') {
-      return <Navigate to="/teacher-dashboard" replace />;
-    } else if (user.role === 'Admin') {
-      return <Navigate to="/admin-dashboard" replace />;
-    } else if (user.role === 'Parent') {
-      return <Navigate to="/parent-dashboard" replace />;
-    }
-  }
-
-  return children;
-};
-
-// Home Route Component
-const HomeRoute = () => {
-  const { isAuthenticated, user, loading, tokenValidated } = useAuth();
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (isAuthenticated && tokenValidated && user) {
-    if (user.role === 'Admin') {
-      return <Navigate to="/admin-dashboard" replace />;
-    } else if (user.role === 'Teacher') {
-      return <Navigate to="/teacher-dashboard" replace />;
-    } else if (user.role === 'Student') {
-      return <Navigate to="/student-dashboard" replace />;
-    } else if (user.role === 'Parent') {
-      return <Navigate to="/parent-dashboard" replace />;
-    }
-    return <Navigate to="/login" replace />;
-  }
-
+function HomeRoute() {
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
+  if (!isAuthenticated) return <LandingPage />;
+  if (user?.role === 'Admin') return <Navigate to="/admin-dashboard" replace />;
+  if (user?.role === 'Teacher') return <Navigate to="/teacher-dashboard" replace />;
+  if (user?.role === 'Student') return <Navigate to="/student-dashboard" replace />;
+  if (user?.role === 'Parent') return <Navigate to="/parent-dashboard" replace />;
   return <LandingPage />;
-};
+}
+
+function PublicRoute({ children }) {
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
+  if (isAuthenticated) {
+    if (user?.role === 'Admin') return <Navigate to="/admin-dashboard" replace />;
+    if (user?.role === 'Teacher') return <Navigate to="/teacher-dashboard" replace />;
+    if (user?.role === 'Student') return <Navigate to="/student-dashboard" replace />;
+    if (user?.role === 'Parent') return <Navigate to="/parent-dashboard" replace />;
+  }
+  return children;
+}
+
+function ProtectedRoute({ children, allowedRoles }) {
+  const { isAuthenticated, user, loading, hasRole } = useAuth();
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (allowedRoles && !hasRole(allowedRoles)) {
+    if (user?.role === 'Admin') return <Navigate to="/admin-dashboard" replace />;
+    if (user?.role === 'Teacher') return <Navigate to="/teacher-dashboard" replace />;
+    if (user?.role === 'Student') return <Navigate to="/student-dashboard" replace />;
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+function RoleBasedDashboardRedirect() {
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'Admin') return <Navigate to="/admin-dashboard" replace />;
+  if (user?.role === 'Teacher') return <Navigate to="/teacher-dashboard" replace />;
+  if (user?.role === 'Student') return <Navigate to="/student-dashboard" replace />;
+  if (user?.role === 'Parent') return <Navigate to="/parent-dashboard" replace />;
+  return <Navigate to="/" replace />;
+}
 
 function AppRoutes() {
   return (
@@ -229,6 +172,13 @@ function AppRoutes() {
         <Route path="parents/:id/edit" element={<ParentForm />} />
         <Route path="student-profiles" element={<StudentProfile />} />
         <Route path="students/:studentId/profile" element={<StudentProfile />} />
+        <Route path="entrance-exams" element={<EntranceExamList />} />
+        <Route path="entrance-exams/create" element={<EntranceExamForm />} />
+        <Route path="entrance-exams/:id" element={<EntranceExamDetail />} />
+        <Route path="entrance-exams/:id/questions" element={<EntranceExamQuestions />} />
+        <Route path="entrance-candidates" element={<EntranceCandidateList />} />
+        <Route path="entrance-candidates/register" element={<EntranceCandidateRegister />} />
+        <Route path="entrance-candidates/:id" element={<EntranceCandidateResult />} />
       </Route>
 
       {/* Teacher Dashboard Routes */}
@@ -254,6 +204,7 @@ function AppRoutes() {
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="student-comments" element={<TeacherComments />} />
       </Route>
 
       {/* Legacy redirects */}
@@ -270,6 +221,9 @@ function AppRoutes() {
       <Route path="/dashboard/report-cards" element={<ProtectedRoute><Navigate to="/admin-dashboard/report-cards" replace /></ProtectedRoute>} />
       <Route path="/dashboard/settings" element={<ProtectedRoute><Navigate to="/admin-dashboard/settings" replace /></ProtectedRoute>} />
       <Route path="/dashboard/teacher-assignments" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><TeacherAssignments /></DashboardLayout></ProtectedRoute>} />
+
+      {/* Entrance Exam Route - No Auth Required (token-based) */}
+      <Route path="/entrance-exam/take" element={<EntranceExamTake />} />
 
       {/* Student Exam Route - Standalone Page */}
       <Route path="/student/exam/:examId" element={<ProtectedRoute allowedRoles={['Student']}><TakeExam /></ProtectedRoute>} />

@@ -260,6 +260,7 @@ export const adminAPI = {
     getStudentAvailableTerms: (studentId) => api.get(`/api/results/student/${studentId}/available-terms`),
     publish: (data) => api.post('/api/results/publish', data),
     updateRemarks: (id, data) => api.put(`/api/results/${id}`, data),
+    updateTeacherComment: (id, data) => api.put(`/api/results/${id}/teacher-comment`, data),
     updatePsychomotorAffective: (id, data) => api.put(`/api/results/${id}/psychomotor-affective`, data),
     delete: (id) => api.delete(`/api/results/${id}`),
     calculatePositions: (data) => api.post('/api/results/positions/calculate', data),
@@ -424,6 +425,44 @@ export const informationAPI = {
   markAsRead: (userNotificationId) => api.post(`/api/information/mark-as-read/${userNotificationId}`),
   markAllAsRead: () => api.post('/api/information/mark-all-as-read'),
   deleteNotification: (userNotificationId) => api.delete(`/api/information/${userNotificationId}`),
+};
+
+// ============================================
+// ENTRANCE EXAM API
+// ============================================
+export const entranceExamAPI = {
+  getAll: () => api.get('/api/entranceexams'),
+  getByLevel: (level) => api.get(`/api/entranceexams/by-level/${level}`),
+  getById: (id) => api.get(`/api/entranceexams/${id}`),
+  create: (data) => api.post('/api/entranceexams', data),
+  update: (id, data) => api.put(`/api/entranceexams/${id}`, data),
+  delete: (id) => api.delete(`/api/entranceexams/${id}`),
+
+  getQuestions: (examId) => api.get(`/api/entranceexams/${examId}/questions`),
+  addQuestion: (examId, data) => api.post(`/api/entranceexams/${examId}/questions`, data),
+  updateQuestion: (questionId, data) => api.put(`/api/entranceexams/questions/${questionId}`, data),
+  deleteQuestion: (questionId) => api.delete(`/api/entranceexams/questions/${questionId}`),
+
+  uploadDocx: (examId, formData) => api.post(`/api/entranceexams/${examId}/questions/upload-docx`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+};
+
+export const entranceExamCandidateAPI = {
+  getByExam: (examId) => api.get(`/api/entranceexamcandidates/exam/${examId}`),
+  getByLevel: (level) => api.get(`/api/entranceexamcandidates/by-level/${level}`),
+  getById: (id) => api.get(`/api/entranceexamcandidates/${id}`),
+  register: (data) => api.post('/api/entranceexamcandidates', data),
+  update: (id, data) => api.put(`/api/entranceexamcandidates/${id}/reassign`, data),
+  delete: (id) => api.delete(`/api/entranceexamcandidates/${id}`),
+  hardDelete: (id) => api.delete(`/api/entranceexamcandidates/${id}/hard`),
+  reset: (id) => api.post(`/api/entranceexamcandidates/${id}/reset`),
+};
+
+export const entranceExamTakeAPI = {
+  getInfo: (token) => api.get('/api/entranceexamtake/info', { params: { token } }),
+  getQuestions: (token) => api.get('/api/entranceexamtake/questions', { params: { token } }),
+  submit: (data) => api.post('/api/entranceexamtake/submit', data),
 };
 
 // ============================================
