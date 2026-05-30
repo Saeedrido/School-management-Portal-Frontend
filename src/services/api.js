@@ -103,12 +103,20 @@ api.interceptors.response.use(
           console.error('Token refresh failed:', refreshError);
         }
       }
-      // Clear auth data
+      const currentToken = localStorage.getItem('token');
+      if (!currentToken) {
+        return Promise.reject(error);
+      }
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       
-      // Redirect based on user role - students go to student-login, others to login
+      const currentPath = window.location.pathname;
+      const publicPaths = ['/login', '/student-login', '/register', '/reset-password', '/'];
+      if (publicPaths.includes(currentPath)) {
+        return Promise.reject(error);
+      }
+      
       if (userRole === 'Student') {
         window.location.href = '/student-login';
       } else {
