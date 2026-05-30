@@ -92,7 +92,7 @@ const PaymentPage = () => {
                   300 Arundel
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '0.6rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  Learning Centre
+                  Learning Limited
                 </Typography>
               </Box>
             </Box>
@@ -337,7 +337,7 @@ const PaymentPage = () => {
                       <School sx={{ color: 'white' }} />
                     </Box>
                     <Typography sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem', fontFamily: 'Georgia, serif' }}>
-                      300 Arundel Learning Centre
+                      300 Arundel Learning Limited
                     </Typography>
                   </Box>
 
@@ -461,7 +461,7 @@ const PaymentPage = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box component="img" src={schoolLogo} alt="Logo" sx={{ width: 30, height: 30, objectFit: 'contain', borderRadius: '50%' }} />
               <Typography sx={{ color: '#999', fontSize: '0.9rem' }}>
-                © 2024 300 Arundel Learning Centre
+                © {new Date().getFullYear()} 300 Arundel Learning Limited
               </Typography>
             </Box>
             <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>

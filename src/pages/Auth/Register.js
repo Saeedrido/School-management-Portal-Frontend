@@ -154,10 +154,12 @@ const Register = () => {
               component="img"
               src={schoolLogo}
               alt="School Logo"
+              onClick={() => navigate('/')}
               sx={{
                 width: 200,
                 height: 200,
                 objectFit: 'contain',
+                cursor: 'pointer',
               }}
             />
           </Box>

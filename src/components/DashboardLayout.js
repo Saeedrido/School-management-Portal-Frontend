@@ -151,7 +151,7 @@ const DashboardLayout = () => {
         }}
       >
         {!collapsed && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box onClick={() => navigate('/')} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}>
             <Box
               component="img"
               src={schoolLogo}
@@ -169,7 +169,7 @@ const DashboardLayout = () => {
                 300 Arundel
               </Typography>
               <Typography variant="caption" sx={{ color: '#6FAF8F', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.3px' }}>
-                Learning Centre
+                 Learning Limited
               </Typography>
             </Box>
           </Box>
@@ -179,12 +179,14 @@ const DashboardLayout = () => {
             component="img"
             src={schoolLogo}
             alt="School Logo"
+            onClick={() => navigate('/')}
             sx={{
               width: 45,
               height: 45,
               borderRadius: 1.5,
               objectFit: 'contain',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              cursor: 'pointer',
             }}
           />
         )}

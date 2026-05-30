@@ -299,7 +299,7 @@ const CumulativeResult = () => {
                 {cumulativeResults.isPublished ? 'Published' : 'Not Yet Published'}
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                300 Arundel Learning Centre | Generated: {new Date().toLocaleDateString()}
+                300 Arundel Learning Limited | Generated: {new Date().toLocaleDateString()}
               </Typography>
             </Box>
           </Box>

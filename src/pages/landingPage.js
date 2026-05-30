@@ -107,7 +107,7 @@ const LandingPage = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ type: 'spring', stiffness: 400 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => navigate('/')}>
-                <Box sx={{ width: 45, height: 45, borderRadius: '50%', overflow: 'hidden' }}>
+                <Box sx={{ width: 55, height: 55, borderRadius: '50%', overflow: 'hidden' }}>
                   <img src={schoolLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </Box>
                 <Box>
@@ -115,7 +115,7 @@ const LandingPage = () => {
                     300 Arundel
                   </Typography>
                   <Typography sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    Learning Centre
+                    Learning Limited
                   </Typography>
                 </Box>
               </Box>
@@ -171,54 +171,56 @@ const LandingPage = () => {
                   </IconButton>
                 </motion.div>
               </Box>
-              <AnimatedButton 
-                onClick={() => navigate('/login')}
-                sx={{ 
-                  background: '#1a1a1a', 
-                  color: 'white', 
-                  px: { xs: 1.5, md: 2.5 }, 
-                  py: { xs: 0.75, md: 1 }, 
-                  fontWeight: 600, 
-                  fontSize: { xs: '0.65rem', md: '0.8rem' },
-                  borderRadius: '25px',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                  '&:hover': { background: '#333', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }
-                }}
-              >
-                Staff
-              </AnimatedButton>
-              <AnimatedButton 
-                onClick={() => navigate('/student-login')}
-                sx={{ 
-                  background: '#6FAF8F', 
-                  color: 'white', 
-                  px: { xs: 1.5, md: 2.5 }, 
-                  py: { xs: 0.75, md: 1 }, 
-                  fontWeight: 600, 
-                  fontSize: { xs: '0.65rem', md: '0.8rem' },
-                  borderRadius: '25px',
-                  boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
-                  '&:hover': { background: '#5FA08A', boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
-                }}
-              >
-                Student
-              </AnimatedButton>
-              <AnimatedButton 
-                onClick={() => navigate('/payment')} 
-                sx={{ 
-                  background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)', 
-                  color: 'white', 
-                  px: { xs: 1.5, md: 3 }, 
-                  py: { xs: 0.75, md: 1 }, 
-                  fontWeight: 600, 
-                  fontSize: { xs: '0.65rem', md: '0.85rem' },
-                  borderRadius: '25px',
-                  boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
-                  '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
-                }}
-              >
-                Enroll
-              </AnimatedButton>
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+                <AnimatedButton 
+                  onClick={() => navigate('/login')}
+                  sx={{ 
+                    background: '#1a1a1a', 
+                    color: 'white', 
+                    px: 2.5, 
+                    py: 1, 
+                    fontWeight: 600, 
+                    fontSize: '0.8rem',
+                    borderRadius: '25px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                    '&:hover': { background: '#333', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }
+                  }}
+                >
+                  Staff
+                </AnimatedButton>
+                <AnimatedButton 
+                  onClick={() => navigate('/student-login')}
+                  sx={{ 
+                    background: '#6FAF8F', 
+                    color: 'white', 
+                    px: 2.5, 
+                    py: 1, 
+                    fontWeight: 600, 
+                    fontSize: '0.8rem',
+                    borderRadius: '25px',
+                    boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
+                    '&:hover': { background: '#5FA08A', boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
+                  }}
+                >
+                  Student
+                </AnimatedButton>
+                <AnimatedButton 
+                  onClick={() => navigate('/payment')} 
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)', 
+                    color: 'white', 
+                    px: 3, 
+                    py: 1, 
+                    fontWeight: 600, 
+                    fontSize: '0.85rem',
+                    borderRadius: '25px',
+                    boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
+                    '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
+                  }}
+                >
+                  Make Payment
+                </AnimatedButton>
+              </Box>
             </Box>
           </Box>
         </Container>
@@ -234,7 +236,7 @@ const LandingPage = () => {
           zIndex: 1001, 
           background: 'white', 
           boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-          maxHeight: 150,
+          maxHeight: 300,
           overflowY: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -266,6 +268,20 @@ const LandingPage = () => {
               </Box>
             );
           })}
+          <Box sx={{ borderTop: '1px solid #eee', mt: 1, pt: 1, pb: 2, px: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Button fullWidth variant="outlined" onClick={() => { setMenuOpen(false); navigate('/login'); }}
+              sx={{ borderColor: '#333', color: '#333', fontWeight: 600, borderRadius: '25px' }}>
+              Staff
+            </Button>
+            <Button fullWidth variant="outlined" onClick={() => { setMenuOpen(false); navigate('/student-login'); }}
+              sx={{ borderColor: '#6FAF8F', color: '#6FAF8F', fontWeight: 600, borderRadius: '25px' }}>
+              Student
+            </Button>
+            <Button fullWidth variant="contained" onClick={() => { setMenuOpen(false); navigate('/payment'); }}
+              sx={{ bgcolor: '#6FAF8F', fontWeight: 600, borderRadius: '25px', '&:hover': { bgcolor: '#5FA08A' } }}>
+              Make Payment
+            </Button>
+          </Box>
         </Box>
       )}
 
@@ -315,7 +331,7 @@ const LandingPage = () => {
                   <FadeIn delay={0.4}>
                     <Box sx={{ fontWeight: 900, fontSize: { xs: '2.8rem', md: '4rem' }, color: '#1a1a1a', lineHeight: 1.1, mb: 3, fontFamily: 'Georgia, serif' }}>
                       <Box sx={{ display: 'block' }}>300 Arundel</Box>
-                      <Box sx={{ color: '#6FAF8F' }}>Learning Centre</Box>
+                      <Box sx={{ color: '#6FAF8F' }}>Learning Limited</Box>
                     </Box>
                   </FadeIn>
                   <FadeIn delay={0.5}>
@@ -338,7 +354,7 @@ const LandingPage = () => {
                           '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
                         }}
                       >
-                        Start Enrollment
+                        Make Payment
                       </AnimatedButton>
                       <AnimatedButton 
                         onClick={() => navigate('/parent-login')} 
@@ -457,7 +473,7 @@ const LandingPage = () => {
                 Building Futures Through Education
               </Typography>
               <Typography sx={{ color: '#666', maxWidth: 700, mx: 'auto', lineHeight: 1.9, fontSize: '1.05rem', fontFamily: 'Georgia, serif' }}>
-                At 300 Arundel Learning Centre, we believe every child deserves access to quality education. 
+                At 300 Arundel Learning Limited, we believe every child deserves access to quality education. 
                 Our commitment to academic excellence, character development, and holistic growth has made us 
                 a trusted name in education.
               </Typography>
@@ -755,7 +771,7 @@ const LandingPage = () => {
                     '&:hover': { background: '#5FA08A' }
                   }}
                 >
-                  Enroll Now
+                  Make Payment
                 </AnimatedButton>
                 <AnimatedButton 
                   onClick={() => navigate('/contact')} 
@@ -877,7 +893,7 @@ const LandingPage = () => {
                 </Box>
               </motion.div>
               <Typography sx={{ color: '#999', fontSize: '0.9rem' }}>
-                © 2024 300 Arundel Learning Centre. All rights reserved.
+                © {new Date().getFullYear()} 300 Arundel Learning Limited. All rights reserved.
               </Typography>
             </Box>
             <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>

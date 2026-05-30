@@ -129,7 +129,7 @@ const Gallery = () => {
               </Box>
               <Box>
                 <Typography sx={{ color: '#1a1a1a', fontWeight: 800, fontSize: '1rem' }}>300 Arundel</Typography>
-                <Typography sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase' }}>Learning Centre</Typography>
+                <Typography sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase' }}>Learning Limited</Typography>
               </Box>
             </Box>
             <IconButton onClick={() => window.location.href = '/'} sx={{ color: '#333' }}>
@@ -151,7 +151,7 @@ const Gallery = () => {
               Explore Our Campus Life
             </Typography>
             <Typography sx={{ color: '#666', maxWidth: 600, mx: 'auto', lineHeight: 1.8, fontSize: '1.05rem', fontFamily: 'Georgia, serif' }}>
-              Discover the vibrant learning environment, state-of-the-art facilities, and memorable moments at 300 Arundel Learning Centre.
+              Discover the vibrant learning environment, state-of-the-art facilities, and memorable moments at 300 Arundel Learning Limited.
             </Typography>
           </motion.div>
         </Box>

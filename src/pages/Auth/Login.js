@@ -179,10 +179,12 @@ const Login = () => {
               component="img"
               src={schoolLogo}
               alt="School Logo"
+              onClick={() => navigate('/')}
               sx={{
                 width: 140,
                 height: 140,
                 objectFit: 'contain',
+                cursor: 'pointer',
               }}
             />
           </Box>

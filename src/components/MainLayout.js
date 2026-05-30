@@ -103,12 +103,14 @@ const MainLayout = () => {
           component="img"
           src={schoolLogo}
           alt="School Logo"
+          onClick={() => navigate('/')}
           sx={{
             width: 50,
             height: 50,
             borderRadius: 1.5,
             objectFit: 'contain',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+            cursor: 'pointer',
           }}
         />
         <Box>
@@ -124,7 +126,7 @@ const MainLayout = () => {
             variant="caption"
             sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}
           >
-            Learning Centre
+             Learning Limited
           </Typography>
         </Box>
       </Box>
