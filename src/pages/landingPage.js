@@ -897,8 +897,14 @@ const LandingPage = () => {
               </Typography>
             </Box>
             <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
-              <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
-                Built by: 07041718422 / 07088201223
+              <Typography sx={{ color: '#6FAF8F', fontSize: '0.85rem', fontWeight: 600 }}>
+                Built by GTech Concept
+              </Typography>
+              <Typography sx={{ color: '#999', fontSize: '0.8rem' }}>
+                gtechconcept8@gmail.com
+              </Typography>
+              <Typography sx={{ color: '#666', fontSize: '0.8rem' }}>
+                07041718422 / 07088201223
               </Typography>
               <Typography sx={{ color: '#555', fontSize: '0.75rem' }}>
                 Call or WhatsApp for your own school portal or any application you want built
