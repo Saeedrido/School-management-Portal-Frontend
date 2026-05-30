@@ -896,9 +896,14 @@ const LandingPage = () => {
                 © {new Date().getFullYear()} 300 Arundel Learning Limited. All rights reserved.
               </Typography>
             </Box>
-            <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
-              Educating for Excellence
-            </Typography>
+            <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+              <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
+                Built by: 07041718422 / 07088201223
+              </Typography>
+              <Typography sx={{ color: '#555', fontSize: '0.75rem' }}>
+                Call or WhatsApp for your own school portal or any application you want built
+              </Typography>
+            </Box>
           </Box>
         </Container>
       </Box>
