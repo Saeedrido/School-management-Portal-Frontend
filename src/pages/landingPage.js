@@ -13,9 +13,6 @@ import {
 } from '@mui/material';
 import {
   ArrowForward,
-  Groups,
-  School,
-  EmojiEvents,
   Phone,
   Email,
   LocationOn,
@@ -68,12 +65,6 @@ const AnimatedIcon = ({ children }) => (
 const LandingPage = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const features = [
-    { icon: <School />, title: 'Academic Excellence', desc: 'Rigorous curriculum preparing students for future success' },
-    { icon: <Groups />, title: 'Expert Faculty', desc: 'Qualified teachers committed to student growth' },
-    { icon: <EmojiEvents />, title: 'Holistic Development', desc: 'Sports, arts, and character building programs' },
-  ];
 
   const stats = [
     { num: '500+', label: 'Students' },
@@ -462,66 +453,139 @@ const LandingPage = () => {
       </Box>
 
       {/* About Section */}
-      <Box id="about" sx={{ py: { xs: 8, md: 12 }, background: '#fff' }}>
+      <Box id="about" sx={{ py: { xs: 8, md: 12 }, background: '#fff', position: 'relative', overflow: 'hidden' }}>
+        <Box sx={{ position: 'absolute', top: -100, right: -100, width: 300, height: 300, borderRadius: '50%', background: 'rgba(111, 175, 143, 0.04)' }} />
+        <Box sx={{ position: 'absolute', bottom: -50, left: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(111, 175, 143, 0.06)' }} />
         <Container maxWidth="lg">
           <FadeIn>
-            <Box sx={{ textAlign: 'center', mb: 8 }}>
-              <Typography sx={{ color: '#6FAF8F', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', mb: 2, fontSize: '0.85rem' }}>
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography sx={{ color: '#6FAF8F', fontWeight: 600, letterSpacing: '3px', textTransform: 'uppercase', mb: 2, fontSize: '0.85rem' }}>
                 About Us
               </Typography>
-              <Typography sx={{ fontWeight: 800, fontSize: { xs: '2rem', md: '2.8rem' }, color: '#1a1a1a', fontFamily: 'Georgia, serif', mb: 3 }}>
-                Building Futures Through Education
-              </Typography>
-              <Typography sx={{ color: '#666', maxWidth: 700, mx: 'auto', lineHeight: 1.9, fontSize: '1.05rem', fontFamily: 'Georgia, serif' }}>
-                At 300 Arundel Learning Limited, we believe every child deserves access to quality education. 
-                Our commitment to academic excellence, character development, and holistic growth has made us 
-                a trusted name in education.
+              <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3rem' }, color: '#1a1a1a', fontFamily: 'Georgia, serif', mb: 4, lineHeight: 1.2 }}>
+                Welcome to{' '}
+                <Box component="span" sx={{ color: '#6FAF8F' }}>
+                  300 Arundel Learning Limited
+                </Box>
               </Typography>
             </Box>
           </FadeIn>
-          <Grid container spacing={4}>
-            {features.map((feature, i) => (
-              <Grid item xs={12} md={4} key={i}>
-                <FadeIn delay={i * 0.15}>
-                  <motion.div whileHover={{ y: -8 }} transition={{ type: 'spring', stiffness: 400 }}>
-                    <Card sx={{ 
-                      height: '100%', 
-                      borderRadius: '20px', 
-                      p: 4, 
-                      textAlign: 'center',
-                      border: '1px solid #eee',
-                      transition: 'all 0.3s ease',
-                      '&:hover': { 
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
-                        borderColor: '#6FAF8F'
-                      }
-                    }}>
-                      <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 400 }}>
-                        <Box sx={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          width: 70, 
-                          height: 70, 
-                          borderRadius: '50%', 
-                          background: 'rgba(111, 175, 143, 0.1)',
-                          mb: 3
+
+          <FadeIn delay={0.1}>
+            <Box sx={{
+              background: 'linear-gradient(135deg, #faf9f7 0%, #f0efe9 100%)',
+              borderRadius: '24px',
+              p: { xs: 3, md: 6 },
+              mb: 6,
+              border: '1px solid rgba(111, 175, 143, 0.15)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
+            }}>
+              <Grid container spacing={4} alignItems="center">
+                <Grid item xs={12} md={7}>
+                  <Stack spacing={3}>
+                    {[
+                      'a place where excellence in education meets character development. We are delighted to have you visit our website and learn more about our vibrant learning community.',
+                      'we are committed to providing quality education that inspires academic excellence, creativity, leadership, and lifelong learning. Our dedicated teachers and supportive environment help every child discover their unique potential and develop the skills needed to succeed in an ever-changing world.',
+                      'we believe that every learner deserves the opportunity to grow intellectually, socially, morally, and emotionally. Through innovative teaching methods, modern learning resources, and a strong partnership with parents, we strive to nurture confident, responsible, and productive citizens.',
+                      'whether you are a prospective parent, student, or visitor, we invite you to explore our programs and discover the exceptional learning experience we offer. We look forward to welcoming you to our school family.',
+                    ].map((text, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: i * 0.1 }}
+                        viewport={{ once: true }}
+                      >
+                        <Typography sx={{
+                          color: '#444',
+                          lineHeight: 1.9,
+                          fontSize: { xs: '0.95rem', md: '1.05rem' },
+                          fontFamily: 'Georgia, serif',
+                          pl: 2,
+                          borderLeft: '3px solid #6FAF8F',
                         }}>
-                          <Box sx={{ color: '#6FAF8F', fontSize: '2rem' }}>{feature.icon}</Box>
-                        </Box>
+                          <Box component="span" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
+                            {i === 0 ? 'Welcome to 300 Arundel Learning Limited, ' : i === 1 ? 'At 300 Arundel Learning Limited, ' : i === 2 ? 'We believe that ' : ''}
+                          </Box>
+                          {text}
+                        </Typography>
                       </motion.div>
-                      <Typography sx={{ fontWeight: 700, color: '#1a1a1a', mb: 2, fontFamily: 'Georgia, serif', fontSize: '1.25rem' }}>
-                        {feature.title}
+                    ))}
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6 }}
+                    viewport={{ once: true }}
+                  >
+                    <Box sx={{
+                      background: 'white',
+                      borderRadius: '20px',
+                      p: 4,
+                      textAlign: 'center',
+                      boxShadow: '0 15px 45px rgba(111, 175, 143, 0.15)',
+                      border: '1px solid rgba(111, 175, 143, 0.2)',
+                    }}>
+                      <Box sx={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', mx: 'auto', mb: 3, border: '3px solid #6FAF8F' }}>
+                        <img src={schoolLogo} alt="School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      </Box>
+                      <Typography sx={{ fontWeight: 800, color: '#1a1a1a', fontFamily: 'Georgia, serif', fontSize: '1.2rem', mb: 0.5 }}>
+                        300 Arundel
                       </Typography>
-                      <Typography sx={{ color: '#666', lineHeight: 1.8, fontFamily: 'Georgia, serif' }}>
-                        {feature.desc}
+                      <Typography sx={{ color: '#6FAF8F', fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+                        Learning Limited
                       </Typography>
-                    </Card>
+                      <Box sx={{ borderTop: '1px solid #eee', pt: 2, mt: 2 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LocationOn sx={{ color: '#6FAF8F', fontSize: 18 }} />
+                            <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
+                              12A Olusegun Asekun Close, Eyita, Ojokoro, Ikorodu, Lagos State
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    </Box>
                   </motion.div>
-                </FadeIn>
+                </Grid>
               </Grid>
-            ))}
-          </Grid>
+            </Box>
+          </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <Box sx={{
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
+                borderRadius: '16px',
+                p: { xs: 3, md: 4 },
+                boxShadow: '0 10px 30px rgba(111, 175, 143, 0.3)',
+              }}>
+                <motion.div
+                  animate={{ scale: [1, 1.02, 1] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                >
+                  <Typography sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: { xs: '1.1rem', md: '1.4rem' },
+                    fontFamily: 'Georgia, serif',
+                    fontStyle: 'italic',
+                    letterSpacing: '1px',
+                  }}>
+                    "Building Knowledge, Character, and Excellence for the Future."
+                  </Typography>
+                </motion.div>
+              </Box>
+            </motion.div>
+          </FadeIn>
         </Container>
       </Box>
 
@@ -810,9 +874,9 @@ const LandingPage = () => {
                 </Typography>
                 <Stack spacing={3}>
                   {[
-                    { icon: <Phone />, label: 'Phone', value: '+234 XXX XXX XXXX' },
-                    { icon: <Email />, label: 'Email', value: 'info@300arundel.edu' },
-                    { icon: <LocationOn />, label: 'Location', value: 'Arundel, Nigeria' },
+                    { icon: <Phone />, label: 'Phone', value: '08023196047 / 08033995565' },
+                    { icon: <Email />, label: 'Email', value: '300arundellearninglimited@gmail.com' },
+                    { icon: <LocationOn />, label: 'Location', value: '12A Olusegun Asekun Close, Eyita, Ojokoro, Ikorodu, Lagos State, Nigeria' },
                   ].map((item, i) => (
                     <motion.div
                       key={i}

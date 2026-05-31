@@ -9,9 +9,13 @@ import {
   CardContent,
   Stack,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  List,
+  ListItemButton,
+  ListItemText,
 } from '@mui/material';
 import {
   Phone,
@@ -21,7 +25,6 @@ import {
   ArrowBack,
   Payment as PaymentIcon,
   AccountBalance,
-  School,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -39,21 +42,46 @@ const FadeIn = ({ children, delay = 0 }) => (
 
 const PaymentPage = () => {
   const navigate = useNavigate();
-  const [selectedMethod, setSelectedMethod] = useState('bank');
   const [copied, setCopied] = useState('');
+  const [numberModalOpen, setNumberModalOpen] = useState(false);
+  const [paymentTypeModalOpen, setPaymentTypeModalOpen] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
+  const [selectedWhatsAppNumber, setSelectedWhatsAppNumber] = useState('');
 
-  const paymentDetails = {
-    accountNumber: '1234567890',
-    accountName: 'School Management System',
-    accountHolder: 'School Bursar Office',
-    phoneNumber: '+2347041718422',
+  const whatsAppNumbers = ['08023233594', '08135460603', '08023186047'];
+  const paymentTypes = ['SCH. FEES', 'BOOKS', 'UNIFORM', 'SCHOOL BUS', 'MISCELLANEOUS'];
+  const bankAccounts = [
+    { label: 'SCH. FEES', number: '4240065190' },
+    { label: 'BOOKS', number: '4240065200' },
+    { label: 'UNIFORM', number: '4240065217' },
+    { label: 'SCHOOL BUS', number: '4240065224' },
+    { label: 'MISCELLANEOUS', number: '4240065231' },
+  ];
+
+  const getGreeting = () => {
+    const hours = new Date().getHours();
+    if (hours < 12) return 'Good morning';
+    if (hours < 17) return 'Good afternoon';
+    return 'Good evening';
   };
 
-  const paymentMethods = [
-    { id: 'bank', icon: <AccountBalance />, title: 'Bank Transfer', desc: 'Direct bank transfer to our school account' },
-    { id: 'card', icon: <PaymentIcon />, title: 'Card Payment', desc: 'Pay with Visa, MasterCard, or other cards' },
-    { id: 'cash', icon: <PaymentIcon />, title: 'Cash Payment', desc: 'Visit our office for cash payment' },
-  ];
+  const handleWhatsAppClick = () => setNumberModalOpen(true);
+
+  const handleNumberSelect = (num) => {
+    setSelectedWhatsAppNumber(num);
+    setNumberModalOpen(false);
+    setPaymentTypeModalOpen(true);
+  };
+
+  const handlePaymentTypeSelect = (type) => {
+    setPaymentTypeModalOpen(false);
+    const greeting = getGreeting();
+    const message = encodeURIComponent(
+      `${greeting},\n\nI have made a payment for ${type}.\n\nBelow is my transaction receipt for confirmation.\n\nThank you.`
+    );
+    const whatsappNum = '234' + selectedWhatsAppNumber.slice(1);
+    window.open(`https://wa.me/${whatsappNum}?text=${message}`, '_blank');
+  };
 
   const handleCopy = (text, label) => {
     navigator.clipboard.writeText(text);
@@ -61,14 +89,7 @@ const PaymentPage = () => {
     setTimeout(() => setCopied(''), 2000);
   };
 
-  const handleWhatsAppClick = () => {
-    const message = encodeURIComponent(
-      `Hello, I would like to make a payment for school fees.\n\n` +
-      `Amount: NGN 50,000 (Tuition)\n` +
-      `Please confirm receipt. Thank you!`
-    );
-    window.open(`https://wa.me/${paymentDetails.phoneNumber.replace('+', '')}?text=${message}`, '_blank');
-  };
+  const handleCallClick = () => setCallModalOpen(true);
 
   return (
     <Box sx={{ overflowX: 'hidden', fontFamily: 'Georgia, serif', background: '#faf9f7' }}>
@@ -141,290 +162,198 @@ const PaymentPage = () => {
 
       {/* Main Content */}
       <Box sx={{ py: { xs: 6, md: 8 }, mt: -4 }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            {/* Payment Methods */}
-            <Grid item xs={12} lg={8}>
-              <FadeIn delay={0.2}>
-                <Box sx={{ mb: 6 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 4, fontFamily: 'Georgia, serif' }}>
-                    Select Payment Method
+        <Container maxWidth="md">
+          <FadeIn delay={0.2}>
+            <Card sx={{ borderRadius: '20px', border: '1px solid #eee', overflow: 'hidden', mb: 4 }}>
+              <Box sx={{ 
+                p: 3, 
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <AccountBalance sx={{ color: 'white', fontSize: 28 }} />
+                  <Typography sx={{ color: 'white', fontWeight: 700, fontSize: { xs: '1.1rem', md: '1.3rem' }, fontFamily: 'Georgia, serif' }}>
+                    SCHOOL BANK DETAILS
                   </Typography>
-                  <Grid container spacing={3}>
-                    {paymentMethods.map((method, index) => (
-                      <Grid item xs={12} sm={4} key={method.id}>
-                        <Card
-                          onClick={() => setSelectedMethod(method.id)}
-                          sx={{
-                            cursor: 'pointer',
-                            borderRadius: '20px',
-                            border: `2px solid ${selectedMethod === method.id ? '#6FAF8F' : '#eee'}`,
-                            background: selectedMethod === method.id ? 'rgba(111, 175, 143, 0.05)' : 'white',
-                            transition: 'all 0.3s ease',
-                            '&:hover': { 
-                              transform: 'translateY(-4px)',
-                              boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
-                              borderColor: '#6FAF8F'
-                            }
-                          }}
-                        >
-                          <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                            <Box sx={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              width: 60, 
-                              height: 60, 
-                              borderRadius: '50%', 
-                              background: selectedMethod === method.id 
-                                ? 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)' 
-                                : 'rgba(111, 175, 143, 0.1)',
-                              mb: 2,
-                              color: selectedMethod === method.id ? 'white' : '#6FAF8F'
-                            }}>
-                              {method.icon}
-                            </Box>
-                            <Typography sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}>
-                              {method.title}
-                            </Typography>
-                            <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
-                              {method.desc}
-                            </Typography>
-                            {selectedMethod === method.id && (
-                              <Box sx={{ mt: 2 }}>
-                                <CheckCircle sx={{ color: '#6FAF8F', fontSize: 24 }} />
-                              </Box>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
+                </Box>
+              </Box>
+              <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
+                      Bank Name
+                    </Typography>
+                    <Paper sx={{ p: 2, borderRadius: '12px', background: '#faf9f7' }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a1a1a' }}>
+                        ECO BANK
+                      </Typography>
+                    </Paper>
                   </Grid>
-                </Box>
-              </FadeIn>
-
-              {/* Bank Details */}
-              <FadeIn delay={0.3}>
-                <Card sx={{ borderRadius: '20px', border: '1px solid #eee', overflow: 'hidden' }}>
-                  <Box sx={{ 
-                    p: 3, 
-                    background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2
-                  }}>
-                    <AccountBalance sx={{ color: 'white', fontSize: 28 }} />
-                    <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '1.2rem', fontFamily: 'Georgia, serif' }}>
-                      Bank Transfer Details
+                  <Grid item xs={12} md={6}>
+                    <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
+                      Account Name
                     </Typography>
-                  </Box>
-                  <CardContent sx={{ p: 4 }}>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
-                          Account Number
-                        </Typography>
+                    <Paper sx={{ p: 2, borderRadius: '12px', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Typography sx={{ fontWeight: 600, color: '#1a1a1a' }}>
+                        300 ARUNDEL LEARNING LIMITED
+                      </Typography>
+                      <IconButton onClick={() => handleCopy('300 ARUNDEL LEARNING LIMITED', 'Account Name')} sx={{ color: '#6FAF8F' }}>
+                        <ContentCopy />
+                      </IconButton>
+                    </Paper>
+                  </Grid>
+                </Grid>
+
+                <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 2, mt: 4 }}>
+                  ACCOUNT DETAILS
+                </Typography>
+                <Grid container spacing={2}>
+                  {bankAccounts.map((account) => (
+                    <Grid item xs={12} sm={6} key={account.label}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        whileHover={{ y: -3 }}
+                      >
                         <Paper sx={{ 
-                          p: 2, 
-                          borderRadius: '12px', 
+                          p: 2.5, 
+                          borderRadius: '16px', 
                           background: '#faf9f7',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
+                          border: '1px solid #eee',
+                          transition: 'all 0.3s ease',
+                          '&:hover': { borderColor: '#6FAF8F', boxShadow: '0 5px 20px rgba(111, 175, 143, 0.1)' }
                         }}>
-                          <Typography sx={{ fontWeight: 700, fontSize: '1.4rem', color: '#6FAF8F', fontFamily: 'monospace', letterSpacing: 2 }}>
-                            {paymentDetails.accountNumber}
+                          <Typography sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>
+                            {account.label}
                           </Typography>
-                          <IconButton onClick={() => handleCopy(paymentDetails.accountNumber, 'Account Number')} sx={{ color: '#6FAF8F' }}>
-                            <ContentCopy />
-                          </IconButton>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: { xs: '1.1rem', md: '1.3rem' }, color: '#1a1a1a', fontFamily: 'monospace', letterSpacing: 2 }}>
+                              {account.number}
+                            </Typography>
+                            <IconButton onClick={() => handleCopy(account.number, account.label)} sx={{ color: '#6FAF8F' }}>
+                              <ContentCopy />
+                            </IconButton>
+                          </Box>
                         </Paper>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
-                          Account Name
-                        </Typography>
-                        <Paper sx={{ 
-                          p: 2, 
-                          borderRadius: '12px', 
-                          background: '#faf9f7',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}>
-                          <Typography sx={{ fontWeight: 600, color: '#1a1a1a' }}>
-                            {paymentDetails.accountName}
-                          </Typography>
-                          <IconButton onClick={() => handleCopy(paymentDetails.accountName, 'Account Name')} sx={{ color: '#6FAF8F' }}>
-                            <ContentCopy />
-                          </IconButton>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
-                          Bank Name
-                        </Typography>
-                        <Paper sx={{ 
-                          p: 2, 
-                          borderRadius: '12px', 
-                          background: '#faf9f7',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}>
-                          <Typography sx={{ fontWeight: 600, color: '#1a1a1a' }}>
-                            {paymentDetails.accountHolder}
-                          </Typography>
-                          <IconButton onClick={() => handleCopy(paymentDetails.accountHolder, 'Bank Name')} sx={{ color: '#6FAF8F' }}>
-                            <ContentCopy />
-                          </IconButton>
-                        </Paper>
-                      </Grid>
+                      </motion.div>
                     </Grid>
-                  </CardContent>
-                </Card>
-              </FadeIn>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </FadeIn>
 
-              {/* Amount */}
-              <FadeIn delay={0.4}>
-                <Box sx={{ mt: 4 }}>
-                  <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, mb: 2 }}>
-                    Payment Amount
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    defaultValue="50000"
-                    type="number"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography sx={{ color: '#6FAF8F', fontWeight: 700, fontSize: '1.5rem' }}>
-                            ₦
-                          </Typography>
-                        </InputAdornment>
-                      ),
+          <FadeIn delay={0.3}>
+            <Card sx={{ borderRadius: '20px', border: '1px solid #eee', p: { xs: 3, md: 5 }, textAlign: 'center' }}>
+              <Typography sx={{ fontWeight: 700, color: '#1a1a1a', mb: 2, fontFamily: 'Georgia, serif', fontSize: { xs: '1.1rem', md: '1.2rem' } }}>
+                After Making Payment
+              </Typography>
+              <Typography sx={{ color: '#666', mb: 4, lineHeight: 1.8, maxWidth: 500, mx: 'auto' }}>
+                After making payment, please send your transaction receipt via WhatsApp or call us.
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button 
+                    startIcon={<WhatsApp />}
+                    onClick={handleWhatsAppClick}
+                    sx={{ 
+                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                      color: 'white', 
+                      px: 4, 
+                      py: 1.5, 
+                      fontWeight: 600, 
+                      borderRadius: '12px',
+                      '&:hover': { opacity: 0.9 }
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        background: 'white',
-                        borderRadius: '15px',
-                        '& fieldset': { borderColor: '#eee' },
-                        '&:hover fieldset': { borderColor: '#6FAF8F' },
-                        '&.Mui-focused fieldset': { borderColor: '#6FAF8F' },
-                      },
+                  >
+                    Message on WhatsApp
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button 
+                    startIcon={<Phone />}
+                    onClick={handleCallClick}
+                    sx={{ 
+                      border: '2px solid #333',
+                      color: '#333', 
+                      px: 4, 
+                      py: 1.5, 
+                      fontWeight: 600, 
+                      borderRadius: '12px',
+                      '&:hover': { background: '#f5f5f5' }
                     }}
-                  />
-                </Box>
-              </FadeIn>
-            </Grid>
-
-            {/* Sidebar */}
-            <Grid item xs={12} lg={4}>
-              <FadeIn delay={0.2}>
-                <Card sx={{ borderRadius: '20px', border: '1px solid #eee', p: 3, position: 'sticky', top: 100 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                    <Box sx={{ 
-                      width: 50, 
-                      height: 50, 
-                      borderRadius: '50%', 
-                      background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <School sx={{ color: 'white' }} />
-                    </Box>
-                    <Typography sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem', fontFamily: 'Georgia, serif' }}>
-                      300 Arundel Learning Limited
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mb: 3, p: 2, borderRadius: '12px', background: '#faf9f7' }}>
-                    <Typography sx={{ color: '#999', fontSize: '0.8rem', fontWeight: 600, mb: 1 }}>
-                      Payment For
-                    </Typography>
-                    <Typography sx={{ fontWeight: 700, color: '#1a1a1a' }}>
-                      School Fees - {new Date().getFullYear()}
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={2}>
-                    <Button 
-                      fullWidth 
-                      variant="contained"
-                      sx={{ 
-                        background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
-                        color: 'white', 
-                        py: 1.5, 
-                        fontWeight: 700, 
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
-                        '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
-                      }}
-                    >
-                      Confirm Payment
-                    </Button>
-                  </Stack>
-                </Card>
-              </FadeIn>
-
-              {/* Contact Support */}
-              <FadeIn delay={0.3}>
-                <Card sx={{ borderRadius: '20px', border: '1px solid #eee', p: 3, mt: 3 }}>
-                  <Typography sx={{ fontWeight: 700, color: '#1a1a1a', mb: 3, fontFamily: 'Georgia, serif' }}>
-                    Need Assistance?
-                  </Typography>
-                  <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 3, lineHeight: 1.8 }}>
-                    After making payment, please send your transaction receipt via WhatsApp or call us.
-                  </Typography>
-                  <Stack spacing={2}>
-                    <Button 
-                      fullWidth 
-                      startIcon={<WhatsApp />}
-                      onClick={handleWhatsAppClick}
-                      sx={{ 
-                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                        color: 'white', 
-                        py: 1.5, 
-                        fontWeight: 600, 
-                        borderRadius: '12px',
-                        '&:hover': { opacity: 0.9 }
-                      }}
-                    >
-                      Message on WhatsApp
-                    </Button>
-                    <Button 
-                      fullWidth 
-                      startIcon={<Phone />}
-                      href={`tel:${paymentDetails.phoneNumber}`}
-                      sx={{ 
-                        border: '2px solid #333',
-                        color: '#333', 
-                        py: 1.5, 
-                        fontWeight: 600, 
-                        borderRadius: '12px',
-                        '&:hover': { background: '#f5f5f5' }
-                      }}
-                    >
-                      Call Us
-                    </Button>
-                  </Stack>
-                  <Box sx={{ mt: 3, p: 2, borderRadius: '12px', background: '#faf9f7', textAlign: 'center' }}>
-                    <Typography sx={{ color: '#999', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
-                      Phone Number
-                    </Typography>
-                    <Typography sx={{ fontWeight: 700, color: '#6FAF8F', fontSize: '1.1rem' }}>
-                      {paymentDetails.phoneNumber}
-                    </Typography>
-                  </Box>
-                </Card>
-              </FadeIn>
-            </Grid>
-          </Grid>
+                  >
+                    Call Us
+                  </Button>
+                </motion.div>
+              </Stack>
+            </Card>
+          </FadeIn>
         </Container>
       </Box>
+
+      {/* WhatsApp Number Modal */}
+      <Dialog open={numberModalOpen} onClose={() => setNumberModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#1a1a1a' }}>
+          Select a number to contact
+        </DialogTitle>
+        <DialogContent>
+          <List>
+            {whatsAppNumbers.map((num) => (
+              <ListItemButton
+                key={num}
+                onClick={() => handleNumberSelect(num)}
+                sx={{ borderRadius: '12px', mb: 1, '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.08)' } }}
+              >
+                <ListItemText primary={num} primaryTypographyProps={{ fontWeight: 600, fontSize: '1.1rem' }} />
+                <WhatsApp sx={{ color: '#25D366', fontSize: 28 }} />
+              </ListItemButton>
+            ))}
+          </List>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Type Modal */}
+      <Dialog open={paymentTypeModalOpen} onClose={() => setPaymentTypeModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#1a1a1a' }}>
+          What payment did you make?
+        </DialogTitle>
+        <DialogContent>
+          <List>
+            {paymentTypes.map((type) => (
+              <ListItemButton
+                key={type}
+                onClick={() => handlePaymentTypeSelect(type)}
+                sx={{ borderRadius: '12px', mb: 1, '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.08)' } }}
+              >
+                <ListItemText primary={type} primaryTypographyProps={{ fontWeight: 600 }} />
+              </ListItemButton>
+            ))}
+          </List>
+        </DialogContent>
+      </Dialog>
+
+      {/* Call Number Modal */}
+      <Dialog open={callModalOpen} onClose={() => setCallModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#1a1a1a' }}>
+          Select a number to call
+        </DialogTitle>
+        <DialogContent>
+          <List>
+            {whatsAppNumbers.map((num) => (
+              <ListItemButton
+                key={num}
+                component="a"
+                href={`tel:${num}`}
+                sx={{ borderRadius: '12px', mb: 1, '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.08)' } }}
+              >
+                <ListItemText primary={num} primaryTypographyProps={{ fontWeight: 600, fontSize: '1.1rem' }} />
+                <Phone sx={{ color: '#6FAF8F', fontSize: 24 }} />
+              </ListItemButton>
+            ))}
+          </List>
+        </DialogContent>
+      </Dialog>
 
       {/* Copied Notification */}
       {copied && (
