@@ -24,6 +24,10 @@ import {
   CircularProgress,
   Avatar,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
 } from '@mui/material';
 import {
   Person,
@@ -35,6 +39,8 @@ import {
   AssignmentTurnedIn,
   MoreVert,
   CloudUpload,
+  Description,
+  Info,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
@@ -60,6 +66,7 @@ const StudentList = () => {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [academicYearId, setAcademicYearId] = useState('');
+  const [uploadInfoOpen, setUploadInfoOpen] = useState(false);
 
   const handleBulkUpload = async (event) => {
     const file = event.target.files[0];
@@ -326,37 +333,7 @@ const StudentList = () => {
             />
 
             {user?.role === 'Admin' && (
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<PersonAdd />}
-                  onClick={() => navigate(`${basePath}/students/new`)}
-                  sx={{
-                    background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
-                    borderRadius: 2.5,
-                    px: 2.5,
-                    boxShadow: '0 4px 14px rgba(111, 175, 143, 0.3)',
-                  }}
-                >
-                  Add Student
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<PersonAdd />}
-                  onClick={() => navigate(`${basePath}/students/add-student-parent`)}
-                  sx={{
-                    borderColor: '#FF3E8A',
-                    color: '#FF3E8A',
-                    borderRadius: 2.5,
-                    px: 2.5,
-                    '&:hover': {
-                      borderColor: '#FF5DA3',
-                      background: 'rgba(255, 62, 138, 0.08)',
-                    },
-                  }}
-                >
-                  Add + Parent
-                </Button>
+              <>
                 <input
                   accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   style={{ display: 'none' }}
@@ -364,17 +341,58 @@ const StudentList = () => {
                   type="file"
                   onChange={handleBulkUpload}
                 />
-                <label htmlFor="bulk-student-upload">
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 1, 
+                  flexWrap: 'wrap',
+                  width: { xs: '100%', sm: 'auto' },
+                }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<PersonAdd />}
+                    onClick={() => navigate(`${basePath}/students/new`)}
+                    size="small"
+                    sx={{
+                      background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                      borderRadius: 2.5,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 4px 14px rgba(111, 175, 143, 0.3)',
+                    }}
+                  >
+                    Add Student
+                  </Button>
                   <Button
                     variant="outlined"
-                    component="span"
+                    startIcon={<PersonAdd />}
+                    onClick={() => navigate(`${basePath}/students/add-student-parent`)}
+                    size="small"
+                    sx={{
+                      borderColor: '#FF3E8A',
+                      color: '#FF3E8A',
+                      borderRadius: 2.5,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
+                      '&:hover': {
+                        borderColor: '#FF5DA3',
+                        background: 'rgba(255, 62, 138, 0.08)',
+                      },
+                    }}
+                  >
+                    Add + Parent
+                  </Button>
+                  <Button
+                    variant="outlined"
                     startIcon={<CloudUpload />}
                     disabled={uploadLoading}
+                    size="small"
+                    onClick={() => setUploadInfoOpen(true)}
                     sx={{
                       borderColor: '#6FAF8F',
                       color: '#6FAF8F',
                       borderRadius: 2.5,
-                      px: 2.5,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
                       '&:hover': {
                         borderColor: '#4E8C70',
                         background: 'rgba(111, 175, 143, 0.08)',
@@ -383,12 +401,79 @@ const StudentList = () => {
                   >
                     {uploadLoading ? 'Uploading...' : 'Bulk Upload'}
                   </Button>
-                </label>
-              </Box>
+                </Box>
+              </>
             )}
           </Box>
         </CardContent>
       </Card>
+
+      {/* Upload Info Modal */}
+      <Dialog open={uploadInfoOpen} onClose={() => setUploadInfoOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Description sx={{ color: '#6FAF8F' }} />
+          Student Upload Guide
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 3, p: 2.5, borderRadius: '12px', background: 'rgba(111, 175, 143, 0.06)', border: '1px solid rgba(111, 175, 143, 0.15)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Info sx={{ color: '#6FAF8F', fontSize: 20 }} />
+              <Typography sx={{ fontWeight: 600, color: '#1a1a1a' }}>
+                Accepted File Format
+              </Typography>
+            </Box>
+            <Typography sx={{ color: '#666', fontSize: '0.9rem' }}>
+              Only <strong>.docx</strong> (Word Document) files are accepted.
+              Please prepare your student list in a Word document before uploading.
+            </Typography>
+          </Box>
+
+          <Typography sx={{ fontWeight: 600, color: '#1a1a1a', mb: 2 }}>
+            How to prepare your document:
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+            {[
+              'Open Microsoft Word and create a new document.',
+              'List each student with their details in the format: <strong>Full Name, Gender, Date of Birth, Address, Phone Number</strong>.',
+              'Separate each student on a new line.',
+              'Save the document as a .docx file and upload it using the button below.',
+            ].map((step, i) => (
+              <Box key={i} sx={{ display: 'flex', gap: 1.5 }}>
+                <Box sx={{
+                  width: 24, height: 24, borderRadius: '50%', background: '#6FAF8F',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontWeight: 700, fontSize: '0.75rem', flexShrink: 0, mt: 0.3,
+                }}>
+                  {i + 1}
+                </Box>
+                <Typography sx={{ color: '#555', fontSize: '0.9rem', lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: step }} />
+              </Box>
+            ))}
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setUploadInfoOpen(false)} sx={{ color: '#666', borderRadius: 2.5 }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<CloudUpload />}
+              onClick={() => {
+                setUploadInfoOpen(false);
+                setTimeout(() => document.getElementById('bulk-student-upload')?.click(), 200);
+              }}
+              sx={{
+                background: 'linear-gradient(135deg, #6FAF8F 0%, #4E8C70 100%)',
+                borderRadius: 2.5,
+                px: 3,
+              }}
+            >
+              Choose File
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
       {classes.length === 0 && !loading && user?.role === 'Admin' && (
         <Card sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
