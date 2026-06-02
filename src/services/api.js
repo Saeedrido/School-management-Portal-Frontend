@@ -117,11 +117,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      if (userRole === 'Student') {
-        window.location.href = '/student-login';
-      } else {
-        window.location.href = '/login';
-      }
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
