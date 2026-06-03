@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
@@ -260,9 +260,9 @@ function App() {
       <AuthProvider>
         <MockDataProvider>
           <NotificationProvider>
-          <Router>
+          <HashRouter>
             <AppRoutes />
-          </Router>
+          </HashRouter>
           </NotificationProvider>
         </MockDataProvider>
       </AuthProvider>
