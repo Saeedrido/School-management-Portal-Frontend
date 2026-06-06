@@ -229,6 +229,18 @@ export const adminAPI = {
     enroll: (data) => api.post('/api/students/enroll', data),
     linkParent: (studentId, data) => api.post(`/api/students/${studentId}/parents`, data),
     generateIdCard: (id) => api.get(`/api/students/${id}/id-card`),
+    exportToCsv: (classId, academicYearId) => {
+      const params = new URLSearchParams();
+      if (academicYearId) params.append('academicYearId', academicYearId);
+      return api.get(`/api/students/class/${classId}/export?${params.toString()}`, { responseType: 'blob' });
+    },
+    getByClassMinimalPaged: (classId, page = 1, pageSize = 10, academicYearId = null) => {
+      const params = new URLSearchParams();
+      params.append('pageNumber', page);
+      params.append('pageSize', pageSize);
+      if (academicYearId) params.append('academicYearId', academicYearId);
+      return api.get(`/api/students/class/${classId}/list-paged?${params.toString()}`);
+    },
   },
   exams: {
     getAll: () => api.get('/api/exams'),

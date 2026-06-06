@@ -211,8 +211,8 @@ const LandingPage = () => {
                 >
                   Make Payment
                 </AnimatedButton>
-              </Box>
             </Box>
+          </Box>
           </Box>
         </Container>
       </Box>
@@ -329,39 +329,6 @@ const LandingPage = () => {
                     <Typography sx={{ color: '#666', fontSize: { xs: '1rem', md: '1.15rem' }, lineHeight: 1.8, maxWidth: 480, mb: 4, fontFamily: 'Georgia, serif' }}>
                       Nurturing minds, building character, and shaping the leaders of tomorrow through quality education and holistic development.
                     </Typography>
-                  </FadeIn>
-                  <FadeIn delay={0.6}>
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                      <AnimatedButton 
-                        onClick={() => navigate('/payment')} 
-                        sx={{ 
-                          background: 'linear-gradient(135deg, #6FAF8F 0%, #4a8c6f 100%)',
-                          color: 'white', 
-                          px: 4, 
-                          py: 1.5, 
-                          fontWeight: 600, 
-                          borderRadius: '25px',
-                          boxShadow: '0 4px 15px rgba(111, 175, 143, 0.3)',
-                          '&:hover': { boxShadow: '0 6px 20px rgba(111, 175, 143, 0.4)' }
-                        }}
-                      >
-                        Make Payment
-                      </AnimatedButton>
-                      <AnimatedButton 
-                        onClick={() => navigate('/parent-login')} 
-                        sx={{ 
-                          border: '2px solid #333', 
-                          color: '#333', 
-                          px: 4, 
-                          py: 1.5, 
-                          fontWeight: 600, 
-                          borderRadius: '25px',
-                          '&:hover': { background: 'rgba(0,0,0,0.02)' }
-                        }}
-                      >
-                        Parent Portal
-                      </AnimatedButton>
-                    </Stack>
                   </FadeIn>
                 </Box>
               </FadeIn>
@@ -958,20 +925,6 @@ const LandingPage = () => {
               </motion.div>
               <Typography sx={{ color: '#999', fontSize: '0.9rem' }}>
                 © {new Date().getFullYear()} 300 Arundel Learning Limited. All rights reserved.
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
-              <Typography sx={{ color: '#6FAF8F', fontSize: '0.85rem', fontWeight: 600 }}>
-                Built by GTech Concept
-              </Typography>
-              <Typography sx={{ color: '#999', fontSize: '0.8rem' }}>
-                gtechconcept8@gmail.com
-              </Typography>
-              <Typography sx={{ color: '#666', fontSize: '0.8rem' }}>
-                07041718422 / 07088201223
-              </Typography>
-              <Typography sx={{ color: '#555', fontSize: '0.75rem' }}>
-                Call or WhatsApp for your own school portal or any application you want built
               </Typography>
             </Box>
           </Box>

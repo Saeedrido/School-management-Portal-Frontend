@@ -39,6 +39,7 @@ import {
   AssignmentTurnedIn,
   MoreVert,
   CloudUpload,
+  Download,
   Description,
   Info,
 } from '@mui/icons-material';
@@ -67,6 +68,27 @@ const StudentList = () => {
   const [uploadResult, setUploadResult] = useState(null);
   const [academicYearId, setAcademicYearId] = useState('');
   const [uploadInfoOpen, setUploadInfoOpen] = useState(false);
+
+  const handleExportCsv = async () => {
+    if (!selectedClass) {
+      setError('Please select a class first before exporting');
+      return;
+    }
+    try {
+      const response = await adminAPI.students.exportToCsv(selectedClass, academicYearId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Students_${selectedClass}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting students:', err);
+      setError(err.response?.data?.message || 'Failed to export students');
+    }
+  };
 
   const handleBulkUpload = async (event) => {
     const file = event.target.files[0];
@@ -400,6 +422,25 @@ const StudentList = () => {
                     }}
                   >
                     {uploadLoading ? 'Uploading...' : 'Bulk Upload'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Download />}
+                    size="small"
+                    onClick={handleExportCsv}
+                    sx={{
+                      borderColor: '#1a1a1a',
+                      color: '#1a1a1a',
+                      borderRadius: 2.5,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
+                      '&:hover': {
+                        borderColor: '#333',
+                        background: 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    Export CSV
                   </Button>
                 </Box>
               </>
