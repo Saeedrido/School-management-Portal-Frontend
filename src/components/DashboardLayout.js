@@ -102,6 +102,8 @@ const DashboardLayout = () => {
     { separator: true },
     { text: 'Entrance Exams', icon: <School />, path: '/admin-dashboard/entrance-exams' },
     { text: 'Candidates', icon: <People />, path: '/admin-dashboard/entrance-candidates' },
+    { separator: true },
+    { text: 'Settings', icon: <Settings />, path: '/admin-dashboard/settings' },
   ];
 
   const teacherMenuItems = [

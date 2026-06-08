@@ -336,6 +336,12 @@ export const adminAPI = {
     manual: (data) => api.post('/api/scores/manual', data),
     bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
   },
+  settings: {
+    getAll: () => api.get('/api/settings/all'),
+    getPublic: () => api.get('/api/settings'),
+    update: (key, value) => api.put(`/api/settings/${key}`, { value }),
+    toggleGeofencing: () => api.post('/api/settings/geofencing/toggle'),
+  },
 };
 
 // ============================================
@@ -478,6 +484,7 @@ export const entranceExamCandidateAPI = {
 export const entranceExamTakeAPI = {
   getInfo: (token) => api.get('/api/entranceexamtake/info', { params: { token } }),
   getQuestions: (token) => api.get('/api/entranceexamtake/questions', { params: { token } }),
+  start: (data) => api.post('/api/entranceexamtake/start', data),
   submit: (data) => api.post('/api/entranceexamtake/submit', data),
 };
 

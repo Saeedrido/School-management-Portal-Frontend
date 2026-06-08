@@ -101,7 +101,7 @@ const EntranceCandidateRegister = () => {
     }
   };
 
-  const examUrl = result ? `${window.location.origin}/entrance-exam/take?token=${result.accessToken}` : '';
+  const examUrl = result ? `${window.location.origin}/#/entrance-exam/take?token=${result.accessToken}` : '';
 
   const copyLink = () => {
     navigator.clipboard.writeText(examUrl);

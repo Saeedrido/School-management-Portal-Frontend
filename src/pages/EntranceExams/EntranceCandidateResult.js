@@ -42,7 +42,7 @@ const EntranceCandidateResult = () => {
   };
   const hasScore = candidate.totalScore != null;
   const isPassed = candidate.statusName === 'Passed';
-  const examUrl = `${window.location.origin}/entrance-exam/take?token=${candidate.accessToken}`;
+  const examUrl = `${window.location.origin}/#/entrance-exam/take?token=${candidate.accessToken}`;
 
   const copyLink = () => {
     navigator.clipboard.writeText(examUrl);

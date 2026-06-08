@@ -66,6 +66,7 @@ import EntranceCandidateRegister from './pages/EntranceExams/EntranceCandidateRe
 import EntranceCandidateList from './pages/EntranceExams/EntranceCandidateList';
 import EntranceCandidateResult from './pages/EntranceExams/EntranceCandidateResult';
 import EntranceExamTake from './pages/EntranceExams/EntranceExamTake';
+import AdminSettings from './pages/Admin/AdminSettings';
 
 function HomeRoute() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -179,6 +180,7 @@ function AppRoutes() {
         <Route path="entrance-candidates" element={<EntranceCandidateList />} />
         <Route path="entrance-candidates/register" element={<EntranceCandidateRegister />} />
         <Route path="entrance-candidates/:id" element={<EntranceCandidateResult />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
 
       {/* Teacher Dashboard Routes */}

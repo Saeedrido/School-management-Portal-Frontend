@@ -173,14 +173,42 @@ const TakeExam = () => {
     };
   }, [questionsLoaded, timeRemaining, alreadySubmitted]);
 
+  const getCurrentPosition = () => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ latitude: null, longitude: null });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        () => {
+          resolve({ latitude: null, longitude: null });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  };
+
   const startExam = async () => {
     try {
       console.log('=== START EXAM CLICKED ===');
       console.log('examId:', examId);
       setError('');
-      
-      console.log('Calling attemptsAPI.start...');
-      const response = await attemptsAPI.start({ examId });
+
+      const location = await getCurrentPosition();
+      const payload = { examId };
+      if (location.latitude !== null && location.longitude !== null) {
+        payload.latitude = location.latitude;
+        payload.longitude = location.longitude;
+      }
+
+      console.log('Calling attemptsAPI.start with payload:', payload);
+      const response = await attemptsAPI.start(payload);
       console.log('Start exam response:', response);
       
       if (response.data?.success && response.data?.data) {

@@ -124,12 +124,12 @@ const EntranceCandidateList = () => {
   };
 
   const copyLink = (token) => {
-    navigator.clipboard.writeText(`${window.location.origin}/entrance-exam/take?token=${token}`);
+    navigator.clipboard.writeText(`${window.location.origin}/#/entrance-exam/take?token=${token}`);
     setSnackbar({ open: true, message: 'Link copied to clipboard' });
   };
 
   const openExam = (token) => {
-    window.open(`${window.location.origin}/entrance-exam/take?token=${token}`, '_blank');
+    window.open(`${window.location.origin}/#/entrance-exam/take?token=${token}`, '_blank');
   };
 
   const selectedExam = exams.find(e => e.id === examId);

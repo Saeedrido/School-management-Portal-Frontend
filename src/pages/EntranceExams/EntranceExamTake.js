@@ -45,8 +45,30 @@ const EntranceExamTake = () => {
     }
   };
 
+  const getCurrentPosition = () => new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true, timeout: 10000, maximumAge: 0,
+    });
+  });
+
   const startExam = async () => {
     try {
+      let latitude = null, longitude = null;
+      try {
+        const pos = await getCurrentPosition();
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      } catch (e) {
+        // GPS unavailable, proceed without location
+      }
+
+      const startRes = await entranceExamTakeAPI.start({ accessToken: token, latitude, longitude });
+      if (!startRes.data?.success) {
+        setError(startRes.data?.message || 'Failed to start exam');
+        setPhase('error');
+        return;
+      }
+
       const res = await entranceExamTakeAPI.getQuestions(token);
       if (res.data?.success) {
         const qs = res.data.data || [];
@@ -57,7 +79,8 @@ const EntranceExamTake = () => {
         setPhase('exam');
       } else setError(res.data?.message || 'Failed to load questions');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load');
+      setError(err.response?.data?.message || 'Failed to start exam');
+      setPhase('error');
     }
   };
 
