@@ -28,6 +28,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
+  DialogActions,
+  Tooltip,
 } from '@mui/material';
 import {
   Person,
@@ -36,12 +38,13 @@ import {
   Add,
   Search,
   School,
-  AssignmentTurnedIn,
   MoreVert,
   CloudUpload,
   Download,
   Description,
   Info,
+  Visibility,
+  Delete,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
@@ -52,7 +55,7 @@ import { PageHeader, StatusBadge } from '../../components/ui';
 const StudentList = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const classIdFromUrl = searchParams.get('classId');
   const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
@@ -68,6 +71,7 @@ const StudentList = () => {
   const [uploadResult, setUploadResult] = useState(null);
   const [academicYearId, setAcademicYearId] = useState('');
   const [uploadInfoOpen, setUploadInfoOpen] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, student: null });
 
   const handleExportCsv = async () => {
     if (!selectedClass) {
@@ -87,6 +91,22 @@ const StudentList = () => {
     } catch (err) {
       console.error('Error exporting students:', err);
       setError(err.response?.data?.message || 'Failed to export students');
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    const student = deleteDialog.student;
+    if (!student) return;
+
+    try {
+      await adminAPI.students.delete(student.id);
+      setDeleteDialog({ open: false, student: null });
+      setStudents(prev => prev.filter(s => s.id !== student.id));
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting student:', err);
+      setError(err.response?.data?.message || 'Failed to delete student');
+      setDeleteDialog({ open: false, student: null });
     }
   };
 
@@ -578,6 +598,46 @@ const StudentList = () => {
         </Card>
       )}
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, student: null })} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a1a' }}>
+          Delete Student
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#64748B' }}>
+            Are you sure you want to delete <strong>{deleteDialog.student?.firstName || ''} {deleteDialog.student?.lastName || ''}</strong>?
+            {deleteDialog.student && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: '#FEF2F2', borderRadius: 2, border: '1px solid #FECACA' }}>
+                <Typography variant="body2" sx={{ color: '#991B1B' }}>
+                  If the student has exam or result records, the account will be deactivated instead (soft delete).
+                  Otherwise, the student will be permanently removed.
+                </Typography>
+              </Box>
+            )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setDeleteDialog({ open: false, student: null })}
+            sx={{ color: '#64748B', borderRadius: 2 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteStudent}
+            sx={{
+              bgcolor: '#EF4444',
+              '&:hover': { bgcolor: '#DC2626' },
+              borderRadius: 2,
+              px: 3,
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {selectedClass && classes.length > 0 && !loading && (
         <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
           <TableContainer>
@@ -648,6 +708,18 @@ const StudentList = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <Tooltip title="View Profile">
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`${basePath}/students/${student.id}/detail`)}
+                                sx={{
+                                  color: '#6FAF8F',
+                                  '&:hover': { backgroundColor: 'rgba(111, 175, 143, 0.1)' },
+                                }}
+                              >
+                                <Visibility fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                             <IconButton
                               size="small"
                               onClick={() => navigate(`${basePath}/students/${student.id}/edit`)}
@@ -658,16 +730,16 @@ const StudentList = () => {
                             >
                               <Edit fontSize="small" />
                             </IconButton>
-                            {hasRole('Admin', 'Teacher') && (
+                            {user?.role === 'Admin' && (
                               <IconButton
                                 size="small"
-                                onClick={() => navigate(`${basePath}/students/${student.id}/grade`)}
+                                onClick={() => setDeleteDialog({ open: true, student })}
                                 sx={{
-                                  color: '#10B981',
-                                  '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+                                  color: '#EF4444',
+                                  '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
                                 }}
                               >
-                                <AssignmentTurnedIn fontSize="small" />
+                                <Delete fontSize="small" />
                               </IconButton>
                             )}
                           </Box>

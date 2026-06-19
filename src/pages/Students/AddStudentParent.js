@@ -11,20 +11,14 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  Stepper,
-  Step,
-  StepLabel,
   Tabs,
   Tab,
 } from '@mui/material';
 import {
-  ArrowBack,
   Save,
   Person,
   School,
-  PersonAdd,
   Link as LinkIcon,
-  Add,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { PageHeader } from '../../components/ui';
@@ -151,6 +145,9 @@ const AddStudentParent = () => {
     if (!studentData.dateOfBirth) return 'Student date of birth is required';
     if (!parentData.firstName.trim()) return 'Parent first name is required';
     if (!parentData.lastName.trim()) return 'Parent last name is required';
+    if (studentData.email && parentData.email && studentData.email === parentData.email) {
+      return 'Cannot use the same email for both student and parent. Each user must have a unique email address.';
+    }
     return null;
   };
 
@@ -297,249 +294,273 @@ const AddStudentParent = () => {
             {activeTab === 0 && (
               <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                 <CardContent sx={{ p: 4 }}>
-                  <Grid container spacing={3}>
-                    {/* Student Section */}
-                    <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1B5E20', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <School /> Student Information
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="First Name *"
-                        name="firstName"
-                        value={studentData.firstName}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Last Name *"
-                        name="lastName"
-                        value={studentData.lastName}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Student Number"
-                        name="studentNumber"
-                        value={studentData.studentNumber}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        placeholder="Auto-generated if empty"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        label="Gender *"
-                        name="gender"
-                        value={studentData.gender}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      >
-                        <MenuItem value="Male">Male</MenuItem>
-                        <MenuItem value="Female">Female</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Date of Birth *"
-                        name="dateOfBirth"
-                        type="date"
-                        value={studentData.dateOfBirth}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        required
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={studentData.email}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Phone Number"
-                        name="phoneNumber"
-                        value={studentData.phoneNumber}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        label="Class"
-                        name="classId"
-                        value={studentData.classId}
-                        onChange={handleStudentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      >
-                        <MenuItem value="">Select Class</MenuItem>
-                        {classes.map((cls) => (
-                          <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-
-                    {/* Parent Section */}
-                    <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1B5E20', mb: 2, mt: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Person /> Parent/Guardian Information
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="First Name *"
-                        name="firstName"
-                        value={parentData.firstName}
-                        onChange={handleParentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Last Name *"
-                        name="lastName"
-                        value={parentData.lastName}
-                        onChange={handleParentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={parentData.email}
-                        onChange={handleParentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Phone Number *"
-                        name="phoneNumber"
-                        value={parentData.phoneNumber}
-                        onChange={handleParentChange}
-                        fullWidth
-                        required
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Alternative Phone"
-                        name="alternativePhone"
-                        value={parentData.alternativePhone}
-                        onChange={handleParentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        label="Relationship"
-                        name="relationship"
-                        value={parentData.relationship}
-                        onChange={handleParentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      >
-                        <MenuItem value="Father">Father</MenuItem>
-                        <MenuItem value="Mother">Mother</MenuItem>
-                        <MenuItem value="Guardian">Guardian</MenuItem>
-                        <MenuItem value="Other">Other</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Occupation"
-                        name="occupation"
-                        value={parentData.occupation}
-                        onChange={handleParentChange}
-                        fullWidth
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <TextField
-                        label="Address"
-                        name="address"
-                        value={parentData.address}
-                        onChange={handleParentChange}
-                        fullWidth
-                        multiline
-                        rows={2}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-
-                    {/* Submit Button */}
-                    <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-                        <Button
-                          variant="outlined"
-                          onClick={() => navigate('/admin-dashboard')}
-                          sx={{ borderColor: '#64748B', color: '#64748B' }}
+                  {/* Student Information Section */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: '#1B5E20',
+                        fontWeight: 600,
+                        mb: 2,
+                        pb: 1,
+                        borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <School /> Student Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="First Name *"
+                          name="firstName"
+                          value={studentData.firstName}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Last Name *"
+                          name="lastName"
+                          value={studentData.lastName}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Student Number"
+                          name="studentNumber"
+                          value={studentData.studentNumber}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          placeholder="Auto-generated if empty"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          select
+                          label="Gender *"
+                          name="gender"
+                          value={studentData.gender}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="contained"
-                          onClick={handleSubmitStudentParent}
-                          disabled={submitting}
-                          startIcon={submitting ? <CircularProgress size={20} /> : <Save />}
-                          sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' } }}
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Date of Birth *"
+                          name="dateOfBirth"
+                          type="date"
+                          value={studentData.dateOfBirth}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          required
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Email"
+                          name="email"
+                          type="email"
+                          value={studentData.email}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                        <Typography variant="caption" sx={{ color: '#DC2626', mt: 0.5, display: 'block', lineHeight: 1.4 }}>
+                          This email must be a working email that you can access — system notifications and login credentials will be sent here.
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Phone Number"
+                          name="phoneNumber"
+                          value={studentData.phoneNumber}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          select
+                          label="Class"
+                          name="classId"
+                          value={studentData.classId}
+                          onChange={handleStudentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         >
-                          {submitting ? 'Saving...' : 'Create Student & Parent'}
-                        </Button>
-                      </Box>
+                          <MenuItem value="">Select Class</MenuItem>
+                          {classes.map((cls) => (
+                            <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
                     </Grid>
-                  </Grid>
+                  </Box>
+
+                  {/* Parent/Guardian Information Section */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: '#1B5E20',
+                        fontWeight: 600,
+                        mb: 2,
+                        pb: 1,
+                        borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <Person /> Parent/Guardian Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="First Name *"
+                          name="firstName"
+                          value={parentData.firstName}
+                          onChange={handleParentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Last Name *"
+                          name="lastName"
+                          value={parentData.lastName}
+                          onChange={handleParentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Email"
+                          name="email"
+                          type="email"
+                          value={parentData.email}
+                          onChange={handleParentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                        <Typography variant="caption" sx={{ color: '#DC2626', mt: 0.5, display: 'block', lineHeight: 1.4 }}>
+                          This email must be a working email that you can access — system notifications and login credentials will be sent here.
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Phone Number *"
+                          name="phoneNumber"
+                          value={parentData.phoneNumber}
+                          onChange={handleParentChange}
+                          fullWidth
+                          required
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Alternative Phone"
+                          name="alternativePhone"
+                          value={parentData.alternativePhone}
+                          onChange={handleParentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          select
+                          label="Relationship"
+                          name="relationship"
+                          value={parentData.relationship}
+                          onChange={handleParentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        >
+                          <MenuItem value="Father">Father</MenuItem>
+                          <MenuItem value="Mother">Mother</MenuItem>
+                          <MenuItem value="Guardian">Guardian</MenuItem>
+                          <MenuItem value="Other">Other</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Occupation"
+                          name="occupation"
+                          value={parentData.occupation}
+                          onChange={handleParentChange}
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          label="Address"
+                          name="address"
+                          value={parentData.address}
+                          onChange={handleParentChange}
+                          fullWidth
+                          multiline
+                          rows={2}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate('/admin-dashboard')}
+                      disabled={submitting}
+                      sx={{ borderColor: '#64748B', color: '#64748B', borderRadius: 2, px: 4, py: 1.5 }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleSubmitStudentParent}
+                      disabled={submitting}
+                      startIcon={submitting ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : <Save />}
+                      sx={{
+                        py: 1.5,
+                        px: 4,
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        background: 'linear-gradient(135deg, #6FAF8F 0%, #4A9079 100%)',
+                        '&:hover': { background: 'linear-gradient(135deg, #5A9E7F 0%, #3A8069 100%)' },
+                        '&:disabled': { background: '#94a3b8' },
+                      }}
+                    >
+                      {submitting ? 'Saving...' : 'Create Student & Parent'}
+                    </Button>
+                  </Box>
                 </CardContent>
               </Card>
             )}

@@ -55,6 +55,7 @@ import HeadmasterComments from './pages/Admin/HeadmasterComments';
 import Settings from './pages/Settings';
 import GradeManagement from './pages/Grades/GradeManagement';
 import StudentProfile from './pages/Students/StudentProfile';
+import StudentDetail from './pages/Students/StudentDetail';
 import LandingPage from './pages/landingPage';
 import PaymentPage from './pages/PaymentPage';
 import Gallery from './pages/Gallery';
@@ -137,6 +138,7 @@ function AppRoutes() {
         <Route path="students/add-student-parent" element={<AddStudentParent />} />
         <Route path="students/:id/edit" element={<StudentForm />} />
         <Route path="students/:studentId/grade" element={<GradeTheory />} />
+        <Route path="students/:id/detail" element={<StudentDetail />} />
         <Route path="classes" element={<ClassList />} />
         <Route path="classes/new" element={<ClassForm />} />
         <Route path="classes/:id/edit" element={<ClassForm />} />
@@ -192,6 +194,7 @@ function AppRoutes() {
         <Route path="students/new" element={<StudentForm />} />
         <Route path="students/:id/edit" element={<StudentForm />} />
         <Route path="students/:studentId/grade" element={<GradeTheory />} />
+        <Route path="students/:id/detail" element={<StudentDetail />} />
         <Route path="classes" element={<ClassList />} />
         <Route path="subjects" element={<SubjectList />} />
         <Route path="exams" element={<ExamList />} />

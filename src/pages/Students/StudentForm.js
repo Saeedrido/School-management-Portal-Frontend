@@ -14,16 +14,11 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  InputAdornment,
-  IconButton,
 } from '@mui/material';
 import { PageHeader } from '../../components/ui';
 import {
-  Person as PersonIcon,
   Save,
   Cancel,
-  Visibility,
-  VisibilityOff,
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI, academicYearsAPI, studentsAPI, authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -48,7 +43,6 @@ const StudentForm = () => {
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [classes, setClasses] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -60,7 +54,6 @@ const StudentForm = () => {
     firstName: '',
     lastName: '',
     email: '',
-    password: '',
     phoneNumber: '',
 
     // Student Profile Information
@@ -444,804 +437,367 @@ return (
       <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', bgcolor: '#fff' }}>
         <CardContent sx={{ p: 3 }}>
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              {/* Account Information Section */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Account Information
-                </Typography>
-              </Grid>
-
+            {/* Account Information Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Account Information
+              </Typography>
               {!isEdit && (
-                <>
+                <Grid container spacing={3}>
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth required>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#64748B',
-                          mb: 1,
-                          fontSize: '0.9rem',
-                          fontWeight: 500,
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
                         First Name *
                       </Typography>
                       <TextField
-                        fullWidth
-                        placeholder="Enter first name"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        disabled={loading}
-                        required
-                        error={!!fieldErrors.firstName}
-                        helperText={fieldErrors.firstName}
+                        fullWidth placeholder="Enter first name" name="firstName"
+                        value={formData.firstName} onChange={handleChange} disabled={loading}
+                        required error={!!fieldErrors.firstName} helperText={fieldErrors.firstName}
                         sx={textFieldStyles}
                       />
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth required>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#64748B',
-                          mb: 1,
-                          fontSize: '0.9rem',
-                          fontWeight: 500,
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
                         Last Name *
                       </Typography>
                       <TextField
-                        fullWidth
-                        placeholder="Enter last name"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        disabled={loading}
-                        required
-                        error={!!fieldErrors.lastName}
-                        helperText={fieldErrors.lastName}
+                        fullWidth placeholder="Enter last name" name="lastName"
+                        value={formData.lastName} onChange={handleChange} disabled={loading}
+                        required error={!!fieldErrors.lastName} helperText={fieldErrors.lastName}
                         sx={textFieldStyles}
                       />
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth required>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#64748B',
-                          mb: 1,
-                          fontSize: '0.9rem',
-                          fontWeight: 500,
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
                         Email *
                       </Typography>
                       <TextField
-                        fullWidth
-                        type="email"
-                        placeholder="student@school.com"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        disabled={loading}
-                        required
-                        sx={textFieldStyles}
+                        fullWidth type="email" placeholder="student@school.com" name="email"
+                        value={formData.email} onChange={handleChange} disabled={loading}
+                        required sx={textFieldStyles}
                       />
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#64748B',
-                          mb: 1,
-                          fontSize: '0.9rem',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Password *
+                      <Typography variant="caption" sx={{ color: '#DC2626', mt: 0.5, display: 'block', lineHeight: 1.4 }}>
+                        This email must be a working email that you can access — system notifications and login credentials will be sent here.
                       </Typography>
-                      <TextField
-                        fullWidth
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        disabled={loading}
-                        required
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowPassword(!showPassword)}
-                                edge="end"
-                                sx={{ color: '#1E293B' }}
-                              >
-                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={textFieldStyles}
-                      />
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth required>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#64748B',
-                          mb: 1,
-                          fontSize: '0.9rem',
-                          fontWeight: 500,
-                        }}
-                      >
+                      <Typography variant="body2" sx={{ color: '#64748B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
                         Phone Number *
                       </Typography>
                       <TextField
-                        fullWidth
-                        placeholder="Enter phone number"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        disabled={loading}
-                        required
-                        error={!!fieldErrors.phoneNumber}
-                        helperText={fieldErrors.phoneNumber}
+                        fullWidth placeholder="Enter phone number" name="phoneNumber"
+                        value={formData.phoneNumber} onChange={handleChange} disabled={loading}
+                        required error={!!fieldErrors.phoneNumber} helperText={fieldErrors.phoneNumber}
                         sx={textFieldStyles}
                       />
                     </FormControl>
                   </Grid>
-                </>
+                </Grid>
               )}
+            </Box>
 
-              {/* Personal Information */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    mt: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Personal Information
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Date of Birth *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    InputLabelProps={{ shrink: true }}
-                    error={!!fieldErrors.dateOfBirth}
-                    helperText={fieldErrors.dateOfBirth}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Gender *
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.gender}
-                    sx={selectStyles}
-                  >
-                    <MenuItem value={GENDER_ENUM.Male}>Male</MenuItem>
-                    <MenuItem value={GENDER_ENUM.Female}>Female</MenuItem>
-                  </Select>
-                  {fieldErrors.gender && (
-                    <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>
-                      {fieldErrors.gender}
+            {/* Personal Information */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Personal Information
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Date of Birth *
                     </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Admission Date
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    name="admissionDate"
-                    value={formData.admissionDate}
-                    onChange={handleChange}
-                    disabled={loading}
-                    InputLabelProps={{ shrink: true }}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              {/* Address Information */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    mt: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Address Information
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Street Address *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={2}
-                    placeholder="Enter street address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.address}
-                    helperText={fieldErrors.address}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    City *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Enter city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.city}
-                    helperText={fieldErrors.city}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    State *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Enter state"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.state}
-                    helperText={fieldErrors.state}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Country
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Enter country"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              {/* Medical Information */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    mt: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Medical Information (Optional)
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Blood Group
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="bloodGroup"
-                    value={formData.bloodGroup}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="">Select</MenuItem>
-                    <MenuItem value="A+">A+</MenuItem>
-                    <MenuItem value="A-">A-</MenuItem>
-                    <MenuItem value="B+">B+</MenuItem>
-                    <MenuItem value="B-">B-</MenuItem>
-                    <MenuItem value="AB+">AB+</MenuItem>
-                    <MenuItem value="AB-">AB-</MenuItem>
-                    <MenuItem value="O+">O+</MenuItem>
-                    <MenuItem value="O-">O-</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Genotype
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="genotype"
-                    value={formData.genotype}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="">Select</MenuItem>
-                    <MenuItem value="AA">AA</MenuItem>
-                    <MenuItem value="AS">AS</MenuItem>
-                    <MenuItem value="SS">SS</MenuItem>
-                    <MenuItem value="AC">AC</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Allergies
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Any known allergies"
-                    name="allergies"
-                    value={formData.allergies}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Medical Conditions
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Any medical conditions"
-                    name="medicalConditions"
-                    value={formData.medicalConditions}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              {/* Emergency Contact */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    mt: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Emergency Contact
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Contact Name *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Emergency contact name"
-                    name="emergencyContactName"
-                    value={formData.emergencyContactName}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.emergencyContactName}
-                    helperText={fieldErrors.emergencyContactName}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Contact Phone *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Emergency contact phone"
-                    name="emergencyContactPhone"
-                    value={formData.emergencyContactPhone}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    error={!!fieldErrors.emergencyContactPhone}
-                    helperText={fieldErrors.emergencyContactPhone}
-                    sx={textFieldStyles}
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Relationship
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="emergencyContactRelationship"
-                    value={formData.emergencyContactRelationship}
-                    onChange={handleChange}
-                    disabled={loading}
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="Parent">Parent</MenuItem>
-                    <MenuItem value="Guardian">Guardian</MenuItem>
-                    <MenuItem value="Sibling">Sibling</MenuItem>
-                    <MenuItem value="Spouse">Spouse</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Class Enrollment */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#1B5E20',
-                    fontWeight: 600,
-                    mb: 2,
-                    mt: 2,
-                    pb: 1,
-                    borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
-                  }}
-                >
-                  Class Enrollment
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required error={!!fieldErrors.classId}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Class *
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="classId"
-                    value={formData.classId}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    displayEmpty
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="">Select a class</MenuItem>
-                    {classes.map((cls) => (
-                      <MenuItem key={cls.id} value={String(cls.id)}>
-                        {cls.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.classId && (
-                    <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>
-                      {fieldErrors.classId}
+                    <TextField
+                      fullWidth type="date" name="dateOfBirth"
+                      value={formData.dateOfBirth} onChange={handleChange} disabled={loading}
+                      required InputLabelProps={{ shrink: true }}
+                      error={!!fieldErrors.dateOfBirth} helperText={fieldErrors.dateOfBirth}
+                      sx={textFieldStyles}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Gender *
                     </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required error={!!fieldErrors.academicYearId}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Academic Year *
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="academicYearId"
-                    value={formData.academicYearId}
-                    onChange={handleAcademicYearChange}
-                    disabled={loading}
-                    required
-                    displayEmpty
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="">Select academic year</MenuItem>
-                    {academicYears.map((ay) => (
-                      <MenuItem key={ay.id} value={String(ay.id)}>
-                        {ay.name} {ay.isActive && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.academicYearId && (
-                    <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>
-                      {fieldErrors.academicYearId}
+                    <Select fullWidth name="gender" value={formData.gender} onChange={handleChange} disabled={loading} required error={!!fieldErrors.gender} sx={selectStyles}>
+                      <MenuItem value={GENDER_ENUM.Male}>Male</MenuItem>
+                      <MenuItem value={GENDER_ENUM.Female}>Female</MenuItem>
+                    </Select>
+                    {fieldErrors.gender && <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>{fieldErrors.gender}</Typography>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Admission Date
                     </Typography>
-                  )}
-                </FormControl>
+                    <TextField fullWidth type="date" name="admissionDate" value={formData.admissionDate} onChange={handleChange} disabled={loading} InputLabelProps={{ shrink: true }} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
               </Grid>
+            </Box>
 
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required error={!!fieldErrors.termId}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#1E293B',
-                      mb: 1,
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Term *
-                  </Typography>
-                  <Select
-                    fullWidth
-                    name="termId"
-                    value={formData.termId}
-                    onChange={handleChange}
-                    disabled={loading}
-                    required
-                    displayEmpty
-                    sx={selectStyles}
-                  >
-                    <MenuItem value="">Select term</MenuItem>
-                    {terms.map((term) => (
-                      <MenuItem key={term.id} value={String(term.id)}>
-                        {term.name} {term.isActive && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.termId && (
-                    <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>
-                      {fieldErrors.termId}
+            {/* Address Information */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Address Information
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Street Address *
                     </Typography>
-                  )}
-                </FormControl>
+                    <TextField fullWidth multiline rows={2} placeholder="Enter street address" name="address" value={formData.address} onChange={handleChange} disabled={loading} required error={!!fieldErrors.address} helperText={fieldErrors.address} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      City *
+                    </Typography>
+                    <TextField fullWidth placeholder="Enter city" name="city" value={formData.city} onChange={handleChange} disabled={loading} required error={!!fieldErrors.city} helperText={fieldErrors.city} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      State *
+                    </Typography>
+                    <TextField fullWidth placeholder="Enter state" name="state" value={formData.state} onChange={handleChange} disabled={loading} required error={!!fieldErrors.state} helperText={fieldErrors.state} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Country
+                    </Typography>
+                    <TextField fullWidth placeholder="Enter country" name="country" value={formData.country} onChange={handleChange} disabled={loading} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
               </Grid>
+            </Box>
 
-              {/* Action Buttons */}
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : <Save />}
-                    sx={submitStyles}
-                  >
-                    {loading ? 'Saving...' : isEdit ? 'Update Student' : 'Register Student'}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
-                      navigate(`${basePath}/students`);
-                    }}
-                    disabled={loading}
-                    startIcon={<Cancel />}
-                    sx={cancelStyles}
-                  >
-                    Cancel
-                  </Button>
-                </Box>
+            {/* Medical Information (Optional) */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Medical Information (Optional)
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Blood Group
+                    </Typography>
+                    <Select fullWidth name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} disabled={loading} sx={selectStyles}>
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="A+">A+</MenuItem>
+                      <MenuItem value="A-">A-</MenuItem>
+                      <MenuItem value="B+">B+</MenuItem>
+                      <MenuItem value="B-">B-</MenuItem>
+                      <MenuItem value="AB+">AB+</MenuItem>
+                      <MenuItem value="AB-">AB-</MenuItem>
+                      <MenuItem value="O+">O+</MenuItem>
+                      <MenuItem value="O-">O-</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Genotype
+                    </Typography>
+                    <Select fullWidth name="genotype" value={formData.genotype} onChange={handleChange} disabled={loading} sx={selectStyles}>
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="AA">AA</MenuItem>
+                      <MenuItem value="AS">AS</MenuItem>
+                      <MenuItem value="SS">SS</MenuItem>
+                      <MenuItem value="AC">AC</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Allergies
+                    </Typography>
+                    <TextField fullWidth placeholder="Any known allergies" name="allergies" value={formData.allergies} onChange={handleChange} disabled={loading} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Medical Conditions
+                    </Typography>
+                    <TextField fullWidth placeholder="Any medical conditions" name="medicalConditions" value={formData.medicalConditions} onChange={handleChange} disabled={loading} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
+
+            {/* Emergency Contact */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Emergency Contact
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Contact Name *
+                    </Typography>
+                    <TextField fullWidth placeholder="Emergency contact name" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange} disabled={loading} required error={!!fieldErrors.emergencyContactName} helperText={fieldErrors.emergencyContactName} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Contact Phone *
+                    </Typography>
+                    <TextField fullWidth placeholder="Emergency contact phone" name="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleChange} disabled={loading} required error={!!fieldErrors.emergencyContactPhone} helperText={fieldErrors.emergencyContactPhone} sx={textFieldStyles} />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Relationship
+                    </Typography>
+                    <Select fullWidth name="emergencyContactRelationship" value={formData.emergencyContactRelationship} onChange={handleChange} disabled={loading} sx={selectStyles}>
+                      <MenuItem value="Parent">Parent</MenuItem>
+                      <MenuItem value="Guardian">Guardian</MenuItem>
+                      <MenuItem value="Sibling">Sibling</MenuItem>
+                      <MenuItem value="Spouse">Spouse</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Class Enrollment */}
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: '#1B5E20',
+                  fontWeight: 600,
+                  mb: 2,
+                  pb: 1,
+                  borderBottom: '1px solid rgba(111, 175, 143, 0.2)',
+                }}
+              >
+                Class Enrollment
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required error={!!fieldErrors.classId}>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Class *
+                    </Typography>
+                    <Select fullWidth name="classId" value={formData.classId} onChange={handleChange} disabled={loading} required displayEmpty sx={selectStyles}>
+                      <MenuItem value="">Select a class</MenuItem>
+                      {classes.map((cls) => <MenuItem key={cls.id} value={String(cls.id)}>{cls.name}</MenuItem>)}
+                    </Select>
+                    {fieldErrors.classId && <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>{fieldErrors.classId}</Typography>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required error={!!fieldErrors.academicYearId}>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Academic Year *
+                    </Typography>
+                    <Select fullWidth name="academicYearId" value={formData.academicYearId} onChange={handleAcademicYearChange} disabled={loading} required displayEmpty sx={selectStyles}>
+                      <MenuItem value="">Select academic year</MenuItem>
+                      {academicYears.map((ay) => <MenuItem key={ay.id} value={String(ay.id)}>{ay.name} {ay.isActive && '(Active)'}</MenuItem>)}
+                    </Select>
+                    {fieldErrors.academicYearId && <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>{fieldErrors.academicYearId}</Typography>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required error={!!fieldErrors.termId}>
+                    <Typography variant="body2" sx={{ color: '#1E293B', mb: 1, fontSize: '0.9rem', fontWeight: 500 }}>
+                      Term *
+                    </Typography>
+                    <Select fullWidth name="termId" value={formData.termId} onChange={handleChange} disabled={loading} required displayEmpty sx={selectStyles}>
+                      <MenuItem value="">Select term</MenuItem>
+                      {terms.map((term) => <MenuItem key={term.id} value={String(term.id)}>{term.name} {term.isActive && '(Active)'}</MenuItem>)}
+                    </Select>
+                    {fieldErrors.termId && <Typography variant="caption" color="#ff6b6b" sx={{ mt: 0.5 }}>{fieldErrors.termId}</Typography>}
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                type="submit" variant="contained" disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : <Save />}
+                sx={submitStyles}
+              >
+                {loading ? 'Saving...' : isEdit ? 'Update Student' : 'Register Student'}
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => { const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard'; navigate(`${basePath}/students`); }}
+                disabled={loading} startIcon={<Cancel />} sx={cancelStyles}
+              >
+                Cancel
+              </Button>
+            </Box>
           </form>
         </CardContent>
       </Card>
