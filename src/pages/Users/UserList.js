@@ -120,8 +120,6 @@ const UserList = () => {
       <PageHeader
         title="Users Management"
         subtitle="Manage all system users and their roles"
-        actionText="Add User"
-        onAction={() => navigate(`${basePath}/users/new`)}
       />
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
