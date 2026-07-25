@@ -244,8 +244,8 @@ const TeacherDashboard = () => {
                   <Typography variant="body1" sx={{ color: '#64748B' }}>No classes assigned yet</Typography>
                 </Box>
               ) : (
-                <TableContainer>
-                  <Table>
+                <TableContainer sx={{ maxHeight: 320 }}>
+                  <Table size="small">
                     <TableHead>
                       <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
                         <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Class</TableCell>
@@ -253,7 +253,7 @@ const TeacherDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {myAssignments.slice(0, 5).map((assignment) => (
+                      {myAssignments.map((assignment) => (
                         <TableRow key={assignment.id} sx={{ '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.03)' } }}>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
