@@ -28,6 +28,8 @@ import {
   Search,
   School,
   Email,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import { usersAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -79,8 +81,14 @@ const UserList = () => {
     if (!deleteId) return;
     try {
       await usersAPI.delete(deleteId);
-      setUsers(users.filter((u) => u.id !== deleteId));
-      setTotalCount(totalCount - 1);
+      const newTotal = totalCount - 1;
+      setTotalCount(newTotal);
+      const newTotalPages = Math.max(1, Math.ceil(newTotal / pageSize));
+      if (page > newTotalPages) {
+        setPage(newTotalPages);
+      } else {
+        fetchUsers();
+      }
     } catch (err) {
       setError('Failed to delete user');
       console.error(err);
@@ -111,6 +119,8 @@ const UserList = () => {
       </Box>
     );
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const adminCount = users.filter(u => u.roles?.some(r => r.name === 'Admin')).length;
   const teacherCount = users.filter(u => u.roles?.some(r => r.name === 'Teacher')).length;
@@ -200,8 +210,8 @@ const UserList = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ maxHeight: 480 }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
                   <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>User</TableCell>
@@ -295,6 +305,34 @@ const UserList = () => {
           </TableContainer>
         )}
       </Card>
+
+      {totalCount > pageSize && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mt: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+            startIcon={<ChevronLeft />}
+            sx={{ borderColor: '#6FAF8F', color: '#6FAF8F', '&:hover': { borderColor: '#5A9A7A', bgcolor: 'rgba(111,175,143,0.05)' } }}
+          >
+            Prev
+          </Button>
+          <Typography variant="body2" sx={{ color: '#64748B' }}>
+            Page {page} of {totalPages}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+            endIcon={<ChevronRight />}
+            sx={{ borderColor: '#6FAF8F', color: '#6FAF8F', '&:hover': { borderColor: '#5A9A7A', bgcolor: 'rgba(111,175,143,0.05)' } }}
+          >
+            Next
+          </Button>
+        </Box>
+      )}
 
       <ConfirmDialog
         open={confirmOpen}
