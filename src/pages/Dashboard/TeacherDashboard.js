@@ -250,8 +250,6 @@ const TeacherDashboard = () => {
                       <TableRow sx={{ backgroundColor: '#F8FAF9' }}>
                         <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Class</TableCell>
                         <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Subject</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Students</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -273,16 +271,6 @@ const TeacherDashboard = () => {
                               size="small"
                               sx={{ bgcolor: '#F1F5F9', color: '#475569' }}
                             />
-                          </TableCell>
-                          <TableCell sx={{ color: '#64748B' }}>-</TableCell>
-                          <TableCell align="right">
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`${basePath}/classes/${assignment.classId}/students`)}
-                              sx={{ color: '#6FAF8F' }}
-                            >
-                              <People sx={{ fontSize: 18 }} />
-                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
