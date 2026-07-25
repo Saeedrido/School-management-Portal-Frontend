@@ -130,6 +130,35 @@ const lightTheme = createTheme({
         },
       },
     },
+    MuiSelect: {
+      defaultProps: {
+        MenuProps: {
+          disableScrollLock: true,
+          anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+          transformOrigin: { vertical: 'top', horizontal: 'left' },
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          maxHeight: '300px !important',
+          overflowY: 'auto',
+        },
+      },
+    },
+    MuiPopover: {
+      defaultProps: {
+        anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+        transformOrigin: { vertical: 'top', horizontal: 'left' },
+      },
+      styleOverrides: {
+        paper: {
+          maxHeight: '300px !important',
+          overflowY: 'auto',
+        },
+      },
+    },
     MuiToolbar: {
       styleOverrides: {
         root: {
@@ -289,6 +318,35 @@ const darkTheme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
           },
+        },
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        MenuProps: {
+          disableScrollLock: true,
+          anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+          transformOrigin: { vertical: 'top', horizontal: 'left' },
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          maxHeight: '300px !important',
+          overflowY: 'auto',
+        },
+      },
+    },
+    MuiPopover: {
+      defaultProps: {
+        anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+        transformOrigin: { vertical: 'top', horizontal: 'left' },
+      },
+      styleOverrides: {
+        paper: {
+          maxHeight: '300px !important',
+          overflowY: 'auto',
         },
       },
     },

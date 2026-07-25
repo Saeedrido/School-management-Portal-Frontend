@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -18,12 +18,19 @@ import schoolLogo from '../../assets/school logo imj/school-logo bck.png';
 
 const StudentLogin = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { refreshAuthState } = useAuth();
   const [formData, setFormData] = useState({
     studentNumber: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('session') === 'expired') {
+      setError('Your session has expired. Please log in again.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     setFormData({
@@ -162,10 +169,11 @@ const StudentLogin = () => {
 
           {error && (
             <Alert
-              severity="error"
+              severity={error.includes('session has expired') ? 'warning' : 'error'}
               sx={{
                 mb: 3,
                 borderRadius: 2,
+                '& .MuiAlert-icon': { color: error.includes('session has expired') ? '#F59E0B' : undefined },
               }}
             >
               {error}

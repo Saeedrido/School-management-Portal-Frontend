@@ -446,12 +446,6 @@ const ManualScoreEntry = () => {
         subtitle="Manually enter student scores without requiring them to take exams"
       />
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
-
       {success && (
         <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setSuccess('')}>
           {success}
@@ -634,6 +628,12 @@ const ManualScoreEntry = () => {
             <MenuItem value="ObjectiveAndTest">Objective + Test</MenuItem>
             <MenuItem value="ObjectiveTheoryAndTest">Objective + Theory + Test</MenuItem>
           </TextField>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
 
           <Grid container spacing={2}>
             {/* Objective - always shown */}

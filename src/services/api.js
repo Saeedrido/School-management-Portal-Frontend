@@ -111,13 +111,13 @@ api.interceptors.response.use(
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       
-      const currentPath = window.location.pathname;
+      const currentPath = window.location.pathname + window.location.hash;
       const publicPaths = ['/login', '/student-login', '/register', '/reset-password', '/'];
-      if (publicPaths.includes(currentPath)) {
+      if (publicPaths.includes(currentPath) || currentPath.includes('login') || currentPath.includes('register') || currentPath.includes('reset-password')) {
         return Promise.reject(error);
       }
       
-      window.location.href = '/';
+      window.location.href = '/#/login?session=expired';
     }
     return Promise.reject(error);
   }

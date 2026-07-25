@@ -48,18 +48,6 @@ const EXAM_TYPES = [
   { value: 'ObjectiveTheoryAndTest', label: 'Objective + Theory + Test' },
 ];
 
-// Dropdown menu props for consistent scroll behavior
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const DropdownMenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 6 + ITEM_PADDING_TOP, // ~296px - shows ~6 items
-      width: 250,
-    },
-  },
-};
-
 const ExamForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -771,7 +759,7 @@ const ExamForm = () => {
                       onChange={handleChange}
                       label="Class"
                       error={!!fieldErrors.classId}
-                      MenuProps={DropdownMenuProps}
+                      
                       sx={{
                         color: 'text.primary',
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -816,7 +804,7 @@ const ExamForm = () => {
                       onChange={handleChange}
                       label="Subject"
                       error={!!fieldErrors.classSubjectId}
-                      MenuProps={DropdownMenuProps}
+                      
                       sx={{
                         color: 'text.primary',
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -872,7 +860,7 @@ const ExamForm = () => {
                       value={currentAcademicYear || ''}
                       onChange={handleAcademicYearChange}
                       label="Academic Year"
-                      MenuProps={DropdownMenuProps}
+                      
                       sx={{
                         color: 'text.primary',
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -907,7 +895,7 @@ const ExamForm = () => {
                       value={formData.termId}
                       onChange={handleChange}
                       label="Term"
-                      MenuProps={DropdownMenuProps}
+                      
                       sx={{
                         color: 'text.primary',
                         '& .MuiOutlinedInput-notchedOutline': {

@@ -38,17 +38,6 @@ import {
 import { adminAPI, academicYearsAPI } from '../../services/api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
 const TeacherAssignments = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -423,7 +412,6 @@ const TeacherAssignments = () => {
                   value={selectedSubjects}
                   onChange={(e) => setSelectedSubjects(e.target.value)}
                   label={selectedClass ? 'Select Subject(s) *' : 'Select class first'}
-                  MenuProps={MenuProps}
                   renderValue={(selected) => selected.map(id => subjects.find(s => s.id === id)?.name).join(', ')}
                   sx={{
                     color: 'text.primary',

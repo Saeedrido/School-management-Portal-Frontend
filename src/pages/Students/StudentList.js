@@ -496,8 +496,9 @@ const StudentList = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
             {[
               'Open Microsoft Word and create a new document.',
-              'List each student with their details in the format: <strong>Full Name, Gender, Date of Birth, Address, Phone Number</strong>.',
-              'Separate each student on a new line.',
+              'Each student must start with a number followed by a period (e.g. <strong>1.</strong>).',
+              'List each field on its own line using the format <strong>FieldName: Value</strong>.',
+              'Separate each student with a blank line.',
               'Save the document as a .docx file and upload it using the button below.',
             ].map((step, i) => (
               <Box key={i} sx={{ display: 'flex', gap: 1.5 }}>
@@ -512,6 +513,34 @@ const StudentList = () => {
               </Box>
             ))}
           </Box>
+
+          <Typography sx={{ fontWeight: 600, color: '#1a1a1a', mb: 1 }}>
+            Example format:
+          </Typography>
+          <Box sx={{
+            p: 2.5, borderRadius: '12px', background: '#f8f9fa',
+            border: '1px solid #e0e0e0', fontFamily: 'monospace', fontSize: '0.85rem',
+            lineHeight: 1.8, color: '#333', whiteSpace: 'pre-wrap', mb: 1,
+          }}>
+{`1.
+FirstName: John
+LastName: Doe
+Gender: Male
+DateOfBirth: 2010-01-01
+PhoneNumber: 1234567890
+Email: john.doe@example.com
+
+2.
+FirstName: Jane
+LastName: Smith
+Gender: Female
+DateOfBirth: 2011-03-20
+PhoneNumber: 0987654321
+Email: jane.smith@example.com`}
+          </Box>
+          <Typography sx={{ color: '#888', fontSize: '0.8rem', fontStyle: 'italic', mb: 3 }}>
+            <strong>FirstName</strong>, <strong>LastName</strong>, and <strong>Email</strong> are required. All other fields are optional.
+          </Typography>
 
           <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'flex-end' }}>
             <Button onClick={() => setUploadInfoOpen(false)} sx={{ color: '#666', borderRadius: 2.5 }}>

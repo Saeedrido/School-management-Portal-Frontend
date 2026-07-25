@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -34,6 +34,7 @@ import { authAPI } from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     identifier: '',
@@ -50,6 +51,12 @@ const Login = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState('');
+
+  useEffect(() => {
+    if (searchParams.get('session') === 'expired') {
+      setError('Your session has expired. Please log in again.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     setFormData({
@@ -208,11 +215,11 @@ const Login = () => {
 
           {error && (
             <Alert
-              severity="error"
+              severity={error.includes('session has expired') ? 'warning' : 'error'}
               sx={{
                 mb: 3,
                 borderRadius: 2,
-                '& .MuiAlert-icon': { color: '#EF4444' },
+                '& .MuiAlert-icon': { color: error.includes('session has expired') ? '#F59E0B' : '#EF4444' },
               }}
             >
               {error}

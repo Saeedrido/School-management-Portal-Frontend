@@ -86,7 +86,7 @@ const TeacherDashboard = () => {
 
   const stats = {
     totalStudents: totalStudentCount,
-    totalClasses: myAssignments.length,
+    totalClasses: [...new Set(myAssignments.map(a => a.classId || a.class?.id))].filter(Boolean).length,
     totalSubjects: [...new Set(myAssignments.map(a => a.subjectId || a.subject?.id))].length,
     upcomingExams: exams.filter(e => new Date(e.startTime) > new Date()).length,
   };
