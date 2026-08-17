@@ -16,8 +16,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [tokenValidated, setTokenValidated] = useState(false);
 
-  console.log('🔄 AuthContext - RENDER, user:', user, 'loading:', loading, 'tokenValidated:', tokenValidated);
-
   // Normalize user data from backend to match frontend expectations
   
   const normalizeUser = (userData) => {
@@ -29,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     const lastName = userData.lastName || userData.LastName || '';
     const roles = userData.roles || userData.Roles || [];
     const roleName = roles && roles.length > 0 
-      ? (roles[0].name || roles[0].Name || roles[0].name || '') 
+      ? (roles[0].name || roles[0].Name || '')
       : (userData.role || userData.Role || '');
 
     // Handle ID conversion - backend sends Id, frontend expects id

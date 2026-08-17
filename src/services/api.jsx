@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:64677';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:64677';
 
 // ============================================
 // ERROR HANDLING UTILITY
@@ -331,11 +331,15 @@ export const adminAPI = {
     createStudentAndParent: (data) => api.post('/api/parents/create-student-parent', data),
     getMyChildren: () => api.get('/api/parents/my-children'),
   },
-  scores: {
-    getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
-    manual: (data) => api.post('/api/scores/manual', data),
-    bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
-  },
+   scores: {
+     getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
+     manual: (data) => api.post('/api/scores/manual', data),
+     bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
+     getAllowedClasses: () => api.get('/api/scores/classes'),
+     getStudentsByClass: (classId) => api.get(`/api/scores/class/${classId}/students`),
+     getStudentSubjectScores: (studentId, classId, academicYearId, termId) => api.get(`/api/scores/student/${studentId}/subjects?classId=${classId}&academicYearId=${academicYearId}&termId=${termId}`),
+     saveSubjectScores: (data) => api.post('/api/scores/save-subject-scores', data),
+   },
   settings: {
     getAll: () => api.get('/api/settings/all'),
     getPublic: () => api.get('/api/settings'),
@@ -359,11 +363,15 @@ export const teacherAPI = {
     reset: (data) => api.post('/api/examattempts/reset', data),
     delete: (id) => api.delete(`/api/examattempts/${id}`),
   },
-  scores: {
-    manual: (data) => api.post('/api/scores/manual', data),
-    bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
-    getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
-  },
+   scores: {
+     manual: (data) => api.post('/api/scores/manual', data),
+     bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
+     getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
+     getAllowedClasses: () => api.get('/api/scores/classes'),
+     getStudentsByClass: (classId) => api.get(`/api/scores/class/${classId}/students`),
+     getStudentSubjectScores: (studentId, classId, academicYearId, termId) => api.get(`/api/scores/student/${studentId}/subjects?classId=${classId}&academicYearId=${academicYearId}&termId=${termId}`),
+     saveSubjectScores: (data) => api.post('/api/scores/save-subject-scores', data),
+   },
   ...adminAPI,
 };
 

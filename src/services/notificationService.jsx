@@ -1,6 +1,6 @@
 import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://localhost:64677';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:64677';
 
 let connection = null;
 

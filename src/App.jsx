@@ -11,7 +11,6 @@ import StudentLogin from './pages/Auth/StudentLogin';
 import Register from './pages/Auth/Register';
 import ResetPassword from './pages/Auth/ResetPassword';
 import StudentDashboard from './pages/Students/StudentDashboard';
-import IdCard from './pages/IdCard';
 import StudentList from './pages/Students/StudentList';
 import StudentForm from './pages/Students/StudentForm';
 import AddStudentParent from './pages/Students/AddStudentParent';
@@ -38,6 +37,8 @@ import StudentResult from './pages/Results/StudentResult';
 import ParentStudentResult from './pages/Results/ParentStudentResult';
 import GradeTheory from './pages/Results/GradeTheory';
 import ManualScoreEntry from './pages/Results/ManualScoreEntry';
+import ScoreEntryPage from './pages/Results/ScoreEntryPage';
+import StudentScoreEntryPage from './pages/Results/StudentScoreEntryPage';
 import ResultSheetPage from './pages/Results/ResultSheetPage';
 import ParentList from './pages/Parents/ParentList';
 import ParentForm from './pages/Parents/ParentForm';
@@ -167,6 +168,8 @@ function AppRoutes() {
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="manual-score" element={<ManualScoreEntry />} />
+        <Route path="score-entry" element={<ScoreEntryPage />} />
+        <Route path="score-entry/:studentId" element={<StudentScoreEntryPage />} />
         <Route path="teacher-assignments" element={<TeacherAssignments />} />
         <Route path="grade-management" element={<GradeManagement />} />
         <Route path="report-cards" element={<ReportCardList />} />
@@ -206,6 +209,8 @@ function AppRoutes() {
         <Route path="results" element={<ResultList />} />
         <Route path="results/student/:studentId" element={<StudentResult />} />
         <Route path="manual-score" element={<ManualScoreEntry />} />
+        <Route path="score-entry" element={<ScoreEntryPage />} />
+        <Route path="score-entry/:studentId" element={<StudentScoreEntryPage />} />
         <Route path="report-cards" element={<ReportCardList />} />
         <Route path="parents" element={<ParentList />} />
         <Route path="settings" element={<Settings />} />
@@ -251,7 +256,6 @@ function AppRoutes() {
       </Route>
 
       {/* ID Card Route */}
-      <Route path="/my-id-card" element={<ProtectedRoute allowedRoles={['Teacher', 'Student']}><IdCard /></ProtectedRoute>} />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" />} />
