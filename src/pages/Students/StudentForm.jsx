@@ -360,21 +360,11 @@ const StudentForm = () => {
         // This calls POST /api/students/register which handles everything in one transaction
         
         const registerStudentDto = mapStudentFormToRegisterStudentDto(formData);
-        console.log('=== REGISTER STUDENT DTO ===');
-        console.log('classId:', registerStudentDto.classId);
-        console.log('academicYearId:', registerStudentDto.academicYearId);
-        console.log('termId:', registerStudentDto.termId);
-        console.log('Full DTO:', registerStudentDto);
 
         let registerResponse;
         try {
           registerResponse = await studentsAPI.registerStudent(registerStudentDto);
-          console.log('=== REGISTER RESPONSE ===');
-          console.log('Success:', registerResponse.data?.success);
-          console.log('Data:', registerResponse.data?.data);
-          console.log('IsEnrolled:', registerResponse.data?.data?.isEnrolled);
         } catch (regErr) {
-          console.error('Register Student API error:', regErr.response?.data || regErr.message || regErr);
           const errorsArray = regErr.response?.data?.errors || [];
           const allErrors = Array.isArray(errorsArray) ? errorsArray.map((e, i) => {
             if (typeof e === 'object') return JSON.stringify(e);
@@ -392,7 +382,6 @@ const StudentForm = () => {
           return;
         }
 
-        console.log('Student registered successfully:', registerResponse.data.data);
         setSuccess('Student registered successfully!');
         const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
         setTimeout(() => {

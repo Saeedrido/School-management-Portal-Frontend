@@ -33,8 +33,6 @@ export const AuthProvider = ({ children }) => {
     // Handle ID conversion - backend sends Id, frontend expects id
     const userId = userData.id || userData.Id || userData.ID || '';
 
-    console.log('normalizeUser - roles:', roles, 'roleName:', roleName, 'userId:', userId);
-
     return {
       ...userData,
       id: userId,  // Ensure lowercase id is available
@@ -86,16 +84,11 @@ export const AuthProvider = ({ children }) => {
         ? { email: identifier, password }
         : { studentNumber: identifier, password };
 
-      console.log('🔐 LOGIN ATTEMPT:', { identifier, isEmail, payload: loginPayload });
-
       const response = await authAPI.login(loginPayload);
-      console.log('📨 LOGIN RESPONSE:', response.data);
 
       if (response.data && response.data.success) {
         const { token, refreshToken, user: userData } = response.data.data;
         const normalizedUser = normalizeUser(userData);
-
-        console.log('✅ Login - User Data:', normalizedUser);
 
         localStorage.setItem('token', token);
         if (refreshToken) {
@@ -112,12 +105,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: false, error: response.data?.message || 'Login failed' };
     } catch (error) {
-      console.error('🚨 LOGIN ERROR:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-
       // Use getErrorMessage for consistent error handling
       const errorMessage = getErrorMessage(error);
 
@@ -164,7 +151,6 @@ export const AuthProvider = ({ children }) => {
         error: response.data?.message || 'Registration failed',
       };
     } catch (error) {
-      console.error('Registration error:', error);
       const errorMessage = getErrorMessage(error);
 
       if (error.response?.status === 400) {
@@ -182,7 +168,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    console.log('🔓 LOGOUT - Clearing auth state');
     // Clear local storage first to prevent 401 interceptor issues
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -191,7 +176,6 @@ export const AuthProvider = ({ children }) => {
     
     setUser(null);
     setTokenValidated(false);
-    console.log('🔓 LOGOUT - Auth state cleared');
   };
 
   const changePassword = async (currentPassword, newPassword) => {
@@ -210,7 +194,6 @@ export const AuthProvider = ({ children }) => {
         error: response.data?.message || 'Password change failed',
       };
     } catch (error) {
-      console.error('Change password error:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'An error occurred while changing password',
@@ -231,7 +214,6 @@ export const AuthProvider = ({ children }) => {
         error: response.data?.message || 'Failed to send reset email',
       };
     } catch (error) {
-      console.error('Forgot password error:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'An error occurred',
@@ -256,7 +238,6 @@ export const AuthProvider = ({ children }) => {
         error: response.data?.message || 'Password reset failed',
       };
     } catch (error) {
-      console.error('Reset password error:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'An error occurred',
@@ -300,7 +281,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: false };
     } catch (error) {
-      console.error('Refresh user error:', error);
       // If token is invalid, logout
       if (error.response?.status === 401) {
         await logout();
@@ -317,11 +297,10 @@ export const AuthProvider = ({ children }) => {
     if (token && savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        console.log('🔄 refreshAuthState - Setting user from localStorage:', parsedUser);
         setUser(parsedUser);
         setTokenValidated(true);
       } catch (e) {
-        console.error('Failed to parse user:', e);
+        // Ignore malformed cached user data
       }
     }
   };

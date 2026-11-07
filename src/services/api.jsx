@@ -100,7 +100,7 @@ api.interceptors.response.use(
             return api(originalRequest);
           }
         } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
+          // Token refresh failed - fall through to logout below
         }
       }
       const currentToken = localStorage.getItem('token');
