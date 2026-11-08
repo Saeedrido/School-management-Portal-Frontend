@@ -30,6 +30,9 @@ import {
   DialogContentText,
   DialogActions,
   Tooltip,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import {
   Person,
@@ -45,6 +48,7 @@ import {
   Info,
   Visibility,
   Delete,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
@@ -72,6 +76,91 @@ const StudentList = () => {
   const [academicYearId, setAcademicYearId] = useState('');
   const [uploadInfoOpen, setUploadInfoOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, student: null });
+  const [linkParentDialog, setLinkParentDialog] = useState({ open: false, student: null });
+  const [parentOptions, setParentOptions] = useState([]);
+  const [parentSearch, setParentSearch] = useState('');
+  const [parentsLoading, setParentsLoading] = useState(false);
+  const [parentHasSearched, setParentHasSearched] = useState(false);
+  const [linkingParentId, setLinkingParentId] = useState(null);
+  const [linkRelationship, setLinkRelationship] = useState('Father');
+
+  const getStudentParents = (student) => student?.parents || student?.Parents || [];
+
+  const openLinkParentDialog = (student) => {
+    setLinkParentDialog({ open: true, student });
+    setParentSearch('');
+    setParentOptions([]);
+    setParentHasSearched(false);
+    setParentsLoading(false);
+    setLinkRelationship('Father');
+  };
+
+  // Search parents on the backend as the user types (debounced).
+  useEffect(() => {
+    if (!linkParentDialog.open) return undefined;
+
+    const term = parentSearch.trim();
+    if (!term) {
+      setParentOptions([]);
+      setParentHasSearched(false);
+      setParentsLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+    setParentsLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await adminAPI.parents.search(term, 30);
+        if (!active) return;
+        const data = response.data?.data?.items || response.data?.data || response.data || [];
+        const normalized = (Array.isArray(data) ? data : []).map((p) => ({
+          id: p.id || p.Id,
+          firstName: p.parent?.firstName || p.parent?.FirstName || p.firstName || '',
+          lastName: p.parent?.lastName || p.parent?.LastName || p.lastName || '',
+          email: p.parent?.email || p.parent?.Email || p.email || '',
+          phoneNumber: p.parent?.phoneNumber || p.parent?.PhoneNumber || p.phone || '',
+        }));
+        setParentOptions(normalized);
+        setParentHasSearched(true);
+      } catch (err) {
+        if (active) {
+          console.error('Error searching parents:', err);
+          setParentOptions([]);
+          setError('Failed to search parents');
+        }
+      } finally {
+        if (active) setParentsLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [parentSearch, linkParentDialog.open]);
+
+  const handleLinkParent = async (parent) => {
+    if (!linkParentDialog.student) return;
+    setLinkingParentId(parent.id);
+    setError(null);
+    try {
+      await adminAPI.students.linkParent(linkParentDialog.student.id, {
+        parentId: parent.id,
+        relationship: linkRelationship || 'Guardian',
+        isPrimaryContact: false,
+        canAccessResults: true,
+      });
+      setLinkParentDialog({ open: false, student: null });
+      fetchStudents();
+    } catch (err) {
+      console.error('Error linking parent:', err);
+      setError(err.response?.data?.message || 'Failed to link parent to student');
+    } finally {
+      setLinkingParentId(null);
+    }
+  };
 
   const handleExportCsv = async () => {
     if (!selectedClass) {
@@ -282,6 +371,12 @@ const StudentList = () => {
 
     return fullName.includes(searchLower) || studentNumber.includes(searchLower);
   });
+
+  const linkedParentIds = new Set(
+    getStudentParents(linkParentDialog.student).map(
+      (p) => p.parentId || p.ParentId || p.parent?.id || p.Parent?.id
+    )
+  );
 
   if (loading && students.length === 0) {
     return (
@@ -667,6 +762,148 @@ Email: jane.smith@example.com`}
         </DialogActions>
       </Dialog>
 
+      {/* Link Parent Dialog */}
+      <Dialog
+        open={linkParentDialog.open}
+        onClose={() => setLinkParentDialog({ open: false, student: null })}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { maxHeight: '85vh', borderRadius: 3, display: 'flex', flexDirection: 'column' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <LinkIcon sx={{ color: '#0EA5E9' }} />
+          Link Parent
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1, overflowY: 'auto', flex: '1 1 auto' }}>
+          <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
+            {(() => {
+              const s = linkParentDialog.student;
+              const name = s
+                ? `${s.firstName || s.user?.firstName || ''} ${s.lastName || s.user?.lastName || ''}`.trim()
+                : '';
+              return name
+                ? `Search for a parent to link to ${name}.`
+                : 'Search for a parent to link to this student.';
+            })()}
+          </Typography>
+
+          <TextField
+            autoFocus
+            fullWidth
+            placeholder="Search by name, email or phone..."
+            value={parentSearch}
+            onChange={(e) => setParentSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: '#6FAF8F' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          />
+
+          <TextField
+            select
+            fullWidth
+            label="Relationship"
+            value={linkRelationship}
+            onChange={(e) => setLinkRelationship(e.target.value)}
+            sx={{ mt: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          >
+            <MenuItem value="Father">Father</MenuItem>
+            <MenuItem value="Mother">Mother</MenuItem>
+            <MenuItem value="Guardian">Guardian</MenuItem>
+            <MenuItem value="Other">Other</MenuItem>
+          </TextField>
+
+          <Box
+            sx={{
+              mt: 2,
+              maxHeight: { xs: 220, sm: 280 },
+              overflowY: 'auto',
+              border: '1px solid #E2E8F0',
+              borderRadius: 2,
+            }}
+          >
+            {!parentSearch.trim() ? (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Search sx={{ fontSize: 32, color: '#CBD5E1', mb: 1 }} />
+                <Typography variant="body2" sx={{ color: '#64748B' }}>
+                  Start typing a name, email or phone number to search for a parent.
+                </Typography>
+              </Box>
+            ) : parentsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : parentOptions.length === 0 ? (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography variant="body2" sx={{ color: '#64748B' }}>
+                  {parentHasSearched ? 'No parents match your search' : 'Searching...'}
+                </Typography>
+              </Box>
+            ) : (
+              <List disablePadding>
+                {parentOptions.map((parent) => {
+                  const alreadyLinked = linkedParentIds.has(parent.id);
+                  const isLinking = linkingParentId === parent.id;
+                  const name = `${parent.firstName} ${parent.lastName}`.trim() || 'Unnamed parent';
+
+                  return (
+                    <ListItem
+                      key={parent.id}
+                      divider
+                      secondaryAction={
+                        alreadyLinked ? (
+                          <Chip label="Linked" size="small" color="success" sx={{ fontWeight: 600 }} />
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            disabled={isLinking}
+                            onClick={() => handleLinkParent(parent)}
+                            startIcon={
+                              isLinking ? (
+                                <CircularProgress size={14} sx={{ color: '#fff' }} />
+                              ) : (
+                                <LinkIcon fontSize="small" />
+                              )
+                            }
+                            sx={{
+                              textTransform: 'none',
+                              borderRadius: 2,
+                              bgcolor: '#0EA5E9',
+                              '&:hover': { bgcolor: '#0284C7' },
+                            }}
+                          >
+                            {isLinking ? 'Linking...' : 'Link'}
+                          </Button>
+                        )
+                      }
+                    >
+                      <ListItemText
+                        primary={name}
+                        secondary={[parent.email, parent.phoneNumber].filter(Boolean).join(' • ')}
+                        primaryTypographyProps={{ fontWeight: 600, color: '#1E293B' }}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setLinkParentDialog({ open: false, student: null })}
+            sx={{ color: '#64748B', borderRadius: 2 }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {selectedClass && classes.length > 0 && !loading && (
         <Card sx={{ borderRadius: 3, border: '1px solid rgba(111, 175, 143, 0.1)', overflow: 'hidden' }}>
           <TableContainer>
@@ -677,13 +914,14 @@ Email: jane.smith@example.com`}
                   <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Student Number</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Gender</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Parent Link</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600, color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredStudents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} sx={{ textAlign: 'center', py: 8 }}>
+                    <TableCell colSpan={6} sx={{ textAlign: 'center', py: 8 }}>
                       <Box sx={{ color: '#64748B' }}>
                         <Search sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -735,6 +973,32 @@ Email: jane.smith@example.com`}
                         <TableCell>
                           <StatusBadge status={student.isActive ? 'Active' : 'Inactive'} />
                         </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const parents = getStudentParents(student);
+                            if (parents.length === 0) {
+                              return (
+                                <Chip
+                                  label="Not linked"
+                                  size="small"
+                                  sx={{ bgcolor: '#F1F5F9', color: '#64748B', fontWeight: 600 }}
+                                />
+                              );
+                            }
+                            const first = parents[0];
+                            const parentName = `${first.parent?.firstName || first.Parent?.FirstName || ''} ${first.parent?.lastName || first.Parent?.LastName || ''}`.trim();
+                            return (
+                              <Tooltip title={parentName ? `Linked to ${parentName}` : 'Linked to a parent'}>
+                                <Chip
+                                  label={parents.length > 1 ? `Linked (${parents.length})` : 'Linked'}
+                                  size="small"
+                                  color="success"
+                                  sx={{ fontWeight: 600 }}
+                                />
+                              </Tooltip>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell align="right">
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                             <Tooltip title="View Profile">
@@ -749,6 +1013,20 @@ Email: jane.smith@example.com`}
                                 <Visibility fontSize="small" />
                               </IconButton>
                             </Tooltip>
+                            {(user?.role === 'Admin' || user?.role === 'Teacher') && (
+                              <Tooltip title="Link to Parent">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openLinkParentDialog(student)}
+                                  sx={{
+                                    color: '#0EA5E9',
+                                    '&:hover': { backgroundColor: 'rgba(14, 165, 233, 0.1)' },
+                                  }}
+                                >
+                                  <LinkIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
                             <IconButton
                               size="small"
                               onClick={() => navigate(`${basePath}/students/${student.id}/edit`)}

@@ -317,8 +317,20 @@ export const adminAPI = {
     getHealth: () => api.get('/api/cache/health'),
   },
   parents: {
-    getAll: (page = 1, pageSize = 10) => api.get(`/api/parents?pageNumber=${page}&PageSize=${pageSize}`),
+    getAll: (page = 1, pageSize = 10, search = '') => {
+      const params = new URLSearchParams();
+      params.append('pageNumber', page);
+      params.append('pageSize', pageSize);
+      if (search) params.append('search', search);
+      return api.get(`/api/parents?${params.toString()}`);
+    },
     getById: (id) => api.get(`/api/parents/${id}`),
+    search: (search, limit = 25) => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      params.append('limit', limit);
+      return api.get(`/api/parents/search?${params.toString()}`);
+    },
     create: (data) => api.post('/api/parents/register', data),
     update: (id, data) => api.put(`/api/parents/${id}`, data),
     delete: (id) => api.delete(`/api/parents/${id}`),

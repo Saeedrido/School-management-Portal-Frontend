@@ -70,6 +70,7 @@ const ParentList = () => {
     selectedStudentIds: [], 
     relationship: 'Father' 
   });
+  const [selectedStudentDetails, setSelectedStudentDetails] = useState([]);
   const [linking, setLinking] = useState(false);
 
   useEffect(() => {
@@ -168,6 +169,7 @@ const ParentList = () => {
   const handleLinkClick = (parent) => {
     setLinkDialog({ open: true, parent });
     setLinkData({ selectedClassId: '', selectedStudentIds: [], relationship: 'Father' });
+    setSelectedStudentDetails([]);
   };
 
   const fetchStudentsByClass = async (classId) => {
@@ -206,6 +208,48 @@ const ParentList = () => {
       // If there's an error, set students to empty
       setStudents([]);
     }
+  };
+
+  const toggleStudentSelection = (student) => {
+    const studentId = student.id;
+    const isSelected = linkData.selectedStudentIds.includes(studentId);
+    const className = classes.find((c) => c.id === linkData.selectedClassId)?.name || '';
+
+    setLinkData((prev) => ({
+      ...prev,
+      selectedStudentIds: isSelected
+        ? prev.selectedStudentIds.filter((id) => id !== studentId)
+        : [...prev.selectedStudentIds, studentId],
+    }));
+
+    setSelectedStudentDetails((prev) => {
+      if (isSelected) {
+        return prev.filter((s) => s.id !== studentId);
+      }
+      if (prev.some((s) => s.id === studentId)) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: studentId,
+          name:
+            student.fullName ||
+            `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
+            'Student',
+          studentNumber: student.studentNumber || '',
+          className,
+        },
+      ];
+    });
+  };
+
+  const removeStudentSelection = (studentId) => {
+    setLinkData((prev) => ({
+      ...prev,
+      selectedStudentIds: prev.selectedStudentIds.filter((id) => id !== studentId),
+    }));
+    setSelectedStudentDetails((prev) => prev.filter((s) => s.id !== studentId));
   };
 
   const handleLinkStudent = async () => {
@@ -252,6 +296,8 @@ const ParentList = () => {
       }
       
       setLinkDialog({ open: false, parent: null });
+      setSelectedStudentDetails([]);
+      setLinkData({ selectedClassId: '', selectedStudentIds: [], relationship: 'Father' });
     } catch (err) {
       console.error('Error linking student:', err);
       setError(err.response?.data?.message || 'Failed to link student(s)');
@@ -672,14 +718,20 @@ const ParentList = () => {
       </Dialog>
 
       {/* Link Student Dialog */}
-      <Dialog open={linkDialog.open} onClose={() => setLinkDialog({ open: false, parent: null })} maxWidth="sm" fullWidth>
+      <Dialog
+        open={linkDialog.open}
+        onClose={() => setLinkDialog({ open: false, parent: null })}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { maxHeight: '85vh', borderRadius: 3, display: 'flex', flexDirection: 'column' } }}
+      >
         <DialogTitle sx={{ fontWeight: 600 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <LinkIcon sx={{ color: '#10B981' }} />
             Link Student(s) to Parent
           </Box>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ overflowY: 'auto', flex: '1 1 auto' }}>
           <Typography variant="body1" sx={{ mb: 3 }}>
             Select students to link to <strong>{linkDialog.parent?.firstName} {linkDialog.parent?.lastName}</strong>
           </Typography>
@@ -690,9 +742,11 @@ const ParentList = () => {
               value={linkData.selectedClassId}
               onChange={(e) => {
                 const newClassId = e.target.value;
-                setLinkData({ ...linkData, selectedClassId: newClassId, selectedStudentIds: [] });
+                setLinkData((prev) => ({ ...prev, selectedClassId: newClassId }));
                 if (newClassId) {
                   fetchStudentsByClass(newClassId);
+                } else {
+                  setStudents([]);
                 }
               }}
               label="Select Class"
@@ -711,7 +765,7 @@ const ParentList = () => {
               <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
                 Select students from this class:
               </Typography>
-              <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+              <Box sx={{ maxHeight: { xs: 200, sm: 240 }, overflowY: 'auto', border: '1px solid #e0e0e0', borderRadius: 1 }}>
                 {students.length > 0 ? (
                   <List>
                     {students.map((student) => {
@@ -727,12 +781,7 @@ const ParentList = () => {
                             bgcolor: isSelected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
                             '&:hover': { bgcolor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0, 0, 0, 0.04)' },
                           }}
-                          onClick={() => {
-                            const newSelectedIds = isSelected
-                              ? linkData.selectedStudentIds.filter(id => id !== student.id)
-                              : [...linkData.selectedStudentIds, student.id];
-                            setLinkData({ ...linkData, selectedStudentIds: newSelectedIds });
-                          }}
+                          onClick={() => toggleStudentSelection(student)}
                         >
                           <ListItemIcon>
                             <Checkbox
@@ -758,6 +807,41 @@ const ParentList = () => {
                 )}
               </Box>
             </>
+          )}
+
+          {selectedStudentDetails.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, color: '#1E293B' }}>
+                Selected children ({selectedStudentDetails.length})
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'nowrap',
+                  gap: 1,
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  pb: 0.75,
+                  '&::-webkit-scrollbar': { height: 6 },
+                  '&::-webkit-scrollbar-thumb': { backgroundColor: '#CBD5E1', borderRadius: 3 },
+                }}
+              >
+                {selectedStudentDetails.map((student) => {
+                  const label = `${student.name}${student.className ? ` — ${student.className}` : ''}`;
+                  return (
+                    <Chip
+                      key={student.id}
+                      label={label}
+                      title={label}
+                      color="success"
+                      variant="outlined"
+                      onDelete={() => removeStudentSelection(student.id)}
+                      sx={{ flex: '0 0 auto', maxWidth: 260 }}
+                    />
+                  );
+                })}
+              </Box>
+            </Box>
           )}
 
           <FormControl fullWidth sx={{ mt: 3 }}>
