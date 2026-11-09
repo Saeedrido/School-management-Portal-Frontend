@@ -39,7 +39,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI, academicYearsAPI, termsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 
 const ResultList = () => {
   const navigate = useNavigate();
@@ -64,6 +64,9 @@ const ResultList = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -133,16 +136,17 @@ const ResultList = () => {
     if (selectedClass && selectedTerm) {
       fetchStudents();
     }
-  }, [selectedClass, selectedTerm]);
+  }, [selectedClass, selectedTerm, page]);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const selectedTermData = terms.find(t => t.id === selectedTerm);
       const academicYearId = selectedTermData?.academicYearId;
-      const response = await resultsAPI.students.getByClassPaged(selectedClass, 1, 100, academicYearId);
+      const response = await resultsAPI.students.getByClassPaged(selectedClass, page, pageSize, academicYearId);
       if (response.data?.success) {
         setStudents(response.data.data?.items || []);
+        setTotalCount(response.data.data?.totalCount || 0);
       }
     } catch (err) {
       console.error('Error fetching students:', err);
@@ -241,7 +245,7 @@ const ResultList = () => {
                 <Select
                   value={selectedClass}
                   label="Select Class"
-                  onChange={(e) => setSelectedClass(e.target.value)}
+                  onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
                   sx={{ borderRadius: 2.5 }}
                 >
                   <MenuItem value=""><em>Select a class</em></MenuItem>
@@ -259,7 +263,7 @@ const ResultList = () => {
                 <Select
                   value={selectedTerm}
                   label="Select Term"
-                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  onChange={(e) => { setSelectedTerm(e.target.value); setPage(1); }}
                   sx={{ borderRadius: 2.5 }}
                 >
                   <MenuItem value=""><em>Select a term</em></MenuItem>
@@ -276,7 +280,7 @@ const ResultList = () => {
                 fullWidth
                 placeholder="Search students..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, backgroundColor: '#F8FAF9' } }}
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><Search sx={{ color: '#6FAF8F' }} /></InputAdornment>,
@@ -328,7 +332,7 @@ const ResultList = () => {
               Select a class and term to view results
             </Typography>
           </Box>
-        ) : filteredStudents.length === 0 ? (
+        ) : totalCount === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <School sx={{ fontSize: 48, color: '#94A3B8', mb: 2 }} />
             <Typography variant="body1" sx={{ color: '#64748B', fontWeight: 500 }}>
@@ -387,6 +391,15 @@ const ResultList = () => {
           </TableContainer>
         )}
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="students"
+      />
 
       {/* Publish Confirmation Dialog */}
       <Dialog

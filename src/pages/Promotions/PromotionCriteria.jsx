@@ -34,7 +34,7 @@ import {
   Delete,
 } from '@mui/icons-material';
 import { adminAPI, academicYearsAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const PromotionCriteria = () => {
@@ -45,6 +45,9 @@ const PromotionCriteria = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -75,7 +78,7 @@ const PromotionCriteria = () => {
     if (selectedAcademicYear) {
       fetchCriteria();
     }
-  }, [selectedAcademicYear]);
+  }, [selectedAcademicYear, page]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -108,9 +111,13 @@ const PromotionCriteria = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await adminAPI.promotions.getCriteria(selectedAcademicYear);
+      const response = await adminAPI.promotions.getCriteriaPaged(selectedAcademicYear, page, pageSize);
       if (response.data?.success) {
-        setCriteria(response.data.data);
+        setCriteria(response.data.data?.items || []);
+        setTotalCount(response.data.data?.totalCount || 0);
+        if ((response.data.data?.items || []).length === 0 && page > 1) {
+          setPage(page - 1);
+        }
       } else {
         setError(response.data?.message || 'Failed to load criteria');
       }
@@ -262,7 +269,7 @@ const PromotionCriteria = () => {
             <Select
               value={selectedAcademicYear}
               label="Academic Year"
-              onChange={(e) => setSelectedAcademicYear(e.target.value)}
+              onChange={(e) => { setSelectedAcademicYear(e.target.value); setPage(1); }}
             >
               {academicYears.map((year) => (
                 <MenuItem key={year.id} value={year.id}>
@@ -351,6 +358,15 @@ const PromotionCriteria = () => {
           )}
         </CardContent>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="criteria"
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

@@ -236,7 +236,7 @@ const subjectCount = processedSubjects.length || 1;
         <Box component="img" src={schoolLogo} sx={{ height: 150, mr: 2 }} alt="School Logo" />
         <Box sx={{ textAlign: 'center', flex: 1 }}>
           <Typography sx={{ fontSize: '26px', fontWeight: 'bold', letterSpacing: '1px' }}>300 ARUNDEL LEARNING CENTRE</Typography>
-          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', mt: 0.5 }}>12A, Olusegun Asokun Close, Nopa Bus Stop, Evita OjoKoro Road, Ikorodu</Typography>
+          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', mt: 0.5 }}>Olusegun asekun Street Ayita Ikorodu</Typography>
           <Typography sx={{ fontSize: '11px', fontWeight: 'bold', mt: 0.5 }}>Tel: 08023196047, 08033995565</Typography>
           <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mt: 1, textDecoration: 'underline' }}>{session} ACADEMIC SESSION - {termName.toUpperCase()} RESULT</Typography>
         </Box>

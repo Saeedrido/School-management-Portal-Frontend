@@ -24,7 +24,7 @@ import {
   DialogActions,
   InputAdornment,
 } from '@mui/material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import {
   Edit,
   Save,
@@ -61,6 +61,9 @@ const ManualScoreEntry = () => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -85,15 +88,15 @@ const ManualScoreEntry = () => {
   useEffect(() => {
     if (selectedClass && selectedClass !== '') {
       loadClassSubjects(selectedClass);
-      loadStudents(selectedClass);
-      setSelectedSubject('');
+      loadStudents(selectedClass, page);
     } else {
       setClassSubjects([]);
       setStudents([]);
       setFilteredStudents([]);
+      setTotalCount(0);
       setSelectedSubject('');
     }
-  }, [selectedClass]);
+  }, [selectedClass, page]);
 
   useEffect(() => {
     if (selectedClass && selectedSubject && selectedAcademicYear && selectedTerm) {
@@ -236,33 +239,36 @@ const ManualScoreEntry = () => {
     }
   };
 
-  const loadStudents = async (classId) => {
+  const loadStudents = async (classId, pageNumber = page) => {
     try {
       const apiToUse = hasRole('Admin') ? adminAPI : teacherAPI;
-      const response = await apiToUse.students.getByClass(classId);
+      const response = await apiToUse.students.getByClassPaged(classId, pageNumber, pageSize);
       console.log('Students response:', response.data);
+      let studentsList = [];
       if (response.data?.success && Array.isArray(response.data.data)) {
-        const studentsList = response.data.data;
-        setStudents(studentsList);
-        setFilteredStudents(studentsList);
+        studentsList = response.data.data;
       } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
-        setStudents(response.data.data.items);
-        setFilteredStudents(response.data.data.items);
-      } else {
-        setStudents([]);
-        setFilteredStudents([]);
+        studentsList = response.data.data.items;
+      }
+      setStudents(studentsList);
+      setFilteredStudents(studentsList);
+      setTotalCount(response.data?.data?.totalCount ?? studentsList.length);
+
+      if (studentsList.length > 0 && selectedSubject && selectedAcademicYear && selectedTerm) {
+        await loadExistingScores(studentsList);
       }
     } catch (err) {
       console.error('Failed to load students:', err);
       setError('Failed to load students');
       setStudents([]);
       setFilteredStudents([]);
+      setTotalCount(0);
     }
   };
 
-  const loadExistingScores = async () => {
+  const loadExistingScores = async (studentList = students) => {
     try {
-      if (!selectedAcademicYear || !selectedTerm || students.length === 0) {
+      if (!selectedAcademicYear || !selectedTerm || studentList.length === 0) {
         console.log('loadExistingScores skipped - missing params or no students');
         return;
       }
@@ -279,7 +285,7 @@ const ManualScoreEntry = () => {
       console.log('termInfo.name:', termInfo?.name);
       
       const updatedStudents = await Promise.all(
-        students.map(async (student) => {
+        studentList.map(async (student) => {
           try {
             const response = await adminAPI.scores.getStudentScores(student.id, yearId);
             
@@ -306,7 +312,17 @@ const ManualScoreEntry = () => {
       );
       console.log('Updated students with scores:', updatedStudents.filter(s => s.existingScore).length);
       setStudents(updatedStudents);
-      setFilteredStudents(updatedStudents);
+      const query = searchQuery.toLowerCase();
+      setFilteredStudents(
+        query
+          ? updatedStudents.filter(
+              (s) =>
+                s.firstName?.toLowerCase().includes(query) ||
+                s.lastName?.toLowerCase().includes(query) ||
+                s.studentNumber?.toLowerCase().includes(query)
+            )
+          : updatedStudents
+      );
     } catch (err) {
       console.error('Error loading scores:', err);
     }
@@ -461,7 +477,7 @@ const ManualScoreEntry = () => {
                 select
                 label="Class"
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(''); setPage(1); }}
               >
                 <MenuItem value="">Select Class</MenuItem>
                 {classes.map((c) => (
@@ -532,7 +548,7 @@ const ManualScoreEntry = () => {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                Students ({filteredStudents.length})
+                Students ({totalCount})
               </Typography>
               <TextField
                 size="small"
@@ -602,6 +618,15 @@ const ManualScoreEntry = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <ServerPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={setPage}
+              loading={loading}
+              itemLabel="students"
+            />
           </CardContent>
         </Card>
       )}

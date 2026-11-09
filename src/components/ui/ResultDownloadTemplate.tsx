@@ -93,7 +93,7 @@ const ResultDownloadTemplate = forwardRef<HTMLDivElement, ResultDownloadTemplate
             ROYAL SCHOLARS ACADEMY
           </Typography>
           <Typography sx={{ fontSize: '11px', fontWeight: 'bold', mt: 0.5 }}>
-            NO 4, DAISI OKEOWO AVENUE, EYITA, IKORODU, LAGOS
+            OLUSEGUN ASEKUN STREET AYITA IKORODU
           </Typography>
           <Typography sx={{ fontSize: '10px', fontWeight: 'bold', mt: 0.5 }}>
             Tel: 08175975161, 08055302518

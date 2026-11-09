@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 
 const ClassList = () => {
   const navigate = useNavigate();
@@ -39,6 +39,9 @@ const ClassList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
 
@@ -47,35 +50,16 @@ const ClassList = () => {
       try {
         setLoading(true);
         if (user?.role === 'Teacher') {
-          const response = await teacherAPI.myAssignments.getAll(1, 100);
-          if (response.data?.success && response.data?.data?.items) {
-            const assignments = response.data.data.items;
-            const uniqueClasses = [];
-            const seenClassIds = new Set();
-
-            assignments.forEach(assignment => {
-              if (assignment.class && !seenClassIds.has(assignment.classId)) {
-                seenClassIds.add(assignment.classId);
-                uniqueClasses.push({
-                  id: assignment.classId,
-                  name: assignment.class.name || 'Class',
-                  displayName: assignment.class.displayName,
-                  schoolLevel: assignment.class.schoolLevel,
-                  classOrder: assignment.class.classOrder,
-                  subjects: assignments
-                    .filter(a => a.classId === assignment.classId)
-                    .map(a => a.subject?.name)
-                    .filter(Boolean)
-                    .join(', '),
-                });
-              }
-            });
-            setClasses(uniqueClasses);
+          const response = await teacherAPI.classes.getMyPaged(page, pageSize);
+          if (response.data?.success && response.data?.data) {
+            setClasses(response.data.data.items || []);
+            setTotalCount(response.data.data.totalCount || 0);
           }
         } else {
-          const response = await adminAPI.classes.getAll();
+          const response = await adminAPI.classes.getPaged(page, pageSize);
           if (response.data?.success && response.data?.data) {
-            setClasses(response.data.data);
+            setClasses(response.data.data.items || []);
+            setTotalCount(response.data.data.totalCount || 0);
           }
         }
       } catch (err) {
@@ -89,7 +73,7 @@ const ClassList = () => {
     if (user?.role) {
       fetchClasses();
     }
-  }, [user?.role]);
+  }, [user?.role, page]);
 
   const filteredClasses = classes.filter((classItem) =>
     classItem.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -281,6 +265,15 @@ const ClassList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="classes"
+      />
     </Box>
   );
 };

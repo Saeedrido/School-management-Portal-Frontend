@@ -163,10 +163,7 @@ const KGResultSheet = ({ data = {}, readOnly = false }) => {
             300 ARUNDEL LEARNING CENTRE
           </Typography>
           <Typography variant="body2" sx={{ m: 0, fontSize: '12px', color: '#333' }}>
-            12A, Olusegun Asokun Close, Nopa Bus Stop
-          </Typography>
-          <Typography variant="body2" sx={{ m: 0, fontSize: '12px', color: '#333' }}>
-            Evita OjoKoro Road, Ikorodu
+            Olusegun asekun Street Ayita Ikorodu
           </Typography>
           <Typography variant="body2" sx={{ m: 0, fontSize: '12px', color: '#333' }}>
             Phone: 08023196047, 08033995565

@@ -6,7 +6,7 @@ import {
   Grid,
 } from '@mui/material';
 import { Add, Edit, Delete, Quiz, ArrowBack, Upload } from '@mui/icons-material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { entranceExamAPI } from '../../services/api';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -19,6 +19,12 @@ const EntranceExamDetail = () => {
   const [success, setSuccess] = useState('');
 
   const [deleteDialog, setDeleteDialog] = useState({ open: false, questionId: null });
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [exam?.questions?.length]);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -124,6 +130,7 @@ const EntranceExamDetail = () => {
               No questions yet. Click "Manage Questions" to add multiple choice questions.
             </Typography>
           ) : (
+            <>
             <TableContainer component={Paper} variant="outlined">
               <Table>
                 <TableHead>
@@ -137,9 +144,9 @@ const EntranceExamDetail = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {exam.questions.map((q, i) => (
+                  {exam.questions.slice((page - 1) * pageSize, page * pageSize).map((q, i) => (
                     <TableRow key={q.id}>
-                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
                       <TableCell>{q.subject || '-'}</TableCell>
                       <TableCell sx={{ maxWidth: 350 }}>
                         <Typography noWrap>{q.questionText}</Typography>
@@ -157,6 +164,15 @@ const EntranceExamDetail = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <ServerPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={exam.questions.length}
+              onPageChange={setPage}
+              itemLabel="questions"
+            />
+            </>
           )}
         </CardContent>
       </Card>

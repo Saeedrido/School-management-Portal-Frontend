@@ -55,7 +55,7 @@ import {
   Class,
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 
 const InfoSection = ({ icon, title, color, children }) => (
   <Box sx={{ mb: 4, '&:last-child': { mb: 0 } }}>
@@ -156,6 +156,9 @@ const StudentProfile = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -166,9 +169,12 @@ const StudentProfile = () => {
 
   useEffect(() => {
     if (selectedClass) {
-      fetchStudents(selectedClass);
+      fetchStudents(selectedClass, page);
+    } else {
+      setStudents([]);
+      setTotalCount(0);
     }
-  }, [selectedClass]);
+  }, [selectedClass, page]);
 
   const fetchClasses = async () => {
     try {
@@ -181,12 +187,14 @@ const StudentProfile = () => {
     }
   };
 
-  const fetchStudents = async (classId) => {
+  const fetchStudents = async (classId, pageNumber = page) => {
     setLoading(true);
     try {
-      const response = await adminAPI.students.getByClass(classId);
+      const response = await adminAPI.students.getByClassPaged(classId, pageNumber, pageSize);
       if (response.data?.success) {
-        setStudents(response.data.data);
+        const items = response.data.data?.items || response.data.data || [];
+        setStudents(items);
+        setTotalCount(response.data.data?.totalCount ?? items.length);
       }
     } catch (err) {
       console.error('Error fetching students:', err);
@@ -248,7 +256,7 @@ const StudentProfile = () => {
                 select
                 label="Select Class"
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
                 SelectProps={{ native: true }}
               >
                 <option value="">Select a class</option>
@@ -264,7 +272,7 @@ const StudentProfile = () => {
                 fullWidth
                 placeholder="Search by name or student number..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -276,7 +284,7 @@ const StudentProfile = () => {
             </Grid>
             <Grid item xs={12} md={2}>
               <Typography variant="body2" color="textSecondary">
-                {filteredStudents.length} students
+                {totalCount} students
               </Typography>
             </Grid>
           </Grid>
@@ -302,7 +310,7 @@ const StudentProfile = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredStudents.length === 0 ? (
+                {totalCount === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                       <Typography color="textSecondary">No students found</Typography>
@@ -352,6 +360,14 @@ const StudentProfile = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          <ServerPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+            itemLabel="students"
+          />
         </Card>
       ) : (
         <Card>

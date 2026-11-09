@@ -288,7 +288,7 @@ const PrimaryResultSheet = forwardRef(({ data, readOnly = true }, ref) => {
             300 ARUNDEL LEARNING CENTRE
           </Typography>
           <Typography sx={{ fontSize: '12px', mt: 0.5 }}>
-            12A, Olusegun Asokun Close, Nopa Bus Stop, Evita OjoKoro Road, Ikorodu
+            Olusegun asekun Street Ayita Ikorodu
           </Typography>
           <Typography sx={{ fontSize: '12px' }}>
             Phone: 08023196047, 08033995565

@@ -5,7 +5,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import { Add, Delete, Visibility } from '@mui/icons-material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { entranceExamAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,16 +14,21 @@ const EntranceExamList = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
-  useEffect(() => { loadExams(); }, []);
+  useEffect(() => { loadExams(); }, [page]);
 
   const loadExams = async () => {
     setLoading(true);
     try {
-      const res = await entranceExamAPI.getAll();
-      if (res.data?.success) setExams(res.data.data || []);
-      else setError(res.data?.message || 'Failed to load exams');
+      const res = await entranceExamAPI.getPaged(page, pageSize);
+      if (res.data?.success) {
+        setExams(res.data.data?.items || []);
+        setTotalCount(res.data.data?.totalCount || 0);
+      } else setError(res.data?.message || 'Failed to load exams');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load exams');
     } finally {
@@ -37,6 +42,13 @@ const EntranceExamList = () => {
       if (res.data?.success) {
         setExams(prev => prev.filter(e => e.id !== deleteDialog.id));
         setDeleteDialog({ open: false, id: null });
+        const remaining = totalCount - 1;
+        const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+        if (page > lastPage) {
+          setPage(lastPage);
+        } else {
+          setTotalCount(remaining);
+        }
       } else setError(res.data?.message || 'Failed to delete');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete');
@@ -104,6 +116,15 @@ const EntranceExamList = () => {
               </Table>
             </TableContainer>
           )}
+
+          <ServerPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+            itemLabel="entrance exams"
+          />
         </CardContent>
       </Card>
 

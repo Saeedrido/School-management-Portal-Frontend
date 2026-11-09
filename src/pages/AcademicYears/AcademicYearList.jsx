@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import { academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const AcademicYearList = () => {
@@ -41,6 +41,9 @@ const AcademicYearList = () => {
   const [academicYears, setAcademicYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -63,13 +66,14 @@ const AcademicYearList = () => {
 
   useEffect(() => {
     fetchAcademicYears();
-  }, []);
+  }, [page]);
 
   const fetchAcademicYears = async () => {
     try {
       setLoading(true);
-      const response = await academicYearsAPI.getAll();
-      setAcademicYears(response.data.data || []);
+      const response = await academicYearsAPI.getPaged(page, pageSize);
+      setAcademicYears(response.data.data?.items || []);
+      setTotalCount(response.data.data?.totalCount || 0);
     } catch (err) {
       setError('Failed to fetch academic years');
       console.error(err);
@@ -88,7 +92,13 @@ const AcademicYearList = () => {
     if (!deleteId) return;
     try {
       await academicYearsAPI.delete(deleteId);
-      setAcademicYears(academicYears.filter((y) => y.id !== deleteId));
+      const remaining = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+      if (page > lastPage) {
+        setPage(lastPage);
+      } else {
+        await fetchAcademicYears();
+      }
     } catch (err) {
       setError('Failed to delete academic year');
       console.error(err);
@@ -325,6 +335,15 @@ const AcademicYearList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="academic years"
+      />
 
       <ConfirmDialog
         open={confirmOpen}

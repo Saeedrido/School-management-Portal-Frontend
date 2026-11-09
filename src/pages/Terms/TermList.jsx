@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material';
 import { termsAPI, academicYearsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const TermList = () => {
@@ -47,6 +47,9 @@ const TermList = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -68,9 +71,9 @@ const TermList = () => {
 
   useEffect(() => {
     if (selectedYear) {
-      fetchTerms(selectedYear);
+      fetchTerms(selectedYear, page);
     }
-  }, [selectedYear]);
+  }, [selectedYear, page]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -80,7 +83,6 @@ const TermList = () => {
       setAcademicYears(years);
       if (years.length > 0) {
         setSelectedYear(years[0].id);
-        await fetchTerms(years[0].id);
       } else {
         setLoading(false);
       }
@@ -91,10 +93,11 @@ const TermList = () => {
     }
   };
 
-  const fetchTerms = async (yearId) => {
+  const fetchTerms = async (yearId, pageNumber = page) => {
     try {
-      const response = await termsAPI.getByAcademicYear(yearId);
-      setTerms(response.data.data || []);
+      const response = await termsAPI.getByAcademicYearPaged(yearId, pageNumber, pageSize);
+      setTerms(response.data.data?.items || []);
+      setTotalCount(response.data.data?.totalCount || 0);
     } catch (err) {
       setError('Failed to fetch terms');
       console.error(err);
@@ -119,7 +122,13 @@ const TermList = () => {
     if (!deleteId) return;
     try {
       await termsAPI.delete(deleteId);
-      setTerms(terms.filter((t) => t.id !== deleteId));
+      const remaining = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+      if (page > lastPage) {
+        setPage(lastPage);
+      } else {
+        await fetchTerms(selectedYear, page);
+      }
     } catch (err) {
       setError('Failed to delete term');
       console.error(err);
@@ -194,7 +203,7 @@ const handleSetActive = async (id) => {
             <Select
               value={selectedYear}
               label="Academic Year"
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => { setSelectedYear(e.target.value); setPage(1); }}
               sx={{ borderRadius: 2.5 }}
             >
               {academicYears.map((year) => (
@@ -334,6 +343,15 @@ const handleSetActive = async (id) => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="terms"
+      />
 
       <ConfirmDialog
         open={confirmOpen}

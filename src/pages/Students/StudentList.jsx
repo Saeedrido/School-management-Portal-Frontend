@@ -54,7 +54,7 @@ import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI } from '../../services/api';
 import api from '../../services/api';
 import { enumToGender } from '../../utils/dataMapping';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 
 const StudentList = () => {
   const theme = useTheme();
@@ -71,6 +71,9 @@ const StudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [academicYearId, setAcademicYearId] = useState('');
@@ -191,6 +194,13 @@ const StudentList = () => {
       await adminAPI.students.delete(student.id);
       setDeleteDialog({ open: false, student: null });
       setStudents(prev => prev.filter(s => s.id !== student.id));
+      const remaining = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+      if (page > lastPage) {
+        setPage(lastPage);
+      } else {
+        setTotalCount(remaining);
+      }
       setError(null);
     } catch (err) {
       console.error('Error deleting student:', err);
@@ -327,6 +337,7 @@ const StudentList = () => {
   const fetchStudents = async () => {
     if (!selectedClass) {
       setStudents([]);
+      setTotalCount(0);
       setLoading(false);
       return;
     }
@@ -335,6 +346,7 @@ const StudentList = () => {
       const allowedIds = teacherClasses.map(c => c.id);
       if (!allowedIds.includes(selectedClass)) {
         setStudents([]);
+        setTotalCount(0);
         setLoading(false);
         return;
       }
@@ -343,12 +355,14 @@ const StudentList = () => {
     try {
       setLoading(true);
       const api = user?.role === 'Teacher' ? teacherAPI.students : adminAPI.students;
-      const response = await api.getByClassPaged(selectedClass, 1, 100, academicYearId);
+      const response = await api.getByClassPaged(selectedClass, page, pageSize, academicYearId);
       
       if (response.data?.success && response.data?.data?.items) {
         setStudents(response.data.data.items);
+        setTotalCount(response.data.data.totalCount || 0);
       } else {
         setStudents([]);
+        setTotalCount(0);
       }
     } catch (err) {
       console.error('Error fetching students:', err);
@@ -360,7 +374,7 @@ const StudentList = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, [selectedClass, teacherClasses, user?.role]);
+  }, [selectedClass, teacherClasses, user?.role, page, academicYearId]);
 
   const filteredStudents = students.filter((student) => {
     const searchLower = searchQuery.toLowerCase();
@@ -398,7 +412,7 @@ const StudentList = () => {
     <Box>
       <PageHeader
         title={user?.role === 'Teacher' ? 'My Students' : 'All Students'}
-        subtitle={`${filteredStudents.length} ${filteredStudents.length === 1 ? 'student' : 'students'} found`}
+        subtitle={`${totalCount} ${totalCount === 1 ? 'student' : 'students'} found`}
         actionText={user?.role === 'Admin' ? 'Add Student' : undefined}
         onAction={user?.role === 'Admin' ? () => navigate(`${basePath}/students/new`) : undefined}
       />
@@ -427,7 +441,7 @@ const StudentList = () => {
               <InputLabel>Select Class</InputLabel>
               <Select
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
                 label="Select Class"
                 sx={{
                   borderRadius: 2.5,
@@ -451,7 +465,7 @@ const StudentList = () => {
             <TextField
               placeholder="Search by name or roll number..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               sx={{
                 flex: 1,
                 minWidth: { xs: '100%', sm: 250 },
@@ -1060,6 +1074,15 @@ Email: jane.smith@example.com`}
           </TableContainer>
         </Card>
       )}
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="students"
+      />
     </Box>
   );
 };

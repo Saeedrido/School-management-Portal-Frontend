@@ -27,7 +27,7 @@ import {
   Edit,
   School,
 } from '@mui/icons-material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { adminAPI, teacherAPI, academicYearsAPI, termsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -52,6 +52,9 @@ const ScoreEntryPage = () => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     loadInitialData();
@@ -65,12 +68,13 @@ const ScoreEntryPage = () => {
 
   useEffect(() => {
     if (selectedClass) {
-      loadStudents(selectedClass);
+      loadStudents(selectedClass, page);
     } else {
       setStudents([]);
       setFilteredStudents([]);
+      setTotalCount(0);
     }
-  }, [selectedClass]);
+  }, [selectedClass, page]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -140,17 +144,20 @@ const ScoreEntryPage = () => {
     }
   };
 
-  const loadStudents = async (classId) => {
+  const loadStudents = async (classId, pageNumber = page) => {
     try {
       setError('');
       const api = hasRole('Admin') ? adminAPI : teacherAPI;
-      const response = await api.scores.getStudentsByClass(classId);
+      const response = await api.scores.getStudentsByClassPaged(classId, pageNumber, pageSize);
       if (response.data?.success) {
-        setStudents(response.data.data || []);
-        setFilteredStudents(response.data.data || []);
+        const items = response.data.data?.items || response.data.data || [];
+        setStudents(items);
+        setFilteredStudents(items);
+        setTotalCount(response.data.data?.totalCount ?? items.length);
       } else {
         setStudents([]);
         setFilteredStudents([]);
+        setTotalCount(0);
         if (response.data?.message) {
           setError(response.data.message);
         }
@@ -161,6 +168,7 @@ const ScoreEntryPage = () => {
       setError(errMsg);
       setStudents([]);
       setFilteredStudents([]);
+      setTotalCount(0);
     }
   };
 
@@ -221,7 +229,7 @@ const ScoreEntryPage = () => {
                 select
                 label="Class"
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
                 required
                 InputProps={{
                   startAdornment: (
@@ -299,7 +307,7 @@ const ScoreEntryPage = () => {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                Students ({students.length})
+                Students ({totalCount})
               </Typography>
               <TextField
                 size="small"
@@ -317,7 +325,7 @@ const ScoreEntryPage = () => {
               />
             </Box>
 
-            {students.length === 0 ? (
+            {totalCount === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4, color: '#666' }}>
                 <Person sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
                 <Typography variant="h6" color="inherit">
@@ -366,6 +374,15 @@ const ScoreEntryPage = () => {
                 </Table>
               </TableContainer>
             )}
+
+            <ServerPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={setPage}
+              loading={loading}
+              itemLabel="students"
+            />
           </CardContent>
         </Card>
       )}

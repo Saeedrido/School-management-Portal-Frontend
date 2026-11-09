@@ -43,6 +43,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ServerPagination from '../../components/ui/ServerPagination';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import ResultSheet from '../../components/ui/ResultSheet';
@@ -95,6 +96,8 @@ const StudentResult = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [resultList, setResultList] = useState([]);
+  const [subjectPage, setSubjectPage] = useState(1);
+  const subjectPageSize = 10;
   const [student, setStudent] = useState(null);
   const [term, setTerm] = useState(null);
   const [academicYear, setAcademicYear] = useState(null);
@@ -389,6 +392,10 @@ const StudentResult = () => {
     ? (result.subjectResults || result.SubjectResults || [])
     : [];
 
+  useEffect(() => {
+    setSubjectPage(1);
+  }, [resultList]);
+
   // Detect if this is a KG student
   const classInfo = result?.Class || result?.class || {};
   const schoolLevel = classInfo.schoolLevel || classInfo.SchoolLevel || '';
@@ -647,7 +654,7 @@ const StudentResult = () => {
                 </TableHead>
                 <TableBody>
                   {subjectResults && subjectResults.length > 0 ? (
-                    subjectResults.map((subjectResult, index) => {
+                    subjectResults.slice((subjectPage - 1) * subjectPageSize, subjectPage * subjectPageSize).map((subjectResult, index) => {
                       const objectiveScore = getValue(subjectResult, 'objectiveScore') || getValue(subjectResult, 'ObjectiveScore') || 0;
                       const theoryScore = getValue(subjectResult, 'theoryScore') || getValue(subjectResult, 'TheoryScore') || 0;
                       const testScore = getValue(subjectResult, 'testScore') || getValue(subjectResult, 'TestScore') || 0;
@@ -736,6 +743,14 @@ const StudentResult = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <ServerPagination
+              page={subjectPage}
+              pageSize={subjectPageSize}
+              totalCount={subjectResults.length}
+              onPageChange={setSubjectPage}
+              itemLabel="subjects"
+            />
 
             {/* Summary Section */}
             <Box sx={{ p: 3, background: '#F5F7FA' }}>

@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const SCHOOL_LEVELS = {
@@ -45,6 +45,9 @@ const SubjectList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -53,23 +56,28 @@ const SubjectList = () => {
   const basePath = user?.role === 'Admin' ? '/admin-dashboard' : '/teacher-dashboard';
 
   useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        setLoading(true);
-        const response = await adminAPI.subjects.getAll();
-        if (response.data?.success && response.data?.data) {
-          setSubjects(response.data.data);
+    const timer = setTimeout(() => {
+      const fetchSubjects = async () => {
+        try {
+          setLoading(true);
+          const response = await adminAPI.subjects.getPaged(page, pageSize, '', searchTerm.trim());
+          if (response.data?.success && response.data?.data) {
+            setSubjects(response.data.data.items || []);
+            setTotalCount(response.data.data.totalCount || 0);
+          }
+        } catch (err) {
+          console.error('Error fetching subjects:', err);
+          setError('Failed to load subjects');
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('Error fetching subjects:', err);
-        setError('Failed to load subjects');
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchSubjects();
-  }, []);
+      fetchSubjects();
+    }, searchTerm ? 400 : 0);
+
+    return () => clearTimeout(timer);
+  }, [page, searchTerm]);
 
   const filteredSubjects = subjects.filter((subject) =>
     subject.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,7 +94,14 @@ const SubjectList = () => {
     if (!deleteId) return;
     try {
       await adminAPI.subjects.delete(deleteId);
-      setSubjects(subjects.filter((s) => s.id !== deleteId));
+      const remaining = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+      if (page > lastPage) {
+        setPage(lastPage);
+      } else {
+        setSubjects(subjects.filter((s) => s.id !== deleteId));
+        setTotalCount(remaining);
+      }
     } catch (err) {
       console.error('Error deleting subject:', err);
       setError('Failed to delete subject');
@@ -180,7 +195,7 @@ const SubjectList = () => {
             fullWidth
             placeholder="Search subjects..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2.5,
@@ -285,6 +300,15 @@ const SubjectList = () => {
           </Table>
             </TableContainer>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="subjects"
+      />
 
       <ConfirmDialog
         open={confirmOpen}

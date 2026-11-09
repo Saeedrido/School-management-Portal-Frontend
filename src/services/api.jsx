@@ -160,6 +160,7 @@ export const adminAPI = {
   },
   academicYears: {
     getAll: () => api.get('/api/academicyears'),
+    getPaged: (page = 1, pageSize = 10) => api.get(`/api/academicyears/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/academicyears/${id}`),
     getActive: () => api.get('/api/academicyears/active'),
     create: (data) => api.post('/api/academicyears', data),
@@ -171,6 +172,8 @@ export const adminAPI = {
   },
   terms: {
     getAll: () => api.get('/api/terms'),
+    getPaged: (page = 1, pageSize = 10) => api.get(`/api/terms/paged?pageNumber=${page}&pageSize=${pageSize}`),
+    getByAcademicYearPaged: (academicYearId, page = 1, pageSize = 10) => api.get(`/api/terms/by-academic-year/${academicYearId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/terms/${id}`),
     getActive: () => api.get('/api/terms/active'),
     getByAcademicYear: (academicYearId) => api.get(`/api/terms/by-academic-year/${academicYearId}`),
@@ -182,6 +185,8 @@ export const adminAPI = {
   },
   classes: {
     getAll: () => api.get('/api/classes'),
+    getPaged: (page = 1, pageSize = 10) => api.get(`/api/classes/paged?pageNumber=${page}&pageSize=${pageSize}`),
+     getMyPaged: (page = 1, pageSize = 10) => api.get(`/api/classes/my-classes/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getById: (id) => api.get(`/api/classes/${id}`),
     create: (data) => api.post('/api/classes', data),
     update: (id, data) => api.put(`/api/classes/${id}`, data),
@@ -192,6 +197,14 @@ export const adminAPI = {
   },
   subjects: {
     getAll: () => api.get('/api/subjects'),
+    getPaged: (page = 1, pageSize = 10, schoolLevel = '', search = '') => {
+      const params = new URLSearchParams();
+      params.append('pageNumber', page);
+      params.append('pageSize', pageSize);
+      if (schoolLevel) params.append('schoolLevel', schoolLevel);
+      if (search) params.append('search', search);
+      return api.get(`/api/subjects/query?${params.toString()}`);
+    },
     getById: (id) => api.get(`/api/subjects/${id}`),
     create: (data) => api.post('/api/subjects', data),
     update: (id, data) => api.put(`/api/subjects/${id}`, data),
@@ -283,6 +296,7 @@ export const adminAPI = {
   },
   grades: {
     getAll: () => api.get('/api/grades'),
+    getPaged: (page = 1, pageSize = 10) => api.get(`/api/grades/paged?pageNumber=${page}&pageSize=${pageSize}`),
     getBySchoolLevel: (schoolLevel) => api.get(`/api/grades/school-level/${schoolLevel}`),
     getById: (id) => api.get(`/api/grades/${id}`),
     create: (data) => api.post('/api/grades', data),
@@ -307,6 +321,7 @@ export const adminAPI = {
     override: (studentId, academicYearId, data) => api.put(`/api/promotions/${studentId}/override?academicYearId=${academicYearId}`, data),
     publishWithResults: (data) => api.post('/api/promotions/publish-with-promotions', data),
     getCriteria: (academicYearId) => api.get(`/api/promotions/criteria?academicYearId=${academicYearId}`),
+    getCriteriaPaged: (academicYearId, page = 1, pageSize = 10) => api.get(`/api/promotions/criteria/paged?academicYearId=${academicYearId}&pageNumber=${page}&pageSize=${pageSize}`),
     createCriteria: (data) => api.post('/api/promotions/criteria', data),
     updateCriteria: (id, data) => api.put(`/api/promotions/criteria/${id}`, data),
     deleteCriteria: (id) => api.delete(`/api/promotions/criteria/${id}`),
@@ -325,6 +340,13 @@ export const adminAPI = {
       return api.get(`/api/parents?${params.toString()}`);
     },
     getById: (id) => api.get(`/api/parents/${id}`),
+    getPaged: (page = 1, pageSize = 10, search = '') => {
+      const params = new URLSearchParams();
+      params.append('pageNumber', page);
+      params.append('pageSize', pageSize);
+      if (search) params.append('search', search);
+      return api.get(`/api/parents/paged?${params.toString()}`);
+    },
     search: (search, limit = 25) => {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
@@ -349,6 +371,7 @@ export const adminAPI = {
      bulkManual: (data) => api.post('/api/scores/bulk-manual', data),
      getAllowedClasses: () => api.get('/api/scores/classes'),
      getStudentsByClass: (classId) => api.get(`/api/scores/class/${classId}/students`),
+     getStudentsByClassPaged: (classId, page = 1, pageSize = 10) => api.get(`/api/scores/class/${classId}/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
      getStudentSubjectScores: (studentId, classId, academicYearId, termId) => api.get(`/api/scores/student/${studentId}/subjects?classId=${classId}&academicYearId=${academicYearId}&termId=${termId}`),
      saveSubjectScores: (data) => api.post('/api/scores/save-subject-scores', data),
    },
@@ -381,6 +404,7 @@ export const teacherAPI = {
      getStudentScores: (studentId, academicYearId) => api.get(`/api/scores/student/${studentId}?academicYearId=${academicYearId}`),
      getAllowedClasses: () => api.get('/api/scores/classes'),
      getStudentsByClass: (classId) => api.get(`/api/scores/class/${classId}/students`),
+     getStudentsByClassPaged: (classId, page = 1, pageSize = 10) => api.get(`/api/scores/class/${classId}/students/paged?pageNumber=${page}&pageSize=${pageSize}`),
      getStudentSubjectScores: (studentId, classId, academicYearId, termId) => api.get(`/api/scores/student/${studentId}/subjects?classId=${classId}&academicYearId=${academicYearId}&termId=${termId}`),
      saveSubjectScores: (data) => api.post('/api/scores/save-subject-scores', data),
    },
@@ -434,6 +458,7 @@ export const parentAPI = {
 export const commentsAPI = {
   // Teacher Remarks
   getTeacherRemarks: () => api.get('/api/comments/teacher-remarks'),
+  getTeacherRemarksPaged: (page = 1, pageSize = 10) => api.get(`/api/comments/teacher-remarks/paged?pageNumber=${page}&pageSize=${pageSize}`),
   getTeacherRemarksBySchoolLevel: (schoolLevel) => api.get(`/api/comments/teacher-remarks/school-level/${schoolLevel}`),
   getTeacherRemark: (id) => api.get(`/api/comments/teacher-remarks/${id}`),
   createTeacherRemark: (data) => api.post('/api/comments/teacher-remarks', data),
@@ -445,6 +470,7 @@ export const commentsAPI = {
   
   // Headmaster Comments
   getHeadmasterComments: () => api.get('/api/comments/headmaster-comments'),
+  getHeadmasterCommentsPaged: (page = 1, pageSize = 10) => api.get(`/api/comments/headmaster-comments/paged?pageNumber=${page}&pageSize=${pageSize}`),
   getHeadmasterCommentsBySchoolLevel: (schoolLevel) => api.get(`/api/comments/headmaster-comments/school-level/${schoolLevel}`),
   getHeadmasterComment: (id) => api.get(`/api/comments/headmaster-comments/${id}`),
   createHeadmasterComment: (data) => api.post('/api/comments/headmaster-comments', data),
@@ -474,6 +500,7 @@ export const informationAPI = {
 // ============================================
 export const entranceExamAPI = {
   getAll: () => api.get('/api/entranceexams'),
+  getPaged: (page = 1, pageSize = 10) => api.get(`/api/entranceexams/paged?pageNumber=${page}&pageSize=${pageSize}`),
   getByLevel: (level) => api.get(`/api/entranceexams/by-level/${level}`),
   getById: (id) => api.get(`/api/entranceexams/${id}`),
   create: (data) => api.post('/api/entranceexams', data),
@@ -492,7 +519,9 @@ export const entranceExamAPI = {
 
 export const entranceExamCandidateAPI = {
   getByExam: (examId) => api.get(`/api/entranceexamcandidates/exam/${examId}`),
+  getByExamPaged: (examId, page = 1, pageSize = 10) => api.get(`/api/entranceexamcandidates/exam/${examId}/paged?pageNumber=${page}&pageSize=${pageSize}`),
   getByLevel: (level) => api.get(`/api/entranceexamcandidates/by-level/${level}`),
+  getByLevelPaged: (level, page = 1, pageSize = 10) => api.get(`/api/entranceexamcandidates/by-level/${level}/paged?pageNumber=${page}&pageSize=${pageSize}`),
   getById: (id) => api.get(`/api/entranceexamcandidates/${id}`),
   register: (data) => api.post('/api/entranceexamcandidates', data),
   update: (id, data) => api.put(`/api/entranceexamcandidates/${id}/reassign`, data),

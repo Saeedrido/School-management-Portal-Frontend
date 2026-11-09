@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { teacherAPI } from '../../services/api';
-import { PageHeader, InfoCard } from '../../components/ui';
+import { PageHeader, InfoCard, ServerPagination } from '../../components/ui';
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -40,6 +40,8 @@ const TeacherDashboard = () => {
   const [error, setError] = useState(null);
 
   const [myAssignments, setMyAssignments] = useState([]);
+  const [assignmentPage, setAssignmentPage] = useState(1);
+  const assignmentPageSize = 10;
   const [students, setStudents] = useState([]);
   const [exams, setExams] = useState([]);
   const [totalStudentCount, setTotalStudentCount] = useState(0);
@@ -253,7 +255,7 @@ const TeacherDashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {myAssignments.map((assignment) => (
+                      {myAssignments.slice((assignmentPage - 1) * assignmentPageSize, assignmentPage * assignmentPageSize).map((assignment) => (
                         <TableRow key={assignment.id} sx={{ '&:hover': { bgcolor: 'rgba(111, 175, 143, 0.03)' } }}>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -278,6 +280,13 @@ const TeacherDashboard = () => {
                   </Table>
                 </TableContainer>
               )}
+              <ServerPagination
+                page={assignmentPage}
+                pageSize={assignmentPageSize}
+                totalCount={myAssignments.length}
+                onPageChange={setAssignmentPage}
+                itemLabel="assignments"
+              />
             </CardContent>
           </Card>
         </Grid>

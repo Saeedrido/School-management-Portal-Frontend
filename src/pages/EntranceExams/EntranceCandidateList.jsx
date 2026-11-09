@@ -6,7 +6,7 @@ import {
   TextField, MenuItem, Grid, Snackbar,
 } from '@mui/material';
 import { Add, Delete, DeleteForever, ContentCopy, OpenInNew, SwapHoriz } from '@mui/icons-material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { entranceExamAPI, entranceExamCandidateAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,9 @@ const EntranceCandidateList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, hard: false });
   const [reassignDialog, setReassignDialog] = useState({ open: false, candidate: null, exams: [], newExamId: '' });
@@ -44,8 +47,11 @@ const EntranceCandidateList = () => {
   useEffect(() => {
     if (examId) loadCandidatesByExam(examId);
     else if (level) loadCandidatesByLevel(level);
-    else setCandidates([]);
-  }, [examId, level]);
+    else {
+      setCandidates([]);
+      setTotalCount(0);
+    }
+  }, [examId, level, page]);
 
   const loadExamsByLevel = async (lvl) => {
     try {
@@ -59,8 +65,11 @@ const EntranceCandidateList = () => {
   const loadCandidatesByLevel = async (lvl) => {
     setLoading(true);
     try {
-      const res = await entranceExamCandidateAPI.getByLevel(lvl);
-      if (res.data?.success) setCandidates(res.data.data || []);
+      const res = await entranceExamCandidateAPI.getByLevelPaged(lvl, page, pageSize);
+      if (res.data?.success) {
+        setCandidates(res.data.data?.items || []);
+        setTotalCount(res.data.data?.totalCount || 0);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load');
     } finally {
@@ -71,8 +80,11 @@ const EntranceCandidateList = () => {
   const loadCandidatesByExam = async (id) => {
     setLoading(true);
     try {
-      const res = await entranceExamCandidateAPI.getByExam(id);
-      if (res.data?.success) setCandidates(res.data.data || []);
+      const res = await entranceExamCandidateAPI.getByExamPaged(id, page, pageSize);
+      if (res.data?.success) {
+        setCandidates(res.data.data?.items || []);
+        setTotalCount(res.data.data?.totalCount || 0);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load');
     } finally {
@@ -90,6 +102,13 @@ const EntranceCandidateList = () => {
         setCandidates(prev => prev.filter(c => c.id !== deleteDialog.id));
         setDeleteDialog({ open: false, id: null, hard: false });
         setSuccess(deleteDialog.hard ? 'Candidate permanently deleted' : 'Candidate deleted');
+        const remaining = totalCount - 1;
+        const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+        if (page > lastPage) {
+          setPage(lastPage);
+        } else {
+          setTotalCount(remaining);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete');
@@ -156,14 +175,14 @@ const EntranceCandidateList = () => {
           <Grid container spacing={2} sx={{ mb: 2 }}>
             <Grid item xs={12} sm={4}>
               <TextField fullWidth select label="Select Level" value={level}
-                onChange={(e) => setLevel(e.target.value)}>
+                onChange={(e) => { setLevel(e.target.value); setPage(1); }}>
                 <MenuItem value="">All Levels</MenuItem>
                 {LEVELS.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField fullWidth select label="Select Exam" value={examId}
-                onChange={(e) => setExamId(e.target.value)}
+                onChange={(e) => { setExamId(e.target.value); setPage(1); }}
                 disabled={!level}>
                 <MenuItem value="">All Exams at this Level</MenuItem>
                 {exams.map(e => (
@@ -179,7 +198,7 @@ const EntranceCandidateList = () => {
             <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
               Select a level to view candidates.
             </Typography>
-          ) : examId && candidates.length === 0 ? (
+          ) : examId && totalCount === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography color="text.secondary" sx={{ mb: 2 }}>
                 No candidates registered for <strong>{selectedExam?.title}</strong> yet.
@@ -190,7 +209,7 @@ const EntranceCandidateList = () => {
                 Register Candidate for this Exam
               </Button>
             </Box>
-          ) : level && !examId && candidates.length === 0 ? (
+          ) : level && !examId && totalCount === 0 ? (
             <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
               No candidates found for this level.
             </Typography>
@@ -254,6 +273,15 @@ const EntranceCandidateList = () => {
               </Table>
             </TableContainer>
           )}
+
+          <ServerPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+            itemLabel="candidates"
+          />
         </CardContent>
       </Card>
 

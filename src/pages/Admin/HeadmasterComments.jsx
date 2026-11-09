@@ -36,13 +36,16 @@ import {
   Restore,
 } from '@mui/icons-material';
 import { commentsAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { SCHOOL_LEVEL_OPTIONS, getSchoolLevelLabel, getSchoolLevelKey } from '../../utils/constants';
 
 const HeadmasterComments = () => {
   const navigate = useNavigate();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState(null);
@@ -61,15 +64,19 @@ const HeadmasterComments = () => {
 
   useEffect(() => {
     fetchComments();
-  }, []);
+  }, [page]);
 
   const fetchComments = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await commentsAPI.getHeadmasterComments();
+      const response = await commentsAPI.getHeadmasterCommentsPaged(page, pageSize);
       if (response.data?.success) {
-        setComments(response.data.data || []);
+        setComments(response.data.data?.items || []);
+        setTotalCount(response.data.data?.totalCount || 0);
+        if ((response.data.data?.items || []).length === 0 && page > 1) {
+          setPage(page - 1);
+        }
       }
     } catch (err) {
       console.error('Error fetching comments:', err);
@@ -388,6 +395,15 @@ const HeadmasterComments = () => {
           </Card>
         ))
       )}
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="comments"
+      />
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>

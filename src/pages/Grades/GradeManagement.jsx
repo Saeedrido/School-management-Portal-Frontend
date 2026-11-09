@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { Save, Refresh } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 
 const schoolLevels = [
   { value: 1, label: 'Primary' },
@@ -35,6 +35,8 @@ const GradeManagement = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -109,6 +111,11 @@ const GradeManagement = () => {
     return level ? level.label : 'Unknown';
   };
 
+  const startIndex = (page - 1) * pageSize;
+  const pagedGrades = grades
+    .slice(startIndex, startIndex + pageSize)
+    .map((grade, visibleIndex) => ({ grade, index: startIndex + visibleIndex }));
+
   return (
     <Box>
       <PageHeader
@@ -136,7 +143,7 @@ const GradeManagement = () => {
               <Select
                 value={selectedLevel}
                 label="School Level"
-                onChange={(e) => setSelectedLevel(e.target.value)}
+                onChange={(e) => { setSelectedLevel(e.target.value); setPage(1); }}
               >
                 {schoolLevels.map((level) => (
                   <MenuItem key={level.value} value={level.value}>
@@ -184,7 +191,7 @@ const GradeManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {grades.map((grade, index) => (
+                    {pagedGrades.map(({ grade, index }) => (
                       <TableRow key={grade.id} hover>
                         <TableCell>
                           <TextField
@@ -234,6 +241,15 @@ const GradeManagement = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              <ServerPagination
+                page={page}
+                pageSize={pageSize}
+                totalCount={grades.length}
+                onPageChange={setPage}
+                loading={loading}
+                itemLabel="grades"
+              />
 
               <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button

@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Collapse,
 } from '@mui/material';
 import { OpenInNew, ContentCopy, ExpandMore, ExpandLess } from '@mui/icons-material';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { entranceExamAPI, entranceExamCandidateAPI } from '../../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -28,6 +28,9 @@ const EntranceCandidateRegister = () => {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const loadExams = async () => {
@@ -59,17 +62,22 @@ const EntranceCandidateRegister = () => {
       loadExistingCandidates(form.entranceExamId);
     } else {
       setExistingCandidates([]);
+      setTotalCount(0);
     }
-  }, [form.entranceExamId]);
+  }, [form.entranceExamId, page]);
 
   const handleChange = (e) => {
+    if (e.target.name === 'entranceExamId') setPage(1);
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const loadExistingCandidates = async (examId) => {
     try {
-      const res = await entranceExamCandidateAPI.getByExam(examId);
-      if (res.data?.success) setExistingCandidates(res.data.data || []);
+      const res = await entranceExamCandidateAPI.getByExamPaged(examId, page, pageSize);
+      if (res.data?.success) {
+        setExistingCandidates(res.data.data?.items || []);
+        setTotalCount(res.data.data?.totalCount || 0);
+      }
     } catch (_) {
       setExistingCandidates([]);
     }
@@ -197,7 +205,7 @@ const EntranceCandidateRegister = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="h6" sx={{ color: '#2E7D32' }}>
-                    Existing Candidates for this Exam ({existingCandidates.length})
+                    Existing Candidates for this Exam ({totalCount})
                   </Typography>
                   <Button size="small" onClick={() => setShowExisting(!showExisting)}
                     endIcon={showExisting ? <ExpandLess /> : <ExpandMore />}>
@@ -225,6 +233,13 @@ const EntranceCandidateRegister = () => {
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  <ServerPagination
+                    page={page}
+                    pageSize={pageSize}
+                    totalCount={totalCount}
+                    onPageChange={setPage}
+                    itemLabel="candidates"
+                  />
                 </Collapse>
               </CardContent>
             </Card>

@@ -38,13 +38,16 @@ import {
   Restore,
 } from '@mui/icons-material';
 import { commentsAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 import { SCHOOL_LEVEL_OPTIONS, getSchoolLevelLabel, getSchoolLevelKey } from '../../utils/constants';
 
 const TeacherRemarks = () => {
   const navigate = useNavigate();
   const [remarks, setRemarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRemark, setSelectedRemark] = useState(null);
@@ -63,15 +66,19 @@ const TeacherRemarks = () => {
 
   useEffect(() => {
     fetchRemarks();
-  }, []);
+  }, [page]);
 
   const fetchRemarks = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await commentsAPI.getTeacherRemarks();
+      const response = await commentsAPI.getTeacherRemarksPaged(page, pageSize);
       if (response.data?.success) {
-        setRemarks(response.data.data || []);
+        setRemarks(response.data.data?.items || []);
+        setTotalCount(response.data.data?.totalCount || 0);
+        if ((response.data.data?.items || []).length === 0 && page > 1) {
+          setPage(page - 1);
+        }
       }
     } catch (err) {
       console.error('Error fetching remarks:', err);
@@ -415,6 +422,15 @@ const TeacherRemarks = () => {
           </Card>
         ))
       )}
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="remarks"
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

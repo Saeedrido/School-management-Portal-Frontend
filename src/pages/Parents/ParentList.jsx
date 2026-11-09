@@ -49,7 +49,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 
 const ParentList = () => {
   const navigate = useNavigate();
@@ -63,6 +63,8 @@ const ParentList = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, parent: null });
   const [linkDialog, setLinkDialog] = useState({ open: false, parent: null });
   const [linkData, setLinkData] = useState({ 
@@ -78,11 +80,12 @@ const ParentList = () => {
       setLoading(true);
       try {
         const [parentsRes, studentsRes] = await Promise.all([
-          adminAPI.parents.getAll(1, 100),
+          adminAPI.parents.getPaged(page, pageSize, searchTerm.trim()),
           adminAPI.students.getAll(1, 100),
         ]);
         
         if (parentsRes.data) {
+          setTotalCount(parentsRes.data.data?.totalCount || 0);
           const parentsData = parentsRes.data.data?.items || parentsRes.data.data || parentsRes.data;
           const transformedParents = Array.isArray(parentsData) ? parentsData.map(p => ({
             id: p.id || p.Id,
@@ -148,8 +151,9 @@ const ParentList = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    const timer = setTimeout(fetchData, searchTerm ? 400 : 0);
+    return () => clearTimeout(timer);
+  }, [page, searchTerm]);
 
   const handleDeleteClick = (parent) => {
     setDeleteDialog({ open: true, parent });
@@ -158,7 +162,14 @@ const ParentList = () => {
   const handleDeleteConfirm = async () => {
     try {
       await adminAPI.parents.delete(deleteDialog.parent.id);
-      setParents(parents.filter((p) => p.id !== deleteDialog.parent.id));
+      const remaining = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(remaining / pageSize));
+      if (page > lastPage) {
+        setPage(lastPage);
+      } else {
+        setParents(parents.filter((p) => p.id !== deleteDialog.parent.id));
+        setTotalCount(remaining);
+      }
       setDeleteDialog({ open: false, parent: null });
     } catch (err) {
       console.error('Error deleting parent:', err);
@@ -489,7 +500,7 @@ const ParentList = () => {
             <TextField
               placeholder="Search parents..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               sx={{
                 flex: 1,
                 minWidth: 250,
@@ -694,6 +705,15 @@ const ParentList = () => {
           </TableContainer>
         )}
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="parents"
+      />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, parent: null })} maxWidth="sm">

@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, academicYearsAPI, resultsAPI } from '../../services/api';
-import { PageHeader } from '../../components/ui';
+import { PageHeader, ServerPagination } from '../../components/ui';
 
 const PromotionsList = () => {
   const { hasRole } = useAuth();
@@ -50,6 +50,9 @@ const PromotionsList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   
   // Override dialog
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -67,7 +70,7 @@ const PromotionsList = () => {
     if (selectedAcademicYear) {
       fetchPromotions();
     }
-  }, [selectedAcademicYear, selectedClass]);
+  }, [selectedAcademicYear, selectedClass, page]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -108,6 +111,7 @@ const PromotionsList = () => {
         pendingCount: 0,
         students: []
       });
+      setTotalCount(0);
       return;
     }
     
@@ -119,20 +123,22 @@ const PromotionsList = () => {
         selectedAcademicYear,
         selectedClass,
         undefined,
-        1,
-        100
+        page,
+        pageSize
       );
       
       if (promotionsResponse.data?.success && promotionsResponse.data.data?.students?.length > 0) {
         // Use data from promotions endpoint (after calculation)
         setPromotions(promotionsResponse.data.data);
+        setTotalCount(promotionsResponse.data.data?.totalStudents || 0);
       } else {
         // Fall back to students endpoint if no promotions calculated yet
-        const studentsResponse = await adminAPI.students.getByClass(selectedClass);
+        const studentsResponse = await adminAPI.students.getByClassPaged(selectedClass, page, pageSize);
         
         if (studentsResponse.data?.success) {
+          const studentItems = studentsResponse.data.data?.items || studentsResponse.data.data || [];
           // Transform students data to match our display format
-          const students = studentsResponse.data.data.map(student => ({
+          const students = studentItems.map(student => ({
             studentProfileId: student.id,
             studentName: student.fullName || `${student.firstName} ${student.lastName}`,
             studentNumber: student.studentNumber,
@@ -146,13 +152,14 @@ const PromotionsList = () => {
           }));
           
           setPromotions({
-            totalStudents: students.length,
+            totalStudents: studentsResponse.data.data?.totalCount ?? students.length,
             promotedCount: 0,
             retainedCount: 0,
             graduatedCount: 0,
             pendingCount: students.length,
             students: students
           });
+          setTotalCount(studentsResponse.data.data?.totalCount ?? students.length);
         } else {
           setError(studentsResponse.data?.message || 'Failed to load students');
         }
@@ -369,7 +376,7 @@ const PromotionsList = () => {
             <Select
               value={selectedAcademicYear}
               label="Academic Year"
-              onChange={(e) => setSelectedAcademicYear(e.target.value)}
+              onChange={(e) => { setSelectedAcademicYear(e.target.value); setPage(1); }}
             >
               {academicYears.map((year) => (
                 <MenuItem key={year.id} value={year.id}>
@@ -385,7 +392,7 @@ const PromotionsList = () => {
             <Select
               value={selectedClass}
               label="Class (Optional)"
-              onChange={(e) => setSelectedClass(e.target.value)}
+              onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
             >
               <MenuItem value="">All Classes</MenuItem>
               {classes.map((cls) => (
@@ -550,6 +557,15 @@ const PromotionsList = () => {
               </Table>
             </TableContainer>
           )}
+
+          <ServerPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+            itemLabel="students"
+          />
         </CardContent>
       </Card>
 

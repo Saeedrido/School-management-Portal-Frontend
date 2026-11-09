@@ -31,6 +31,7 @@ import {
 import { adminAPI, teacherAPI, academicYearsAPI, termsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/ui';
+import ServerPagination from '../../components/ui/ServerPagination';
 
 const TEST_MAX = 40;
 const EXAM_MAX = 60;
@@ -63,6 +64,12 @@ const StudentScoreEntryPage = () => {
   const [success, setSuccess] = useState('');
 
   const [subjectScores, setSubjectScores] = useState({});
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [subjects]);
 
   const isTeacher = hasRole('Teacher');
 
@@ -361,7 +368,7 @@ const StudentScoreEntryPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {subjects.map((subject, index) => {
+                  {subjects.slice((page - 1) * pageSize, page * pageSize).map((subject, index) => {
                     const score = subjectScores[subject.classSubjectId] || {};
                     const testValue = score.testScore !== undefined ? score.testScore : '';
                     const examValue = score.examScore !== undefined ? score.examScore : '';
@@ -372,7 +379,7 @@ const StudentScoreEntryPage = () => {
 
                     return (
                       <TableRow key={subject.classSubjectId} hover>
-                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             {subject.subjectName || subject.SubjectName || 'Unknown Subject'}
@@ -421,6 +428,14 @@ const StudentScoreEntryPage = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <ServerPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={subjects.length}
+              onPageChange={setPage}
+              itemLabel="subjects"
+            />
           </CardContent>
         </Card>
       )}

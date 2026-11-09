@@ -449,10 +449,17 @@ const StudentDetail = () => {
                   </Box>
                   <Divider sx={{ my: 1, borderColor: 'rgba(111,175,143,0.15)' }} />
                   <Typography sx={{ fontWeight: 700, color: '#2E7D32', fontSize: '0.65rem', mb: 0.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Address
+                    Student Address
                   </Typography>
                   <Typography sx={{ color: '#64748B', fontSize: '0.65rem', lineHeight: 1.4 }}>
-                    {student.address || '13 Modiubada Str, off Carwash Bus Stop, Ikotun, Lagos'}
+                    {student.address || 'Not provided'}
+                  </Typography>
+                  <Divider sx={{ my: 1, borderColor: 'rgba(111,175,143,0.15)' }} />
+                  <Typography sx={{ fontWeight: 700, color: '#2E7D32', fontSize: '0.65rem', mb: 0.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    School Address
+                  </Typography>
+                  <Typography sx={{ color: '#64748B', fontSize: '0.65rem', lineHeight: 1.4 }}>
+                    Olusegun asekun Street Ayita Ikorodu
                   </Typography>
                   <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(111,175,143,0.1)', textAlign: 'center' }}>
                     <Typography sx={{ color: '#94A3B8', fontSize: '0.5rem' }}>

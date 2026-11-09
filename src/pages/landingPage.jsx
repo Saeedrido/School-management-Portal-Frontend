@@ -509,7 +509,7 @@ const LandingPage = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LocationOn sx={{ color: '#6FAF8F', fontSize: 18 }} />
                             <Typography sx={{ color: '#666', fontSize: '0.85rem' }}>
-                              12A Olusegun Asekun Close, Eyita, Ojokoro, Ikorodu, Lagos State
+                              Olusegun asekun Street Ayita Ikorodu
                             </Typography>
                           </Box>
                         </Stack>
@@ -843,7 +843,7 @@ const LandingPage = () => {
                   {[
                     { icon: <Phone />, label: 'Phone', value: '08023196047 / 08033995565' },
                     { icon: <Email />, label: 'Email', value: '300arundellearninglimited@gmail.com' },
-                    { icon: <LocationOn />, label: 'Location', value: '12A Olusegun Asekun Close, Eyita, Ojokoro, Ikorodu, Lagos State, Nigeria' },
+                    { icon: <LocationOn />, label: 'Location', value: 'Olusegun asekun Street Ayita Ikorodu' },
                   ].map((item, i) => (
                     <motion.div
                       key={i}

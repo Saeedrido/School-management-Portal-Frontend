@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { Save, ArrowBack } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
+import ServerPagination from '../../components/ui/ServerPagination';
 import { useNavigate } from 'react-router-dom';
 
 const ACADEMIC_COMMENTS = {
@@ -62,6 +63,9 @@ const TeacherComments = () => {
   const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedTermId, setSelectedTermId] = useState('');
   const [students, setStudents] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [resultMap, setResultMap] = useState({});
   const [comments, setComments] = useState({});
   const [behaviorComments, setBehaviorComments] = useState({});
@@ -113,15 +117,18 @@ const TeacherComments = () => {
     if (selectedClassId && selectedTermId) {
       loadStudentsAndResults();
     }
-  }, [selectedClassId, selectedTermId]);
+  }, [selectedClassId, selectedTermId, page]);
 
   const loadStudentsAndResults = async () => {
     setLoading(true);
     setProgress('Loading students...');
     try {
-      const studentsRes = await adminAPI.students.getByClass(selectedClassId);
-      const studentList = studentsRes.data?.success ? (studentsRes.data.data || []) : [];
+      const studentsRes = await adminAPI.students.getByClassPaged(selectedClassId, page, pageSize);
+      const studentList = studentsRes.data?.success
+        ? (studentsRes.data.data?.items || studentsRes.data.data || [])
+        : [];
       setStudents(studentList);
+      setTotalCount(studentsRes.data?.data?.totalCount ?? studentList.length);
 
       if (studentList.length === 0) {
         setLoading(false);
@@ -231,7 +238,7 @@ const TeacherComments = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Class</InputLabel>
-                <Select value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)} label="Class">
+                <Select value={selectedClassId} onChange={(e) => { setSelectedClassId(e.target.value); setPage(1); }} label="Class">
                   <MenuItem value="">Select Class</MenuItem>
                   {classes.map(c => (
                     <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
@@ -242,7 +249,7 @@ const TeacherComments = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Term</InputLabel>
-                <Select value={selectedTermId} onChange={(e) => setSelectedTermId(e.target.value)} label="Term">
+                <Select value={selectedTermId} onChange={(e) => { setSelectedTermId(e.target.value); setPage(1); }} label="Term">
                   <MenuItem value="">Select Term</MenuItem>
                   {terms.map(t => (
                     <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
@@ -261,7 +268,7 @@ const TeacherComments = () => {
         </Box>
       )}
 
-      {!loading && selectedClassId && students.length === 0 && (
+      {!loading && selectedClassId && totalCount === 0 && (
         <Alert severity="info">No students found in this class.</Alert>
       )}
 
@@ -350,6 +357,15 @@ const TeacherComments = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <ServerPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+            itemLabel="students"
+          />
         </>
       )}
 

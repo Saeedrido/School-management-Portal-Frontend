@@ -42,7 +42,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI, teacherAPI, studentAPI } from '../../services/api';
 import { enumToExamType } from '../../utils/dataMapping';
-import { PageHeader, StatusBadge } from '../../components/ui';
+import { PageHeader, StatusBadge, ServerPagination } from '../../components/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
 const ExamList = () => {
@@ -62,6 +62,9 @@ const ExamList = () => {
   const [error, setError] = useState('');
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -101,8 +104,8 @@ const ExamList = () => {
               }
             });
             setClasses(uniqueClasses);
-            // Auto-select first class if only one
-            if (uniqueClasses.length === 1) {
+            // Select the first class so the exam table can page per class
+            if (uniqueClasses.length > 0 && !selectedClassId) {
               setSelectedClassId(uniqueClasses[0].id);
             }
           }
@@ -119,99 +122,59 @@ const ExamList = () => {
     if (user) {
       fetchExams();
     }
-  }, [user, selectedClassId]);
+  }, [user, selectedClassId, page]);
 
   const fetchExams = async () => {
     try {
       setLoading(true);
       setError('');
 
-      if (user?.role === 'Teacher') {
-        try {
-          // First get teacher's assigned classes
-          const assignmentsRes = await teacherAPI.myAssignments.getAll(1, 100);
-          if (assignmentsRes.data?.success && assignmentsRes.data?.data?.items) {
-            const assignments = assignmentsRes.data.data.items;
-            
-            // Get unique class IDs
-            const classIds = [...new Set(assignments.map(a => a.classId))];
-            
-            // Fetch ONLY exams created by this teacher (filter by teacherId)
-            const allExams = [];
-            for (const classId of classIds) {
-              try {
-                // Filter by teacherId so teacher only sees their own exams
-                const examRes = await adminAPI.exams.getByClass(classId, 1, 100, user?.id);
-                if (examRes.data?.success) {
-                  const examData = examRes.data.data?.items || examRes.data.data || [];
-                  // Add class info and ownership to each exam
-                  const classAssignment = assignments.find(a => a.classId === classId);
-                  
-                  const examsWithClass = examData.map(exam => {
-                    const isOwner = exam.createdBy?.toLowerCase() === user?.id?.toLowerCase();
-                    return {
-                      ...exam,
-                      isOwner: isOwner,
-                      class: { 
-                        id: classId, 
-                        name: classAssignment?.class?.name || '', 
-                        displayName: classAssignment?.class?.displayName || '' 
-                      }
-                    };
-                  });
-                  allExams.push(...examsWithClass);
-                }
-              } catch (e) {
-                console.warn(`Failed to fetch exams for class ${classId}:`, e);
-              }
-            }
-            
-            // Filter by selected class if one is selected
-            const filteredExams = selectedClassId 
-              ? allExams.filter(e => e.class?.id === selectedClassId)
-              : allExams;
-              
-            setExams(filteredExams);
-          } else {
-            setExams([]);
-          }
-        } catch (err) {
-          console.error('Error fetching teacher exams:', err);
-          setExams([]);
-        }
-      } else if (user?.role === 'Admin') {
+      if (user?.role === 'Teacher' || user?.role === 'Admin') {
         if (!selectedClassId) {
-          setError('Please select a class to view exams');
           setExams([]);
-        } else {
-          const response = await adminAPI.exams.getByClass(selectedClassId, 1, 100);
-          if (response.data?.success) {
-            const examData = response.data.data?.items || response.data.data || [];
-            // Admin can do everything, mark all as owner
-            const examsWithOwner = examData.map(exam => ({
-              ...exam,
-              isOwner: true
-            }));
-            if (response.data.data?.items) {
-              setExams(examsWithOwner);
-            } else if (Array.isArray(response.data.data)) {
-              setExams(examsWithOwner);
-            } else {
-              setExams([]);
-            }
-          } else {
-            setExams([]);
+          setTotalCount(0);
+          if (user?.role === 'Admin') {
+            setError('Please select a class to view exams');
           }
+          return;
+        }
+
+        const response = await adminAPI.exams.getByClass(
+          selectedClassId,
+          page,
+          pageSize,
+          user?.role === 'Teacher' ? user?.id : null
+        );
+
+        if (response.data?.success) {
+          const examData = response.data.data?.items || response.data.data || [];
+          const classInfo = classes.find((c) => c.id === selectedClassId);
+          setExams(
+            examData.map((exam) => ({
+              ...exam,
+              isOwner:
+                user?.role === 'Admin' ||
+                exam.createdBy?.toLowerCase() === user?.id?.toLowerCase(),
+              class: exam.class || classInfo,
+            }))
+          );
+          setTotalCount(response.data.data?.totalCount ?? examData.length);
+        } else {
+          setExams([]);
+          setTotalCount(0);
         }
       } else if (user?.role === 'Student') {
         const response = await studentAPI.myExams.getAvailable();
         if (response.data?.success && response.data?.data) {
           setExams(response.data.data);
+          setTotalCount(response.data.data.length);
         } else {
           setExams([]);
+          setTotalCount(0);
         }
       } else {
         setExams([]);
+        setTotalCount(0);
       }
     } catch (err) {
       console.error('Error fetching exams:', err);
@@ -302,6 +265,10 @@ const ExamList = () => {
   const activeExams = exams.filter((e) => e.isActive).length;
   const scheduledExams = exams.filter((e) => !e.isActive && !e.actualEndTime).length;
   const completedExams = exams.filter((e) => e.actualEndTime).length;
+
+  const pagedExams = user?.role === 'Student'
+    ? filteredExams.slice((page - 1) * pageSize, page * pageSize)
+    : filteredExams;
 
   return (
     <Box>
@@ -417,7 +384,7 @@ const ExamList = () => {
                 <Select
                   value={selectedClassId}
                   label="Select Class"
-                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  onChange={(e) => { setSelectedClassId(e.target.value); setPage(1); }}
                   sx={{ borderRadius: 2.5, backgroundColor: '#F8FAF9' }}
                 >
                   <MenuItem value=""><em>Select a class</em></MenuItem>
@@ -433,7 +400,7 @@ const ExamList = () => {
                 <Select
                   value={selectedClassId}
                   label="Select Class"
-                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  onChange={(e) => { setSelectedClassId(e.target.value); setPage(1); }}
                   sx={{ borderRadius: 2.5, backgroundColor: '#F8FAF9' }}
                 >
                   <MenuItem value=""><em>All My Classes</em></MenuItem>
@@ -482,7 +449,7 @@ const ExamList = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredExams.map((exam) => {
+                pagedExams.map((exam) => {
                   const status = getExamStatus(exam);
                   // Handle both string and number examType
                   let examTypeStr = exam.examType;
@@ -675,6 +642,15 @@ const ExamList = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      <ServerPagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        loading={loading}
+        itemLabel="exams"
+      />
 
       <ConfirmDialog
         open={confirmOpen}

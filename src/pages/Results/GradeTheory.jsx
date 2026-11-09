@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI, teacherAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ServerPagination from '../../components/ui/ServerPagination';
 
 const GradeTheory = () => {
   const navigate = useNavigate();
@@ -55,6 +56,12 @@ const GradeTheory = () => {
   const [success, setSuccess] = useState('');
   const [student, setStudent] = useState(null);
   const [attempts, setAttempts] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [attempts.length]);
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
   const [exam, setExam] = useState(null);
@@ -445,7 +452,7 @@ const GradeTheory = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {attempts.map((attempt) => {
+                    {attempts.slice((page - 1) * pageSize, page * pageSize).map((attempt) => {
                       const attemptExam = getExamForAttempt(attempt);
                       return (
                       <TableRow key={attempt.id} hover>
@@ -492,6 +499,15 @@ const GradeTheory = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              <ServerPagination
+                page={page}
+                pageSize={pageSize}
+                totalCount={attempts.length}
+                onPageChange={setPage}
+                loading={loading}
+                itemLabel="attempts"
+              />
             </CardContent>
           </Card>
         )}

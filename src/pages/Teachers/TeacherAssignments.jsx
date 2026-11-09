@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { adminAPI, academicYearsAPI } from '../../services/api';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import ServerPagination from '../../components/ui/ServerPagination';
 
 const TeacherAssignments = () => {
   const theme = useTheme();
@@ -55,6 +56,9 @@ const TeacherAssignments = () => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState(null);
   const [existingAssignments, setExistingAssignments] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Form states
   const [selectedTeacher, setSelectedTeacher] = useState('');
@@ -156,11 +160,12 @@ const TeacherAssignments = () => {
     const fetchAssignments = async () => {
       if (!selectedClass) {
         setExistingAssignments([]);
+        setTotalCount(0);
         return;
       }
 
       try {
-        const response = await adminAPI.classSubjects.getByClass(selectedClass);
+        const response = await adminAPI.classSubjects.getByClass(selectedClass, page, pageSize);
         
         // Handle PagedResponse or List response formats
         let assignments = [];
@@ -173,14 +178,16 @@ const TeacherAssignments = () => {
         }
         
         setExistingAssignments(assignments);
+        setTotalCount(response.data?.data?.totalCount ?? assignments.length);
       } catch (err) {
         console.error('Error fetching assignments:', err);
         setExistingAssignments([]);
+        setTotalCount(0);
       }
     };
 
     fetchAssignments();
-  }, [selectedClass]);
+  }, [selectedClass, page]);
 
   const handleSubmit = async () => {
     if (!selectedTeacher || !selectedClass || !selectedTerm || selectedSubjects.length === 0) {
@@ -211,9 +218,10 @@ const TeacherAssignments = () => {
       setSuccess(true);
 
       // Refresh assignments
-      const response = await adminAPI.classSubjects.getByClass(selectedClass);
+      const response = await adminAPI.classSubjects.getByClass(selectedClass, page, pageSize);
       if (response.data?.success && response.data?.data?.items) {
         setExistingAssignments(response.data.data.items);
+        setTotalCount(response.data.data.totalCount ?? response.data.data.items.length);
       }
 
       // Clear form
@@ -242,9 +250,10 @@ const TeacherAssignments = () => {
       await adminAPI.classSubjects.delete(deleteId);
 
       // Refresh assignments
-      const response = await adminAPI.classSubjects.getByClass(selectedClass);
+      const response = await adminAPI.classSubjects.getByClass(selectedClass, page, pageSize);
       if (response.data?.success && response.data?.data?.items) {
         setExistingAssignments(response.data.data.items);
+        setTotalCount(response.data.data.totalCount ?? response.data.data.items.length);
       }
     } catch (err) {
       console.error('Error deleting assignment:', err);
@@ -317,7 +326,7 @@ const TeacherAssignments = () => {
                 <InputLabel sx={{ color: 'text.secondary' }}>Select Class *</InputLabel>
                 <Select
                   value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
+                  onChange={(e) => { setSelectedClass(e.target.value); setPage(1); }}
                   label="Select Class *"
                   sx={{
                     color: 'text.primary',
@@ -571,6 +580,14 @@ const TeacherAssignments = () => {
                   </Table>
                 </TableContainer>
               )}
+
+              <ServerPagination
+                page={page}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+                itemLabel="assignments"
+              />
             </CardContent>
           </Card>
         </Grid>
