@@ -237,10 +237,16 @@ const StudentList = () => {
       const response = await adminAPI.classes.bulkUploadStudents(selectedClass, formData);
 
       if (response.data?.success) {
-        const result = response.data.data;
+        const result = response.data.data || {};
         setUploadResult(result);
-        if (result.successRecords?.length > 0) {
-          fetchStudents();
+        const successCount = result.successCount ?? result.studentsCreated?.length ?? 0;
+        if (successCount > 0) {
+          if (page !== 1) {
+            // Reload from the first page so the newly uploaded students are fetched
+            setPage(1);
+          } else {
+            await fetchStudents();
+          }
         }
       } else {
         setError(response.data?.message || 'Failed to upload students');
